@@ -1,4 +1,4 @@
-﻿# ColdClock
+# ColdClock
 
 > When refrigeration fails, the alarm is only step one.
 
@@ -13,6 +13,24 @@ replacement through delivery and receipt.
 **Public-data policy:** The demo uses fictional people, medicine lot, pharmacy, coverage plan,
 courier, reviewer, and sensor events.
 
+## From reproducible proof to operational pilot
+
+The deterministic sample remains available because judges and maintainers need a repeatable safety
+case. It is no longer the only product path. The running application also provides a persistent
+multi-case queue and an input-driven pilot API at `/api/pilot`:
+
+- create a synthetic monitored case from supplied package facts on the public service;
+- retain fields only when they appear verbatim in the supplied transcription;
+- attach the authoritative label URL, exact storage excerpt, and human-configured monitoring range;
+- ingest real event-shaped sensor payloads exactly once by device event ID;
+- calculate observed duration and temperature range without producing a medication disposition;
+- require a named qualified reviewer to enter the disposition and independent rationale;
+- preserve every case in Firestore instead of clearing global state when the page opens.
+
+`GET /api/pilot/readiness` states what works and what remains before PHI or clinical deployment.
+The public service is currently a **synthetic operational pilot**, not production clinical software. An authorized de-identified mode is disabled by default and belongs only in a private, identity-controlled deployment. See the
+[startup-readiness audit](STARTUP_READINESS.md) for the identity, compliance,
+integration, validation, and operating controls still required.
 ## The one-sentence distinction
 
 A monitoring product tells someone that the temperature changed. ColdClock executes the fragmented
@@ -160,7 +178,7 @@ python scripts/demo_flow.py --url http://127.0.0.1:8000
 
 Current local baseline on August 16, 2026:
 
-- `100 passed`
+- `111 passed`
 - `10/10` static accessibility checks
 - `12/12` executable HTTP acceptance checks
 - `8/8` foundational safety proof and `8/8` adversarial hardening proof

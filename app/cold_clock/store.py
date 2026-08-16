@@ -11,6 +11,8 @@ class CaseStore(Protocol):
 
     def get(self, case_id: str) -> dict[str, Any] | None: ...
 
+    def list_cases(self) -> list[dict[str, Any]]: ...
+
     def clear(self) -> None: ...
 
 
@@ -24,6 +26,9 @@ class MemoryCaseStore:
     def get(self, case_id: str) -> dict[str, Any] | None:
         case = self._cases.get(case_id)
         return deepcopy(case) if case is not None else None
+
+    def list_cases(self) -> list[dict[str, Any]]:
+        return sorted((deepcopy(case) for case in self._cases.values()), key=lambda case: case["created_at"], reverse=True)
 
     def clear(self) -> None:
         self._cases.clear()
@@ -41,6 +46,10 @@ class FirestoreCaseStore:
     def get(self, case_id: str) -> dict[str, Any] | None:
         snapshot = self._collection.document(case_id).get()
         return snapshot.to_dict() if snapshot.exists else None
+
+    def list_cases(self) -> list[dict[str, Any]]:
+        cases = [snapshot.to_dict() for snapshot in self._collection.stream()]
+        return sorted(cases, key=lambda case: case["created_at"], reverse=True)
 
     def clear(self) -> None:
         for document in self._collection.stream():

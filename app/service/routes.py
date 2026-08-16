@@ -28,7 +28,7 @@ class ReviewRequest(BaseModel):
     rationale: str = Field(min_length=8, max_length=800)
 
 
-def build_router(store: CaseStore) -> APIRouter:
+def build_router(store: CaseStore, *, allow_global_reset: bool = False) -> APIRouter:
     router = APIRouter(prefix="/api", tags=["cold-clock"])
 
     def require(case_id: str) -> dict[str, Any]:
@@ -143,6 +143,8 @@ def build_router(store: CaseStore) -> APIRouter:
 
     @router.post("/reset")
     def reset() -> dict[str, Any]:
+        if not allow_global_reset:
+            raise HTTPException(status_code=403, detail="global reset is disabled in this deployment")
         store.clear()
         return {"ok": True}
 
@@ -215,7 +217,7 @@ def build_router(store: CaseStore) -> APIRouter:
                 },
             ],
             "limitations": [
-                "The public case, sensor, pharmacy, coverage plan, courier, reviewer, and patient are synthetic.",
+                "The public service accepts synthetic pilot evidence only; authorized de-identified mode requires a separate protected deployment.",
                 "ColdClock does not make medication-use decisions.",
                 "The replay fixture must not be described as a live model call.",
                 "No clinical outcome claim has been validated.",

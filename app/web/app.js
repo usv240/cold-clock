@@ -11,7 +11,7 @@ const stateOrder = [
 const actionMap = {
   monitoring: { label: "Trigger power outage", note: "Starts a synthetic utility and sensor event.", endpoint: "outage" },
   excursion_detected: { label: "Assemble reviewer packet", note: "Routes observed facts without a clinical conclusion.", endpoint: "request-review" },
-  awaiting_professional_review: { label: "Approve replacement as reviewer", note: "This click represents a named synthetic human pharmacist.", endpoint: "review" },
+  awaiting_professional_review: { label: "Record human disposition", note: "A qualified reviewer must enter their own decision and rationale.", endpoint: "review" },
   replacement_approved: { label: "Reserve approved replacement", note: "Sandbox inventory cannot be touched before approval.", endpoint: "fulfillment" },
   fulfillment_prepared: { label: "Dispatch accessible delivery", note: "Books a synthetic accessible courier slot.", endpoint: "dispatch" },
   delivery_dispatched: { label: "Confirm household receipt", note: "Closes the loop with synthetic receipt proof.", endpoint: "confirm-delivery" },
@@ -20,6 +20,7 @@ const actionMap = {
 
 let currentCase = null;
 let autoRunning = false;
+let caseSummaries = [];
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -49,6 +50,33 @@ async function api(path, options = {}) {
   return response.json();
 }
 
+async function refreshCases(preferredId = currentCase?.case_id) {
+  const data = await api("/api/pilot/cases");
+  caseSummaries = data.cases;
+  const select = $("#case-select");
+  select.innerHTML = caseSummaries.length
+    ? caseSummaries.map((row) => `<option value="${escapeHtml(row.case_id)}">${escapeHtml(row.case_reference)} · ${escapeHtml(row.medication)} · ${escapeHtml(statusCopy(row.status))}</option>`).join("")
+    : '<option value="">No cases yet</option>';
+  if (preferredId && caseSummaries.some((row) => row.case_id === preferredId)) select.value = preferredId;
+}
+
+async function loadCase(caseId) {
+  if (!caseId) return;
+  $("#console").setAttribute("aria-busy", "true");
+  try { render(await api(`/api/cases/${caseId}`)); }
+  catch (error) { toast(error.message); }
+  finally { $("#console").setAttribute("aria-busy", "false"); }
+}
+
+function openDialog(id) {
+  const dialog = $(`#${id}`);
+  if (dialog && !dialog.open) dialog.showModal();
+}
+
+function closeDialog(id) {
+  const dialog = $(`#${id}`);
+  if (dialog?.open) dialog.close();
+}
 function statusCopy(status) {
   return {
     monitoring: "Monitoring normally",
@@ -119,7 +147,10 @@ function render(caseData) {
   currentCase = caseData;
   const status = caseData.status;
   $("#status-title").textContent = statusCopy(status);
-  $("#case-id").textContent = `${caseData.case_id} · synthetic case`;
+  $("#case-id").textContent = `${caseData.household.display_name} · ${caseData.case_id}`;
+  $("#case-origin").textContent = caseData.origin === "pilot_input" ? `${caseData.data_class} pilot input` : "sample fixture";
+  if ([...$("#case-select").options].some((option) => option.value === caseData.case_id)) $("#case-select").value = caseData.case_id;
+  $("#record-sensor").disabled = caseData.status !== "monitoring";
   $("#progress-count").textContent = caseData.timeline.length;
   $("#status-orb").className = `status-orb ${status === "excursion_detected" ? "attention" : status === "awaiting_professional_review" ? "waiting" : ""}`;
   const readings = caseData.sensor.readings;
@@ -132,6 +163,11 @@ function render(caseData) {
   renderJourney(status);
   renderReview(caseData);
   $("#verified-fields").innerHTML = caseData.extraction.fields.map((field) => `<div class="verified-field"><span>${escapeHtml(field.key)}</span><b>${escapeHtml(field.value)}</b><small>Exact quote verified</small></div>`).join("");
+  $("#package-provenance").textContent = caseData.origin === "pilot_input" ? "USER-CONFIRMED VERBATIM" : "SYNTHETIC DEMONSTRATION";
+  $("#package-name").textContent = caseData.medication.display_name;
+  $("#package-strength").textContent = caseData.medication.strength;
+  $("#package-form").textContent = caseData.medication.form;
+  $("#package-lot").textContent = `Lot ${caseData.medication.lot}`;
   $("#label-source").href = caseData.label_evidence.url;
   const action = actionMap[status];
   const button = $("#next-action");
@@ -147,30 +183,32 @@ function escapeHtml(value) {
 async function resetCase() {
   $("#console").setAttribute("aria-busy", "true");
   try {
-    await api("/api/reset", { method: "POST" });
-    render(await api("/api/cases", { method: "POST" }));
-    toast("Synthetic case reset.");
+    const created = await api("/api/cases", { method: "POST" });
+    render(created);
+    await refreshCases(created.case_id);
+    toast("Sample case added to the queue.");
   } catch (error) { toast(error.message); }
   finally { $("#console").setAttribute("aria-busy", "false"); }
 }
 
-async function advance() {
+async function advance(autoApproval = false) {
   if (!currentCase) return;
   const action = actionMap[currentCase.status];
   if (!action?.endpoint) return;
+  if (action.endpoint === "review" && !autoApproval) {
+    openDialog("review-dialog");
+    return;
+  }
   $("#console").setAttribute("aria-busy", "true");
   $("#next-action").disabled = true;
   try {
     const options = { method: "POST" };
     if (action.endpoint === "review") {
-      options.body = JSON.stringify({
-        disposition: "replace",
-        reviewer_name: "Avery Chen, PharmD — synthetic",
-        rationale: "The documented demonstration excursion requires replacement in this tabletop case.",
-      });
+      options.body = JSON.stringify({ disposition: "replace", reviewer_name: "Avery Chen, PharmD — synthetic", rationale: "Replacement approved for the automated synthetic demonstration only." });
     }
     const updated = await api(`/api/cases/${currentCase.case_id}/${action.endpoint}`, options);
     render(updated);
+    await refreshCases(updated.case_id);
     toast(`${statusCopy(updated.status)}.`);
   } catch (error) { toast(error.message); }
   finally { $("#console").setAttribute("aria-busy", "false"); }
@@ -184,7 +222,7 @@ async function runAuto() {
   await resetCase();
   while (currentCase?.status !== "resolved") {
     await sleep(650);
-    await advance();
+    await advance(true);
   }
   autoRunning = false;
   $("#auto-demo").disabled = false;
@@ -199,13 +237,78 @@ function setupTabs() {
   }));
 }
 
+async function submitIntake(event) {
+  event.preventDefault();
+  const values = Object.fromEntries(new FormData(event.currentTarget));
+  const payload = {
+    data_class: "synthetic",
+    case_reference: values.case_reference,
+    contact_preference: values.contact_preference,
+    mobility_note: values.mobility_note,
+    medication: { display_name: values.display_name, strength: values.strength, form: values.form, lot: values.lot, opened_on: values.opened_on },
+    package_transcription: values.package_transcription,
+    label_source_title: values.label_source_title,
+    label_source_url: values.label_source_url,
+    jurisdiction: values.jurisdiction,
+    quoted_storage_text: values.quoted_storage_text,
+    monitoring_range_f: { minimum: Number(values.range_min), maximum: Number(values.range_max) },
+    baseline_fahrenheit: Number(values.baseline),
+    sensor_source: values.sensor_source,
+  };
+  try {
+    const created = await api("/api/pilot/cases", { method: "POST", body: JSON.stringify(payload) });
+    closeDialog("intake-dialog");
+    render(created);
+    await refreshCases(created.case_id);
+    toast("Pilot case enrolled from supplied evidence.");
+  } catch (error) { toast(error.message); }
+}
+
+async function submitSensor(event) {
+  event.preventDefault();
+  if (!currentCase) return;
+  const values = Object.fromEntries(new FormData(event.currentTarget));
+  const utc = (value) => new Date(`${value}:00Z`).toISOString();
+  const payload = { event_id: values.event_id, started_at: utc(values.started_at), ended_at: utc(values.ended_at), minimum_fahrenheit: Number(values.minimum), maximum_fahrenheit: Number(values.maximum), latest_fahrenheit: Number(values.latest), power: values.power };
+  try {
+    const updated = await api(`/api/pilot/cases/${currentCase.case_id}/sensor-events`, { method: "POST", body: JSON.stringify(payload) });
+    closeDialog("sensor-dialog");
+    render(updated);
+    await refreshCases(updated.case_id);
+    toast(updated.last_ingestion?.duplicate ? "Duplicate event ignored safely." : updated.last_ingestion?.excursion_detected ? "Excursion recorded; professional review required." : "In-range event recorded.");
+  } catch (error) { toast(error.message); }
+}
+
+async function submitReview(event) {
+  event.preventDefault();
+  if (!currentCase) return;
+  const values = Object.fromEntries(new FormData(event.currentTarget));
+  try {
+    const updated = await api(`/api/cases/${currentCase.case_id}/review`, { method: "POST", body: JSON.stringify(values) });
+    closeDialog("review-dialog");
+    render(updated);
+    await refreshCases(updated.case_id);
+    toast("Named human disposition recorded.");
+  } catch (error) { toast(error.message); }
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   setTheme(localStorage.getItem("coldclock-theme") || "dark");
   $("#theme-toggle").addEventListener("click", () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
-  $("#next-action").addEventListener("click", advance);
+  $("#next-action").addEventListener("click", () => advance(false));
   $("#reset-demo").addEventListener("click", resetCase);
   $("#auto-demo").addEventListener("click", runAuto);
+  $("#new-case").addEventListener("click", () => openDialog("intake-dialog"));
+  $("#record-sensor").addEventListener("click", () => openDialog("sensor-dialog"));
+  $("#case-select").addEventListener("change", (event) => loadCase(event.target.value));
+  $("#intake-form").addEventListener("submit", submitIntake);
+  $("#sensor-form").addEventListener("submit", submitSensor);
+  $("#review-form").addEventListener("submit", submitReview);
+  $('[data-close]').forEach((button) => button.addEventListener("click", () => closeDialog(button.dataset.close)));
   setupTabs();
-  await resetCase();
+  try {
+    await refreshCases();
+    if (caseSummaries.length) await loadCase(caseSummaries[0].case_id);
+    else await resetCase();
+  } catch (error) { toast(error.message); }
 });
-

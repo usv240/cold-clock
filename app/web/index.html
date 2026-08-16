@@ -34,10 +34,10 @@
         <h1 id="hero-title">When refrigeration fails, <span>the alarm is only step one.</span></h1>
         <p class="hero-lede">ColdClock assembles the evidence, reaches a qualified reviewer, and coordinates the approved replacement through delivery—without letting AI make a medication-use decision.</p>
         <div class="hero-actions">
-          <a class="button primary" href="#demo">Run the outage case <span aria-hidden="true">→</span></a>
+          <a class="button primary" href="#demo">Open operations workspace <span aria-hidden="true">→</span></a>
           <a class="button secondary" href="/judges">Inspect the proof</a>
         </div>
-        <p class="hero-note">Synthetic public demonstration. Pharmacist authority is never simulated as AI.</p>
+        <p class="hero-note">Synthetic public demonstration and operations workspace accept synthetic evidence only. Pharmacist authority is never simulated as AI; any authorized de-identified pilot requires a separate protected deployment.</p>
       </div>
       <div class="hero-visual reveal" aria-label="ColdClock resolution preview">
         <div class="ambient-ring ring-one"></div>
@@ -84,13 +84,77 @@
 
     <section class="demo-section" id="demo" aria-labelledby="demo-title">
       <div class="shell demo-heading">
-        <div><p class="eyebrow">Live synthetic workflow</p><h2 id="demo-title">One outage. Every handoff visible.</h2></div>
+        <div><p class="eyebrow">Pilot operations workspace</p><h2 id="demo-title">More than one outage. One accountable queue.</h2></div>
         <div class="demo-controls">
-          <button id="reset-demo" class="button secondary compact" type="button">Reset case</button>
-          <button id="auto-demo" class="button primary compact" type="button">Run full story</button>
+          <button id="new-case" class="button secondary compact" type="button">New pilot case</button><button id="reset-demo" class="button secondary compact" type="button">Load sample</button>
+          <button id="auto-demo" class="button primary compact" type="button">Run sample story</button>
         </div>
       </div>
 
+      <div class="pilot-toolbar shell" aria-label="Case queue controls">
+        <label><span>Active case</span><select id="case-select" aria-label="Choose active ColdClock case"><option>Loading cases...</option></select></label>
+        <div class="pilot-toolbar-actions"><span class="origin-chip" id="case-origin">Sample fixture</span><button id="record-sensor" class="button secondary compact" type="button">Record sensor event</button><a href="/api/pilot/readiness" target="_blank" rel="noreferrer">Pilot readiness</a></div>
+      </div>
+
+      <dialog id="intake-dialog" class="pilot-dialog" aria-labelledby="intake-title">
+        <form id="intake-form">
+          <header><div><p class="eyebrow">Synthetic pilot intake</p><h3 id="intake-title">Enroll monitored medicine</h3></div><button class="dialog-close" type="button" data-close="intake-dialog" aria-label="Close">x</button></header>
+          <p class="dialog-boundary">This public workspace accepts synthetic data only. A label excerpt and configured range are evidence inputs, not a medication-use decision.</p>
+          <div class="form-grid">
+            <label><span>Case reference</span><input name="case_reference" value="Pilot case A-104" required minlength="3"></label>
+            <label><span>Contact preference</span><select name="contact_preference"><option>text</option><option>voice</option><option>email</option><option>portal</option></select></label>
+            <label><span>Medication name</span><input name="display_name" value="Example biologic" required></label>
+            <label><span>Strength</span><input name="strength" value="100 mg/mL" required></label>
+            <label><span>Form / container</span><input name="form" value="prefilled pen" required></label>
+            <label><span>Lot</span><input name="lot" value="LOT-42" required></label>
+            <label><span>Opened on</span><input name="opened_on" type="date" value="2026-08-15"></label>
+            <label><span>Sensor source</span><input name="sensor_source" value="Pilot webhook sensor" required></label>
+            <label><span>Configured minimum (F)</span><input name="range_min" type="number" step="0.1" value="36" required></label>
+            <label><span>Configured maximum (F)</span><input name="range_max" type="number" step="0.1" value="46" required></label>
+            <label><span>Baseline reading (F)</span><input name="baseline" type="number" step="0.1" value="41" required></label>
+            <label><span>Jurisdiction</span><input name="jurisdiction" value="United States" required></label>
+            <label class="form-wide"><span>Package transcription (entered values must appear exactly)</span><textarea name="package_transcription" rows="4" required>Example biologic
+100 mg/mL
+prefilled pen
+LOT-42</textarea></label>
+            <label class="form-wide"><span>Authoritative label source</span><input name="label_source_title" value="Authorized package insert" required></label>
+            <label class="form-wide"><span>Label URL</span><input name="label_source_url" type="url" value="https://dailymed.nlm.nih.gov/" required></label>
+            <label class="form-wide"><span>Exact storage excerpt</span><textarea name="quoted_storage_text" rows="3" required>Store between 36 and 46 degrees Fahrenheit.</textarea></label>
+            <label class="form-wide"><span>Mobility or access note (optional)</span><input name="mobility_note" value="Accessible delivery requested"></label>
+          </div>
+          <footer><button class="button secondary" type="button" data-close="intake-dialog">Cancel</button><button class="button primary" type="submit">Create monitored case</button></footer>
+        </form>
+      </dialog>
+
+      <dialog id="sensor-dialog" class="pilot-dialog" aria-labelledby="sensor-title">
+        <form id="sensor-form">
+          <header><div><p class="eyebrow">Idempotent device gateway</p><h3 id="sensor-title">Record a sensor event</h3></div><button class="dialog-close" type="button" data-close="sensor-dialog" aria-label="Close">x</button></header>
+          <p class="dialog-boundary">The event ID prevents duplicate processing. ColdClock calculates observed facts and routes exceptions; it makes no medication disposition.</p>
+          <div class="form-grid">
+            <label><span>Device event ID</span><input name="event_id" value="device-evt-9001" required></label>
+            <label><span>Power state</span><select name="power"><option value="off">off</option><option value="on">on</option><option value="unknown">unknown</option></select></label>
+            <label><span>Started at (UTC)</span><input name="started_at" type="datetime-local" value="2026-08-16T10:00" required></label>
+            <label><span>Ended at (UTC)</span><input name="ended_at" type="datetime-local" value="2026-08-16T11:30" required></label>
+            <label><span>Minimum (F)</span><input name="minimum" type="number" step="0.1" value="47" required></label>
+            <label><span>Maximum (F)</span><input name="maximum" type="number" step="0.1" value="73" required></label>
+            <label><span>Latest (F)</span><input name="latest" type="number" step="0.1" value="68" required></label>
+          </div>
+          <footer><button class="button secondary" type="button" data-close="sensor-dialog">Cancel</button><button class="button primary" type="submit">Ingest event</button></footer>
+        </form>
+      </dialog>
+
+      <dialog id="review-dialog" class="pilot-dialog" aria-labelledby="review-title">
+        <form id="review-form">
+          <header><div><p class="eyebrow">Human authority gate</p><h3 id="review-title">Record reviewed disposition</h3></div><button class="dialog-close" type="button" data-close="review-dialog" aria-label="Close">x</button></header>
+          <p class="dialog-boundary">ColdClock does not recommend this selection. A qualified reviewer must examine the evidence and enter their own rationale.</p>
+          <div class="form-grid">
+            <label><span>Disposition</span><select name="disposition"><option value="replace">Replace</option><option value="manufacturer_review">Manufacturer review</option><option value="continue_labeled">Continue per reviewed label</option><option value="shorten_window">Shorten reviewed window</option><option value="clinical_monitoring">Clinical monitoring</option></select></label>
+            <label><span>Reviewer name and credential</span><input name="reviewer_name" placeholder="Name, credential" required minlength="3"></label>
+            <label class="form-wide"><span>Independent rationale</span><textarea name="rationale" rows="4" required minlength="8" placeholder="Enter the qualified reviewer's rationale."></textarea></label>
+          </div>
+          <footer><button class="button secondary" type="button" data-close="review-dialog">Cancel</button><button class="button primary" type="submit">Record human decision</button></footer>
+        </form>
+      </dialog>
       <div class="console-shell shell" id="console" aria-busy="false">
         <div class="console-topbar">
           <div class="case-identity"><span class="status-orb" id="status-orb"></span><div><b id="status-title">Preparing case</b><small id="case-id">Synthetic workspace</small></div></div>
@@ -134,7 +198,7 @@
               <div class="evidence-callout" id="evidence-callout"><span class="shield" aria-hidden="true"></span><div><b>Observation, not a verdict</b><p>ColdClock records temperature evidence. A qualified professional decides the disposition.</p></div></div>
             </div>
             <div class="tab-panel" id="tab-medicine" role="tabpanel" hidden>
-              <div class="package-preview"><div class="package-cap"></div><div class="package-label"><small>SYNTHETIC DEMONSTRATION</small><b>INSULIN<br>GLARGINE-YFGN</b><span>100 units/mL · U-100</span><i>10 mL multiple-dose vial</i><code>Lot DEMO-2048</code></div></div>
+              <div class="package-preview"><div class="package-cap"></div><div class="package-label"><small id="package-provenance">SYNTHETIC DEMONSTRATION</small><b id="package-name">INSULIN<br>GLARGINE-YFGN</b><span id="package-strength">100 units/mL</span><i id="package-form">10 mL multiple-dose vial</i><code id="package-lot">Lot DEMO-2048</code></div></div>
               <div class="verified-fields" id="verified-fields"></div>
               <a class="source-link" id="label-source" href="#" target="_blank" rel="noreferrer">Open current structured label <span aria-hidden="true">↗</span></a>
             </div>
@@ -167,7 +231,7 @@
     </section>
   </main>
 
-  <footer class="site-footer"><div class="shell footer-grid"><div class="brand"><span class="brand-mark" aria-hidden="true"><span></span></span><span>ColdClock</span></div><p>Built for the All Things Agentic Hackathon. Synthetic demonstration; no agency, manufacturer, pharmacy, or institution endorses this project.</p><div><a href="/judges">Judge brief</a><a href="/docs">API</a><a href="#evidence">Sources</a></div></div></footer>
+  <footer class="site-footer"><div class="shell footer-grid"><div class="brand"><span class="brand-mark" aria-hidden="true"><span></span></span><span>ColdClock</span></div><p>De-identified pilot workspace with a reproducible synthetic proof flow. No agency, manufacturer, pharmacy, or institution endorses this product.</p><div><a href="/judges">Judge brief</a><a href="/docs">API</a><a href="#evidence">Sources</a></div></div></footer>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="/static/app.js" defer></script>

@@ -45,6 +45,18 @@ LABEL_EVIDENCE = {
 }
 
 
+def _case_base(case: dict[str, Any]) -> datetime:
+    value = str(case.get("created_at") or _iso(BASE_TIME))
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    return parsed.astimezone(timezone.utc)
+
+
+def _case_moment(case: dict[str, Any], minutes: int) -> datetime:
+    if case.get("clock_mode") == "realtime":
+        return datetime.now(timezone.utc)
+    return _case_base(case) + timedelta(minutes=minutes)
+
+
 def _iso(moment: datetime) -> str:
     return moment.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
@@ -60,7 +72,7 @@ def _append(
     case["timeline"].append(
         {
             "sequence": len(case["timeline"]) + 1,
-            "at": _iso(BASE_TIME + timedelta(minutes=len(case["timeline"]) * 4)),
+            "at": _iso(_case_moment(case, len(case["timeline"]) * 4)),
             "actor": actor,
             "action": action,
             "detail": detail,
@@ -144,9 +156,9 @@ def trigger_outage(case: dict[str, Any]) -> dict[str, Any]:
     if case["status"] != "monitoring":
         raise ValueError("outage can only be triggered from monitoring")
     readings = [
-        {"at": _iso(BASE_TIME + timedelta(minutes=20)), "fahrenheit": 47.8, "power": "off"},
-        {"at": _iso(BASE_TIME + timedelta(minutes=75)), "fahrenheit": 68.4, "power": "off"},
-        {"at": _iso(BASE_TIME + timedelta(minutes=165)), "fahrenheit": 95.2, "power": "off"},
+        {"at": _iso(_case_moment(case, 20)), "fahrenheit": 47.8, "power": "off"},
+        {"at": _iso(_case_moment(case, 75)), "fahrenheit": 68.4, "power": "off"},
+        {"at": _iso(_case_moment(case, 165)), "fahrenheit": 95.2, "power": "off"},
     ]
     case["sensor"]["state"] = "excursion"
     case["sensor"]["readings"].extend(readings)
@@ -176,7 +188,7 @@ def request_review(case: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("review requires a recorded excursion")
     case["review"] = {
         "status": "pending_human",
-        "requested_at": _iso(BASE_TIME + timedelta(minutes=169)),
+        "requested_at": _iso(_case_moment(case, 169)),
         "packet": {
             "medicine": case["medication"]["display_name"],
             "package_fields_verified": case["extraction"]["accuracy"]["matched"],
@@ -220,7 +232,7 @@ def record_review(
             "reviewer": reviewer_name.strip(),
             "reviewer_role": "synthetic pharmacist reviewer",
             "rationale": rationale.strip(),
-            "decided_at": _iso(BASE_TIME + timedelta(minutes=174)),
+            "decided_at": _iso(_case_moment(case, 174)),
             "made_by_ai": False,
         },
     }
@@ -286,7 +298,7 @@ def confirm_delivery(case: dict[str, Any]) -> dict[str, Any]:
     if case["delivery"].get("status") != "dispatched":
         raise ValueError("a dispatched delivery is required")
     case["delivery"]["status"] = "received"
-    case["delivery"]["received_at"] = _iso(BASE_TIME + timedelta(minutes=215))
+    case["delivery"]["received_at"] = _iso(_case_moment(case, 215))
     case["delivery"]["proof"] = "Synthetic household confirmation"
     case["status"] = "resolved"
     _append(

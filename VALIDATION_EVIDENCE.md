@@ -4,7 +4,7 @@
 
 | Gate | Result | Command or endpoint |
 |---|---:|---|
-| Python tests | 100 passed | `python -m pytest -q` |
+| Python tests | 111 passed | `python -m pytest -q` |
 | Static accessibility checks | 10/10 | `python scripts/check_a11y.py` |
 | Executable HTTP demonstration | 12/12 | `python scripts/demo_flow.py --url http://127.0.0.1:8041` |
 | Foundational safety proof | 8/8 |
@@ -17,9 +17,11 @@
 ## Deployed verification
 
 - Public service: https://cold-clock-109051079423.us-central1.run.app
-- Revision verified after deployment: `cold-clock-00011-4fc`.
+- Revision verified after deployment: `cold-clock-00013-dqj`.
 - `/health`: `firestore`, `gemini-3.5-flash`, `human-only`, transactional wakes, active Cloud Trace.
 - Public acceptance: `12/12`; foundational proof: `8/8`; hardening proof: `8/8`; landing, verification console, and architecture brief: HTTP 200.
+- Startup smoke proof: two user-created cases persisted in the queue; a 45-minute event was calculated from supplied timestamps; an identical delivery was acknowledged as a duplicate without adding timeline entries; named human review reached `replacement_approved` with `made_by_ai=false`.
+- Public safety boundary: synthetic-only readiness mode; de-identified intake and global reset both returned HTTP 403.
 
 ## Not yet validated
 
