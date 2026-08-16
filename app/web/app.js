@@ -118,6 +118,7 @@ function renderJourney(status) {
 function render(caseData) {
   currentCase = caseData;
   const status = caseData.status;
+  $("#console").dataset.workflowState = status;
   $("#status-title").textContent = statusCopy(status);
   $("#case-id").textContent = `${caseData.case_id} · synthetic case`;
   $("#progress-count").textContent = caseData.timeline.length;

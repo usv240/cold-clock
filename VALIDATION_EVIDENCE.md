@@ -1,10 +1,10 @@
-﻿# ColdClock: Validation Evidence
+# ColdClock: Validation Evidence
 
 ## Verified locally on August 16, 2026
 
 | Gate | Result | Command or endpoint |
 |---|---:|---|
-| Python tests | 100 passed | `python -m pytest -q` |
+| Python tests | 104 passed | `python -m pytest -q` |
 | Static accessibility checks | 10/10 | `python scripts/check_a11y.py` |
 | Executable HTTP demonstration | 12/12 | `python scripts/demo_flow.py --url http://127.0.0.1:8041` |
 | Foundational safety proof | 8/8 |
@@ -17,7 +17,7 @@
 ## Deployed verification
 
 - Public service: https://cold-clock-109051079423.us-central1.run.app
-- Revision verified after deployment: `cold-clock-00009-85j`.
+- Revision verified after deployment: `cold-clock-00010-7nq`.
 - `/health`: `firestore`, `gemini-3.5-flash`, `human-only`, transactional wakes, active Cloud Trace.
 - Public acceptance: `12/12`; foundational proof: `8/8`; hardening proof: `8/8`; landing, verification console, and architecture brief: HTTP 200.
 
