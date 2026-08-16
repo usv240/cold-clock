@@ -1,4 +1,4 @@
-# ColdClock
+﻿# ColdClock
 
 > When refrigeration fails, the alarm is only step one.
 
@@ -12,10 +12,6 @@ replacement through delivery and receipt.
 **Google Cloud:** Cloud Run deployment package plus Firestore-compatible persistence  
 **Public-data policy:** The demo uses fictional people, medicine lot, pharmacy, coverage plan,
 courier, reviewer, and sensor events.
-
-## Fastest judge path
-
-Open the [state-aware guided demo](https://cold-clock-109051079423.us-central1.run.app/?guide=1). It explains why each step matters, highlights the exact next control, follows the real workflow state, and keeps every approval or consequential action under user control. The judge-proof view remains one click away throughout.
 
 ## The one-sentence distinction
 
@@ -164,7 +160,7 @@ python scripts/demo_flow.py --url http://127.0.0.1:8000
 
 Current local baseline on August 16, 2026:
 
-- `104 passed`
+- `100 passed`
 - `10/10` static accessibility checks
 - `12/12` executable HTTP acceptance checks
 - `8/8` foundational safety proof and `8/8` adversarial hardening proof

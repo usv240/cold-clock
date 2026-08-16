@@ -9,9 +9,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/styles.css">
-  <link rel="stylesheet" href="/static/guide.css">
 </head>
-<body data-guide="cold-clock">
+<body>
   <a class="skip-link" href="#demo">Skip to live demonstration</a>
   <header class="site-header">
     <a class="brand" href="/" aria-label="ColdClock home">
@@ -36,7 +35,6 @@
         <p class="hero-lede">ColdClock assembles the evidence, reaches a qualified reviewer, and coordinates the approved replacement through delivery—without letting AI make a medication-use decision.</p>
         <div class="hero-actions">
           <a class="button primary" href="#demo">Run the outage case <span aria-hidden="true">→</span></a>
-          <button class="button secondary" id="start-guide" type="button">Guide me step by step</button>
           <a class="button secondary" href="/judges">Inspect the proof</a>
         </div>
         <p class="hero-note">Synthetic public demonstration. Pharmacist authority is never simulated as AI.</p>
@@ -172,7 +170,7 @@
   <footer class="site-footer"><div class="shell footer-grid"><div class="brand"><span class="brand-mark" aria-hidden="true"><span></span></span><span>ColdClock</span></div><p>Built for the All Things Agentic Hackathon. Synthetic demonstration; no agency, manufacturer, pharmacy, or institution endorses this project.</p><div><a href="/judges">Judge brief</a><a href="/docs">API</a><a href="#evidence">Sources</a></div></div></footer>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/static/app.js" defer></script><script src="/static/guide.js" defer></script>
+  <script src="/static/app.js" defer></script>
 </body>
 </html>
 
