@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600" viewBox="0 0 900 600" role="img" aria-labelledby="title desc">
+  <title id="title">Synthetic insulin glargine package</title>
+  <desc id="desc">A fictional package used only to evaluate medication label extraction.</desc>
+  <rect width="900" height="600" fill="#dfe8e4"/>
+  <rect x="125" y="70" width="650" height="460" rx="32" fill="#f7f3e9" stroke="#17392f" stroke-width="5"/>
+  <rect x="125" y="70" width="650" height="72" rx="32" fill="#087965"/>
+  <text x="165" y="115" fill="#ffffff" font-family="Arial" font-size="25" font-weight="700">SYNTHETIC DEMONSTRATION PACKAGE — NOT FOR HUMAN USE</text>
+  <text x="170" y="220" fill="#10251f" font-family="Arial" font-size="48" font-weight="700">INSULIN GLARGINE-YFGN INJECTION</text>
+  <text x="170" y="280" fill="#087965" font-family="Arial" font-size="34" font-weight="700">100 units/mL (U-100)</text>
+  <text x="170" y="330" fill="#10251f" font-family="Arial" font-size="27">10 mL multiple-dose vial</text>
+  <text x="170" y="390" fill="#10251f" font-family="monospace" font-size="25">Rx only    Lot DEMO-2048</text>
+  <text x="170" y="440" fill="#10251f" font-family="monospace" font-size="25">Opened 2026-08-12</text>
+  <text x="170" y="485" fill="#a43c31" font-family="Arial" font-size="20">Fixture contains no real patient, prescription, lot, or product package.</text>
+</svg>
+

@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ColdClock carries a refrigerated medication excursion to pharmacist-reviewed resolution.">
+  <title>ColdClock — From outage to reviewed resolution</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#demo">Skip to live demonstration</a>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="ColdClock home">
+      <span class="brand-mark" aria-hidden="true"><span></span></span>
+      <span>ColdClock</span>
+    </a>
+    <nav aria-label="Main navigation">
+      <a href="#how">How it works</a>
+      <a href="#evidence">Evidence</a>
+      <a href="/judges">For judges</a>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="true" aria-label="Switch to light theme">
+        <span class="theme-icon" aria-hidden="true"></span><span class="theme-label">Dark</span>
+      </button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero shell" aria-labelledby="hero-title">
+      <div class="hero-copy reveal">
+        <p class="eyebrow"><span class="pulse-dot"></span> Event-to-resolution agent</p>
+        <h1 id="hero-title">When refrigeration fails, <span>the alarm is only step one.</span></h1>
+        <p class="hero-lede">ColdClock assembles the evidence, reaches a qualified reviewer, and coordinates the approved replacement through delivery—without letting AI make a medication-use decision.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#demo">Run the outage case <span aria-hidden="true">→</span></a>
+          <a class="button secondary" href="/judges">Inspect the proof</a>
+        </div>
+        <p class="hero-note">Synthetic public demonstration. Pharmacist authority is never simulated as AI.</p>
+      </div>
+      <div class="hero-visual reveal" aria-label="ColdClock resolution preview">
+        <div class="ambient-ring ring-one"></div>
+        <div class="ambient-ring ring-two"></div>
+        <div class="device-card">
+          <div class="device-topline"><span>ColdClock sensor</span><span class="connected">Connected</span></div>
+          <div class="temperature">41.0<span>°F</span></div>
+          <div class="temperature-range">Within recorded refrigeration range</div>
+          <svg class="mini-chart" viewBox="0 0 420 100" role="img" aria-label="Stable temperature preview">
+            <path class="chart-grid" d="M0 25H420M0 50H420M0 75H420"/>
+            <path class="chart-area" d="M0 64 C70 62 115 66 175 63 S285 61 340 65 S395 62 420 63 V100 H0Z"/>
+            <path class="chart-line" d="M0 64 C70 62 115 66 175 63 S285 61 340 65 S395 62 420 63"/>
+          </svg>
+          <div class="preview-flow">
+            <span class="flow-node done">Observe</span><i></i><span class="flow-node">Review</span><i></i><span class="flow-node">Resolve</span>
+          </div>
+        </div>
+        <div class="floating-proof proof-human"><b>Human decision</b><span>Required before action</span></div>
+        <div class="floating-proof proof-source"><b>Every fact sourced</b><span>Label + sensor evidence</span></div>
+      </div>
+    </section>
+
+    <section class="signal-strip" aria-label="Product boundaries and proof">
+      <div class="shell signal-grid">
+        <div><strong>1 event</strong><span>starts the workflow</span></div>
+        <div><strong>7 verified actions</strong><span>create the audit trail</span></div>
+        <div><strong>0 AI clinical decisions</strong><span>enforced in code</span></div>
+        <div><strong>Source-bound</strong><span>DailyMed + observed data</span></div>
+      </div>
+    </section>
+
+    <section class="section shell" id="how" aria-labelledby="how-title">
+      <div class="section-heading">
+        <p class="eyebrow">The missing middle</p>
+        <h2 id="how-title">A sensor can warn you. It cannot finish the job.</h2>
+        <p>ColdClock connects the fragmented work after an excursion while preserving the line between coordination and clinical judgment.</p>
+      </div>
+      <div class="steps-grid">
+        <article class="step-card"><span class="step-number">01</span><div class="step-icon sensor-icon" aria-hidden="true"></div><h3>Observe precisely</h3><p>Record the package, current label, temperatures, duration, power event, and previous history.</p><span class="step-proof">Observed facts only</span></article>
+        <article class="step-card"><span class="step-number">02</span><div class="step-icon review-icon" aria-hidden="true"></div><h3>Route for judgment</h3><p>Give a pharmacist a concise evidence packet. Unknown or conflicting evidence stops here.</p><span class="step-proof">Human authority</span></article>
+        <article class="step-card"><span class="step-number">03</span><div class="step-icon route-icon" aria-hidden="true"></div><h3>Complete the resolution</h3><p>After approval, coordinate sandbox inventory, accessible delivery, receipt, and closure.</p><span class="step-proof">Action with proof</span></article>
+      </div>
+    </section>
+
+    <section class="demo-section" id="demo" aria-labelledby="demo-title">
+      <div class="shell demo-heading">
+        <div><p class="eyebrow">Live synthetic workflow</p><h2 id="demo-title">One outage. Every handoff visible.</h2></div>
+        <div class="demo-controls">
+          <button id="reset-demo" class="button secondary compact" type="button">Reset case</button>
+          <button id="auto-demo" class="button primary compact" type="button">Run full story</button>
+        </div>
+      </div>
+
+      <div class="console-shell shell" id="console" aria-busy="false">
+        <div class="console-topbar">
+          <div class="case-identity"><span class="status-orb" id="status-orb"></span><div><b id="status-title">Preparing case</b><small id="case-id">Synthetic workspace</small></div></div>
+          <div class="boundary-chip">Clinical authority: <strong>Human</strong></div>
+          <div class="run-counter"><span id="progress-count">0</span><small>verified actions</small></div>
+        </div>
+
+        <div class="console-grid">
+          <aside class="journey-panel" aria-label="Workflow controls">
+            <h3>Resolution path</h3>
+            <p class="panel-intro">Advance one truthful state at a time.</p>
+            <ol class="journey" id="journey">
+              <li data-state="monitoring"><span>1</span><div><b>Package enrolled</b><small>Verified from transcript</small></div></li>
+              <li data-state="excursion_detected"><span>2</span><div><b>Excursion recorded</b><small>No clinical conclusion</small></div></li>
+              <li data-state="awaiting_professional_review"><span>3</span><div><b>Reviewer packet</b><small>Waiting for a human</small></div></li>
+              <li data-state="replacement_approved"><span>4</span><div><b>Disposition approved</b><small>Named reviewer</small></div></li>
+              <li data-state="fulfillment_prepared"><span>5</span><div><b>Replacement reserved</b><small>Sandbox inventory</small></div></li>
+              <li data-state="delivery_dispatched"><span>6</span><div><b>Accessible delivery</b><small>Sandbox courier</small></div></li>
+              <li data-state="resolved"><span>7</span><div><b>Receipt confirmed</b><small>Case closed</small></div></li>
+            </ol>
+            <button id="next-action" class="button primary full" type="button">Trigger power outage</button>
+            <p class="control-note" id="control-note">The package is already enrolled in this synthetic fixture.</p>
+          </aside>
+
+          <section class="case-panel" aria-label="Case evidence">
+            <div class="case-tabs" role="tablist" aria-label="Case views">
+              <button role="tab" aria-selected="true" data-tab="temperature">Temperature</button>
+              <button role="tab" aria-selected="false" data-tab="medicine">Medicine evidence</button>
+              <button role="tab" aria-selected="false" data-tab="review">Review packet</button>
+            </div>
+            <div class="tab-panel" id="tab-temperature" role="tabpanel">
+              <div class="metric-row">
+                <div><span>Latest reading</span><strong id="latest-temperature">41.0°F</strong></div>
+                <div><span>Observed duration</span><strong id="observed-duration">No excursion</strong></div>
+                <div><span>Power</span><strong id="power-state">On</strong></div>
+              </div>
+              <div class="chart-wrap">
+                <div class="range-band"><span>Recorded refrigerated range</span></div>
+                <svg id="temperature-chart" viewBox="0 0 720 260" role="img" aria-label="Observed refrigerator temperatures over time"></svg>
+              </div>
+              <div class="evidence-callout" id="evidence-callout"><span class="shield" aria-hidden="true"></span><div><b>Observation, not a verdict</b><p>ColdClock records temperature evidence. A qualified professional decides the disposition.</p></div></div>
+            </div>
+            <div class="tab-panel" id="tab-medicine" role="tabpanel" hidden>
+              <div class="package-preview"><div class="package-cap"></div><div class="package-label"><small>SYNTHETIC DEMONSTRATION</small><b>INSULIN<br>GLARGINE-YFGN</b><span>100 units/mL · U-100</span><i>10 mL multiple-dose vial</i><code>Lot DEMO-2048</code></div></div>
+              <div class="verified-fields" id="verified-fields"></div>
+              <a class="source-link" id="label-source" href="#" target="_blank" rel="noreferrer">Open current structured label <span aria-hidden="true">↗</span></a>
+            </div>
+            <div class="tab-panel" id="tab-review" role="tabpanel" hidden>
+              <div id="review-card" class="empty-review"><span class="review-lock" aria-hidden="true"></span><h3>No review requested yet</h3><p>Trigger the synthetic outage and assemble the evidence packet.</p></div>
+            </div>
+          </section>
+
+          <aside class="activity-panel" aria-label="Agent activity">
+            <div class="activity-heading"><div><p class="eyebrow">Immutable timeline</p><h3>Who did what</h3></div><span class="live-label">Live</span></div>
+            <div class="timeline" id="timeline" aria-live="polite"></div>
+            <div class="audit-footer"><span>Every action retains actor, time, state, and evidence.</span><a href="/api/proof" target="_blank">Open proof</a></div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="section shell evidence-section" id="evidence" aria-labelledby="evidence-title">
+      <div class="section-heading"><p class="eyebrow">Research, not decoration</p><h2 id="evidence-title">The workflow is grounded. The outcome claim is not invented.</h2><p>These sources justify the problem, evidence model, and safety boundary. They do not prove that ColdClock improves clinical outcomes.</p></div>
+      <div class="source-grid">
+        <a href="https://www.fda.gov/drugs/emergency-preparedness-drugs/safe-drug-use-after-natural-disaster" target="_blank" rel="noreferrer"><span>U.S. guidance</span><h3>FDA disaster medication guidance</h3><p>Temperature-sensitive medicines and professional escalation.</p><b>Read source ↗</b></a>
+        <a href="https://www.cdc.gov/diabetes/articles/managing-insulin-in-emergency.html" target="_blank" rel="noreferrer"><span>U.S. guidance</span><h3>CDC insulin emergency guidance</h3><p>Storage precautions during power loss and emergencies.</p><b>Read source ↗</b></a>
+        <a href="https://pubmed.ncbi.nlm.nih.gov/37930742/" target="_blank" rel="noreferrer"><span>Systematic review</span><h3>Thermal stability of insulin</h3><p>Why temperature, formulation, duration, and evidence quality matter.</p><b>Read source ↗</b></a>
+        <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC13039186/" target="_blank" rel="noreferrer"><span>Pilot study</span><h3>QChainMED home monitoring</h3><p>Feasibility evidence and the boundary of existing monitoring.</p><b>Read source ↗</b></a>
+      </div>
+    </section>
+
+    <section class="limits-section">
+      <div class="shell limits-grid"><div><p class="eyebrow">Trust is a feature</p><h2>What ColdClock does not do</h2></div><ul><li>It does not tell a patient that medicine is safe or unsafe.</li><li>It does not prescribe, diagnose, or replace professional judgment.</li><li>It does not claim real pharmacy, insurer, or courier integrations in this public demo.</li><li>It does not claim reduced harm without a real-world pilot.</li></ul></div>
+    </section>
+  </main>
+
+  <footer class="site-footer"><div class="shell footer-grid"><div class="brand"><span class="brand-mark" aria-hidden="true"><span></span></span><span>ColdClock</span></div><p>Built for the All Things Agentic Hackathon. Synthetic demonstration; no agency, manufacturer, pharmacy, or institution endorses this project.</p><div><a href="/judges">Judge brief</a><a href="/docs">API</a><a href="#evidence">Sources</a></div></div></footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>
+

@@ -1,0 +1,10 @@
+{
+  "matched": 4,
+  "total": 4,
+  "checks": {
+    "name": true,
+    "strength": true,
+    "form": true,
+    "lot": true
+  }
+}
