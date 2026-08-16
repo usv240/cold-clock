@@ -1,4 +1,4 @@
-"""Cloud Run entry point for ColdClock."""
+﻿"""Cloud Run entry point for ColdClock."""
 from __future__ import annotations
 import os
 from pathlib import Path
@@ -10,6 +10,7 @@ from cold_clock.store import FirestoreCaseStore, MemoryCaseStore
 from service.routes import build_router
 from service.hardening_routes import build_hardening_router
 from service.runtime import build_runtime
+from service.scheduler_routes import build_scheduler_router
 from spine.http_trace import install_http_tracing
 
 PROJECT=os.environ.get("GOOGLE_CLOUD_PROJECT","local")
@@ -22,6 +23,7 @@ clock,wake_scheduler=build_runtime(PROJECT,USE_FIRESTORE)
 app=FastAPI(title="ColdClock",description="Event-to-resolution coordination for refrigerated medicine excursions.",version="0.2.0")
 trace_status=install_http_tracing(app,PROJECT,"cold-clock")
 app.include_router(build_router(case_store)); app.include_router(build_hardening_router(case_store,wake_scheduler,clock))
+app.include_router(build_scheduler_router(case_store,wake_scheduler))
 WEB=Path(__file__).resolve().parent.parent/"web"; app.mount("/static",StaticFiles(directory=WEB),name="static")
 
 @app.get("/health")
@@ -33,4 +35,3 @@ def index()->FileResponse:return FileResponse(WEB/"index.html")
 def judges()->FileResponse:return FileResponse(WEB/"hardening.html")
 @app.get("/judges/architecture",include_in_schema=False)
 def architecture_brief()->FileResponse:return FileResponse(WEB/"judges.html")
-

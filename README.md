@@ -1,4 +1,4 @@
-# ColdClock
+﻿# ColdClock
 
 > When refrigeration fails, the alarm is only step one.
 
@@ -160,7 +160,7 @@ python scripts/demo_flow.py --url http://127.0.0.1:8000
 
 Current local baseline on August 16, 2026:
 
-- `95 passed`
+- `100 passed`
 - `10/10` static accessibility checks
 - `12/12` executable HTTP acceptance checks
 - `8/8` foundational safety proof and `8/8` adversarial hardening proof
@@ -230,4 +230,19 @@ authors, medication manufacturers, pharmacies, insurers, and couriers do not end
 ## August 16 hardening
 
 ColdClock now includes transactional Firestore wake claims, a persistent simulated demo clock, bounded retry/dead-letter behavior, Cloud Trace correlation, and explicit recovery paths for missing sensor history, unavailable review, unavailable matching stock, and courier failure. The public judge console runs both proof suites. These controls strengthen execution evidence; they do not establish clinical effectiveness.
+
+## Findings and learnings
+
+- The most valuable behavior is continuity across evidence, authority, inventory, accessibility and receipt, not a temperature prediction.
+- Exact-quote extraction is useful only when rejected fields stay visible and incomplete history becomes a safe stop.
+- Durable action needs deterministic registration, transactional claiming and idempotent action records.
+- This validates one synthetic package workflow, not medication coverage or clinical benefit.
+
+## Originality and reused-code disclosure
+
+ColdClock's domain workflow, UI, fixtures, evaluation, failure laboratory, research and submission materials were created for this contest-period submission. Generic clock, wake, observability, quarantine and verifier primitives were adapted from the entrant's Day Three contest-period production spine. They are disclosed in app/spine/__init__.py and independently tested here.
+
+## Automated background execution
+
+The deployed cold-clock-wake-scan Cloud Scheduler job calls the internal wake worker every minute with a Google-signed OIDC token from the dedicated agent-wake-scheduler service account. The application verifies audience, issuer, email and email verification before scanning. Unauthenticated calls return HTTP 401. The worker claims Firestore wakes transactionally, executes idempotent actions, bounds retries and retains dead letters. Reproduce or update the job with app/infra/provision_scheduler.ps1 after deployment.
 
