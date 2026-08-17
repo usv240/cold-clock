@@ -6,6 +6,7 @@ from cold_clock.workflow import request_review, trigger_outage
 
 def test_pilot_audit_timestamps_use_realtime_case_clock():
     intake = {
+        "data_use_acknowledgement": True,
         "data_class": "synthetic",
         "case_reference": "Realtime pilot",
         "contact_preference": "portal",

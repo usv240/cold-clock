@@ -26,6 +26,7 @@ class MonitoringRange(BaseModel):
 
 
 class PilotCaseRequest(BaseModel):
+    data_use_acknowledgement: Literal[True]
     data_class: Literal["synthetic", "deidentified-authorized"] = "synthetic"
     case_reference: str = Field(min_length=3, max_length=120)
     contact_preference: Literal["text", "voice", "email", "portal"] = "text"

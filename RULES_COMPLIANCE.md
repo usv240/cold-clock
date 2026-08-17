@@ -7,7 +7,7 @@
 | Google agent framework | Google Gen AI SDK (`google-genai`) | Pass |
 | Google Cloud service | Cloud Run, Firestore, Cloud Trace | Pass |
 | Autonomous workflow beyond chat | Event → evidence → human gate → sandbox fulfillment → delivery → receipt, with durable follow-up wakes | Pass |
-| Working public access | Public product, verification console, OpenAPI and proof endpoints | Pass |
+| Working public access | Public product, operational workspace, OpenAPI and proof endpoints | Pass |
 | Public repository | https://github.com/usv240/cold-clock | Pass |
 | Reproducible setup | README commands, Dockerfile, deploy script and Firestore indexes | Pass |
 | Architecture diagram | `docs/architecture.svg` | Pass |

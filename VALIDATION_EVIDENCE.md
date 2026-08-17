@@ -1,6 +1,6 @@
 # ColdClock: Validation Evidence
 
-## Verified locally on August 16, 2026
+## Verified locally on August 17, 2026
 
 | Gate | Result | Command or endpoint |
 |---|---:|---|
@@ -17,10 +17,10 @@
 ## Deployed verification
 
 - Public service: https://cold-clock-109051079423.us-central1.run.app
-- Revision verified after deployment: `cold-clock-00014-hfl`.
+- Revision verified after deployment: `cold-clock-00015-pz8`.
 - `/health`: `firestore`, `gemini-3.5-flash`, `human-only`, transactional wakes, active Cloud Trace.
 - Public acceptance: `12/12`; foundational proof: `8/8`; hardening proof: `8/8`; customer landing and OpenAPI documentation: HTTP 200.
-- Startup smoke proof: two user-created cases persisted in the queue; a 45-minute event was calculated from supplied timestamps; an identical delivery was acknowledged as a duplicate without adding timeline entries; named human review reached `replacement_approved` with `made_by_ai=false`.
+- Live custom-flow proof: case `cc-a1946abab29741c7a855fdfdd1185706` preserved the supplied fictional package facts, deduplicated a repeated sensor event, persisted in the case queue, passed named-human replacement review, and reached receipt confirmation. Missing acknowledgement returned HTTP 422.
 - Public safety boundary: synthetic-only readiness mode; de-identified intake and global reset both returned HTTP 403.
 - Customer-surface check: no judge-specific labels remain; `/judges`, `/judges/architecture`, and their former static assets return HTTP 404. OpenAPI remains HTTP 200 and proof APIs remain 8/8.
 

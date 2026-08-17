@@ -53,7 +53,7 @@ release work and must not be claimed until implemented and verified in the deplo
 
 ## UI
 
-The product has a user route and a judge route. The interface provides equal light and dark themes,
+The product has one customer-facing operations route. Technical architecture and executable proof remain in the README and API. The interface provides equal light and dark themes,
 responsive layouts, keyboard focus, reduced-motion handling, text-labelled status, evidence links,
 and an `aria-live` activity stream. The interactive console calls the same HTTP state machine used
 by the acceptance script.

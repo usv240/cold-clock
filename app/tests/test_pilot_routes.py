@@ -8,6 +8,7 @@ client = TestClient(app)
 
 def payload(reference="Pilot case A-104"):
     return {
+        "data_use_acknowledgement": True,
         "data_class": "synthetic",
         "case_reference": reference,
         "contact_preference": "text",
@@ -61,3 +62,6 @@ def test_public_service_rejects_deidentified_intake_and_global_reset():
     protected["data_class"] = "deidentified-authorized"
     assert client.post("/api/pilot/cases", json=protected).status_code == 403
     assert client.post("/api/reset").status_code == 403
+    unacknowledged = payload("Unacknowledged synthetic case")
+    unacknowledged.pop("data_use_acknowledgement")
+    assert client.post("/api/pilot/cases", json=unacknowledged).status_code == 422

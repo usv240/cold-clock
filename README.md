@@ -15,6 +15,8 @@ courier, reviewer, and sensor events.
 
 ## From reproducible proof to operational pilot
 
+The public Cloud Run workspace is intentionally signup-free for hackathon evaluation and accepts synthetic inputs only. It supports multiple durable cases and typed event ingestion without inviting real patient information. New cases use complete random UUIDs, destructive global reset is disabled, and internal scheduler workers remain OIDC-authenticated. A real-data deployment would be a separate protected partner environment.
+
 The deterministic sample remains available because reviewers and maintainers need a repeatable safety
 case. It is no longer the only product path. The running application also provides a persistent
 multi-case queue and an input-driven pilot API at `/api/pilot`:

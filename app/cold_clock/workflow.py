@@ -83,7 +83,7 @@ def _append(
 
 
 def create_case() -> dict[str, Any]:
-    case_id = f"cc-{uuid4().hex[:8]}"
+    case_id = f"cc-{uuid4().hex}"
     case: dict[str, Any] = {
         "case_id": case_id,
         "synthetic": True,

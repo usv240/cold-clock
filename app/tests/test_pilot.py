@@ -3,6 +3,7 @@ from cold_clock.pilot import create_pilot_case, ingest_sensor_event
 
 def intake():
     return {
+        "data_use_acknowledgement": True,
         "data_class": "synthetic",
         "case_reference": "Pilot case A-104",
         "contact_preference": "text",
@@ -26,6 +27,7 @@ def event(event_id="sensor-evt-1", maximum=73.0):
 def test_pilot_case_uses_supplied_evidence_not_fixture():
     case = create_pilot_case(intake())
     assert case["origin"] == "pilot_input"
+    assert len(case["case_id"]) > 30
     assert case["medication"]["display_name"] == "Example biologic"
     assert case["label_evidence"]["source_verified_by_user"] is True
     assert all(row["quote"] in case["extraction"]["transcription"] for row in case["extraction"]["fields"])

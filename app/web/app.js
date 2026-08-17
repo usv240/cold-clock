@@ -241,6 +241,7 @@ async function submitIntake(event) {
   event.preventDefault();
   const values = Object.fromEntries(new FormData(event.currentTarget));
   const payload = {
+    data_use_acknowledgement: true,
     data_class: "synthetic",
     case_reference: values.case_reference,
     contact_preference: values.contact_preference,
