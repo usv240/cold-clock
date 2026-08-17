@@ -12,12 +12,12 @@ def test_landing_page_has_required_trust_sections_and_citations():
     assert "theme-toggle" in html
 
 
-def test_judge_page_maps_rubric_and_prior_art():
-    html = (WEB / "judges.html").read_text(encoding="utf-8")
-    assert "Rubric map" in html
-    assert "Prior art and contribution" in html
-    assert "Executable safety case" in html
-    assert "replay evidence" in html
+def test_readme_contains_technical_architecture_and_verification():
+    readme = (WEB.parent.parent / "README.md").read_text(encoding="utf-8")
+    assert "## Architecture" in readme
+    assert "## Verify" in readme
+    assert "/api/proof" in readme
+    assert "/api/hardening/proof" in readme
 
 
 def test_responsive_and_reduced_motion_styles_exist():

@@ -34,7 +34,3 @@ def health()->dict[str,Any]:
  return {"ok":True,"project":"cold-clock","google_cloud_project":PROJECT,"persistence":persistence,"synthetic_demo":True,"operating_mode":"protected-deidentified-pilot" if ALLOW_DEIDENTIFIED else "public-synthetic-pilot","pilot_api":"/api/pilot","public_data_policy":"authorized-deidentified" if ALLOW_DEIDENTIFIED else "synthetic-only","global_reset":ALLOW_GLOBAL_RESET,"clinical_decisions":"human-only","model":"gemini-3.5-flash","model_mode":"live Vertex AI recording with deterministic replay","tracing":trace_status,"durable_wakes":"firestore-transactional" if USE_FIRESTORE else "memory-transactional","simulation_clock":True}
 @app.get("/",include_in_schema=False)
 def index()->FileResponse:return FileResponse(WEB/"index.html")
-@app.get("/judges",include_in_schema=False)
-def judges()->FileResponse:return FileResponse(WEB/"hardening.html")
-@app.get("/judges/architecture",include_in_schema=False)
-def architecture_brief()->FileResponse:return FileResponse(WEB/"judges.html")

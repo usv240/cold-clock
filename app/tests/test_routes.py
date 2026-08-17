@@ -15,7 +15,6 @@ def test_health_and_public_pages():
     assert health.status_code == 200
     assert health.json()["clinical_decisions"] == "human-only"
     assert client.get("/").status_code == 200
-    assert client.get("/judges").status_code == 200
 
 
 def test_http_flow_end_to_end():

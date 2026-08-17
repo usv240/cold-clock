@@ -15,7 +15,7 @@ courier, reviewer, and sensor events.
 
 ## From reproducible proof to operational pilot
 
-The deterministic sample remains available because judges and maintainers need a repeatable safety
+The deterministic sample remains available because reviewers and maintainers need a repeatable safety
 case. It is no longer the only product path. The running application also provides a persistent
 multi-case queue and an input-driven pilot API at `/api/pilot`:
 
@@ -106,11 +106,13 @@ safe, or tell a patient to discard it.
 
 ## Architecture
 
+The customer-facing application intentionally omits rubric language, test counts, infrastructure pages, and judge-only navigation. Technical and submission reviewers can verify the same claims through the architecture below, the API documentation at `/docs`, the executable proof endpoints, `TECHNICAL_DESIGN.md`, and `VALIDATION_EVIDENCE.md`.
+
 ![ColdClock architecture](docs/architecture.svg)
 
 | Layer | Running implementation |
 |---|---|
-| Interface | Responsive, keyboard-operable light/dark web application with user and judge routes |
+| Interface | Responsive, keyboard-operable light/dark operations workspace |
 | API | FastAPI with a typed, bounded state-transition contract |
 | Agent logic | Package evidence, excursion evidence, review packet, fulfillment, logistics, and audit roles |
 | Model | Gemini 3.5 Flash package reader; deterministic replay is used by tests and public rehearsal |
@@ -131,7 +133,7 @@ cold-clock/
   PROJECT_DIFFERENTIATION.md      direct prior-art comparison
   VALIDATION_EVIDENCE.md          measured checks and remaining validation
   SUBMISSION_KIT.md               Devpost copy and video spine
-  docs/architecture.svg           judge-ready architecture diagram
+  docs/architecture.svg           technical architecture diagram
   app/
     cold_clock/
       workflow.py                 safety-bounded state machine
@@ -146,7 +148,7 @@ cold-clock/
       check_a11y.py               static accessibility gate
       record_package.py           explicit live-model recording and grading command
     tests/                         domain, API, reader, claims, UI and safety tests
-    web/                           live product and judge experience
+    web/                           customer-facing product experience
     Dockerfile
     deploy.sh
 ```
@@ -162,7 +164,6 @@ python -m uvicorn service.main:app --host 127.0.0.1 --port 8000
 Open:
 
 - Product: `http://127.0.0.1:8000/`
-- Judge brief: `http://127.0.0.1:8000/judges`
 - API: `http://127.0.0.1:8000/docs`
 - Executable safety proof: `http://127.0.0.1:8000/api/proof`
 - Adversarial hardening proof: `http://127.0.0.1:8000/api/hardening/proof`
@@ -247,7 +248,7 @@ authors, medication manufacturers, pharmacies, insurers, and couriers do not end
 
 ## August 16 hardening
 
-ColdClock now includes transactional Firestore wake claims, a persistent simulated demo clock, bounded retry/dead-letter behavior, Cloud Trace correlation, and explicit recovery paths for missing sensor history, unavailable review, unavailable matching stock, and courier failure. The public judge console runs both proof suites. These controls strengthen execution evidence; they do not establish clinical effectiveness.
+ColdClock now includes transactional Firestore wake claims, a persistent simulated demo clock, bounded retry/dead-letter behavior, Cloud Trace correlation, and explicit recovery paths for missing sensor history, unavailable review, unavailable matching stock, and courier failure. The API exposes both executable proof suites. These controls strengthen execution evidence; they do not establish clinical effectiveness.
 
 ## Findings and learnings
 
