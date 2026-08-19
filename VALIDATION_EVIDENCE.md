@@ -1,10 +1,10 @@
 # ColdClock: Validation Evidence
 
-## Verified locally on August 17, 2026
+## Verified locally on August 18, 2026
 
 | Gate | Result | Command or endpoint |
 |---|---:|---|
-| Python tests | 111 passed | `python -m pytest -q` |
+| Python tests | 114 passed | `python -m pytest -q` |
 | Static accessibility checks | 10/10 | `python scripts/check_a11y.py` |
 | Executable HTTP demonstration | 12/12 | `python scripts/demo_flow.py --url http://127.0.0.1:8041` |
 | Foundational safety proof | 8/8 |
@@ -17,8 +17,9 @@
 ## Deployed verification
 
 - Public service: https://cold-clock-109051079423.us-central1.run.app
-- Revision verified after deployment: `cold-clock-00015-pz8`.
-- `/health`: `firestore`, `gemini-3.5-flash`, `human-only`, transactional wakes, active Cloud Trace.
+- Revision verified after deployment: `cold-clock-00016-8jc`.
+- `/health`: `firestore`, `gemini-3.5-flash`, `human-only`, transactional wakes, active Cloud Trace, and six-service Google stack inventory.
+- Live-stack proof: homepage, CSS, JavaScript, and health inventory returned HTTP 200; the header control was present and the deployment reported `agentic-fleet-2026`.
 - Public acceptance: `12/12`; foundational proof: `8/8`; hardening proof: `8/8`; customer landing and OpenAPI documentation: HTTP 200.
 - Live custom-flow proof: case `cc-a1946abab29741c7a855fdfdd1185706` preserved the supplied fictional package facts, deduplicated a repeated sensor event, persisted in the case queue, passed named-human replacement review, and reached receipt confirmation. Missing acknowledgement returned HTTP 422.
 - Public safety boundary: synthetic-only readiness mode; de-identified intake and global reset both returned HTTP 403.

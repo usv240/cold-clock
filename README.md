@@ -13,6 +13,10 @@ replacement through delivery and receipt.
 **Public-data policy:** The demo uses fictional people, medicine lot, pharmacy, coverage plan,
 courier, reviewer, and sensor events.
 
+## Live stack proof
+
+The header's **Live stack** control reads `/health` at runtime. It turns green only on a healthy non-local deployment; hover, click, or keyboard focus reveals the services actually used: Gemini 3.5 Flash on Vertex AI, Google Gen AI SDK, Cloud Run, Firestore, Cloud Scheduler, and Cloud Trace. The panel links to the same machine-readable evidence.
+
 ## From reproducible proof to operational pilot
 
 The public Cloud Run workspace is intentionally signup-free for hackathon evaluation and accepts synthetic inputs only. It supports multiple durable cases and typed event ingestion without inviting real patient information. New cases use complete random UUIDs, destructive global reset is disabled, and internal scheduler workers remain OIDC-authenticated. A real-data deployment would be a separate protected partner environment.

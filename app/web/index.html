@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/cloud-status.css">
 </head>
 <body>
   <a class="skip-link" href="#demo">Skip to live demonstration</a>
@@ -20,6 +21,7 @@
     <nav aria-label="Main navigation">
       <a href="#how">How it works</a>
       <a href="#evidence">Evidence</a>
+<div class="cloud-status" data-cloud-status><button class="cloud-status-trigger" id="cloud-status-trigger" type="button" data-state="checking" aria-expanded="false" aria-controls="cloud-status-panel"><span class="cloud-status-dot" aria-hidden="true"></span><span class="cloud-status-copy">Live stack</span></button><div class="cloud-status-panel" id="cloud-status-panel" role="region" aria-label="Google services used by ColdClock" aria-hidden="true"><div class="cloud-status-head"><span><strong>Built and running on Google</strong><small data-cloud-summary>Checking live deployment...</small></span><b class="cloud-status-live" data-cloud-badge>Checking</b></div><ul class="cloud-status-services"><li><b>Connecting</b><span>Reading the live service inventory.</span></li></ul><small class="cloud-status-note">Verified from <a href="/health" target="_blank" rel="noreferrer">live health</a>.</small></div></div>
       <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="true" aria-label="Switch to light theme">
         <span class="theme-icon" aria-hidden="true"></span><span class="theme-label">Dark</span>
       </button>
@@ -232,7 +234,7 @@ LOT-42</textarea></label>
   <footer class="site-footer"><div class="shell footer-grid"><div class="brand"><span class="brand-mark" aria-hidden="true"><span></span></span><span>ColdClock</span></div><p>Synthetic operational pilot. No agency, manufacturer, pharmacy, or institution endorses this product.</p><div><a href="#evidence">Sources</a></div></div></footer>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/static/app.js" defer></script>
+  <script src="/static/cloud-status.js" defer></script><script src="/static/app.js" defer></script>
 </body>
 </html>
 
