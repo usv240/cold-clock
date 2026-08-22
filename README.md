@@ -1,5 +1,7 @@
 # ColdClock
 
+Release proof: [2026-08-22 release audit](RELEASE_AUDIT_2026-08-22.md) · [bonus ledger](BONUS_SCORE_LEDGER.md) · [real-world validation protocol](EXTERNAL_VALIDATION_PROTOCOL.md) · [live model contract](https://cold-clock-109051079423.us-central1.run.app/api/model-evidence)
+
 > When refrigeration fails, the alarm is only step one.
 
 ColdClock is an event-driven agent that carries a temperature-sensitive medication case from a
@@ -125,7 +127,7 @@ The customer-facing application intentionally omits rubric language, test counts
 | Interface | Responsive, keyboard-operable light/dark operations workspace |
 | API | FastAPI with a typed, bounded state-transition contract |
 | Agent logic | Package evidence, excursion evidence, review packet, fulfillment, logistics, and audit roles |
-| Model | Gemini 3.5 Flash package reader; deterministic replay is used by tests and public rehearsal |
+| Model | Gemini 3.5 Flash live package reader in the deployed workflow; deterministic replay is restricted to tests |
 | Persistence | Memory locally; Firestore adapter in Cloud deployment mode |
 | Compute | Dockerized Cloud Run service |
 | Evidence | DailyMed structured label URL, observed sensor fixture, named human approval, receipt proof |
@@ -200,7 +202,7 @@ Those counts must be rerun after any code or copy change.
 
 The adjacent recording was produced by a live Vertex AI Gemini 3.5 Flash call on the synthetic PNG
 fixture and matched `4/4` exact expected fields. Every retained field has a verbatim transcription
-quote. The deterministic public rehearsal replays that measured recording without spending tokens.
+quote. The deployed one-request workflow calls Vertex AI live and fails closed if model evidence is unavailable; recorded fixtures remain test-only.
 
 To repeat the recording:
 
@@ -227,7 +229,7 @@ Deployment enables Firestore through `USE_FIRESTORE=true`. Before recording the 
 2. Run the executable demo against the public `.run.app` URL.
 3. Capture the Cloud Run revision and Vertex AI evidence.
 4. Confirm public unauthenticated access from a clean browser.
-5. Keep every sandbox and replay label visible.
+5. Keep every sandbox label and live-model receipt visible.
 
 ## Research ledger
 

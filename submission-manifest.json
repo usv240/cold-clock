@@ -1,1 +1,30 @@
-{"project":"ColdClock","category":"The Taskmaster","hosted_url":"https://cold-clock-109051079423.us-central1.run.app","judge_url":null,"repository":"https://github.com/usv240/cold-clock","video_url":null,"video_status":"entrant must publish public YouTube or Vimeo video under four minutes","model":{"name":"gemini-3.5-flash","access":"Vertex AI via Google Gen AI SDK","live_evidence":"app/fixtures/package.recording.json","truth":"app/fixtures/package.truth.json"},"google_cloud":["Cloud Run","Firestore","Cloud Trace"],"architecture":"docs/architecture.svg","spin_up":"README.md","data":"synthetic package, sensor, people and sandbox connectors; public cited guidance","reused_code":"disclosed production-spine clock, wake, observability, quarantine and verifier primitives","rules_check":"RULES_COMPLIANCE.md","proof_url":"https://cold-clock-109051079423.us-central1.run.app/api/proof"}
+{
+    "project":  "ColdClock",
+    "category":  "The Taskmaster",
+    "hosted_url":  "https://cold-clock-109051079423.us-central1.run.app",
+    "judge_url":  null,
+    "repository":  "https://github.com/usv240/cold-clock",
+    "video_url":  null,
+    "video_status":  "entrant must publish public YouTube or Vimeo video under four minutes",
+    "model":  {
+                  "name":  "gemini-3.5-flash",
+                  "access":  "Vertex AI via Google Gen AI SDK",
+                  "live_evidence":  "app/fixtures/package.recording.json",
+                  "truth":  "app/fixtures/package.truth.json",
+                  "mode":  "live-fail-closed in deployed full workflow; replay only in tests",
+                  "additional_model":  "gemini-embedding-001",
+                  "live_receipt":  "semantic_routing in POST /api/demo/full"
+              },
+    "google_cloud":  [
+                         "Cloud Run",
+                         "Firestore",
+                         "Cloud Trace"
+                     ],
+    "architecture":  "docs/architecture.svg",
+    "spin_up":  "README.md",
+    "data":  "synthetic package, sensor, people and sandbox connectors; public cited guidance",
+    "reused_code":  "disclosed production-spine clock, wake, observability, quarantine and verifier primitives",
+    "rules_check":  "RULES_COMPLIANCE.md",
+    "proof_url":  "https://cold-clock-109051079423.us-central1.run.app/api/proof",
+    "public_action_trace":  "per-record /trace endpoint with explicit redaction policy"
+}

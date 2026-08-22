@@ -53,3 +53,13 @@
 - The deployed service returns an active Cloud Trace status and a per-request trace header.
 - Firestore composite indexes for due and expired-lease scans are checked into `app/infra` and provisioned.
 
+## 2026-08-22 live release proof
+
+- Cloud Run revision: `cold-clock-00022-6z5` (100% traffic; max instances 1; concurrency 10).
+- Final local suite: **123 passed**.
+- Live full workflow: case `cc-079cf13efe354425ba86b83457dd289c` resolved in 6.5 seconds.
+- Live model receipt: `gemini-3.5-flash`; live semantic routing: `gemini-embedding-001`.
+- Executable proof endpoint: **8/8**. Public action trace: **9 events** with an explicit redaction contract.
+- `/api/model-evidence` cites the official Vertex AI model documentation and states the test-only replay policy.
+- The in-app browser could not connect because the workspace Windows browser helper failed before opening a tab. No visual-browser result is claimed; static UI/accessibility contracts and deployed HTTP behavior were verified.
+- Stakeholder outcomes and bonus publication points remain unclaimed pending real consented evidence/public URLs.

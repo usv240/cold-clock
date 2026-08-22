@@ -28,7 +28,7 @@ loop with quote-grounded evidence, a code-enforced professional gate, and proof 
 | 1:50–2:15 | Approve replacement in the named synthetic pharmacist view |
 | 2:15–2:50 | Reserve sandbox inventory, dispatch accessible courier, confirm receipt |
 | 2:50–3:20 | Open timeline, evidence links, and deliberate pre-approval rejection |
-| 3:20–3:45 | Show Cloud Run, Firestore, Vertex AI recording, and trace proof |
+| 3:20–3:45 | Show Cloud Run, Firestore, the live Gemini + Embedding receipts, and the redacted action trace |
 | 3:45–4:00 | Show measured tests, limitations, prior-art distinction, and final promise |
 
 ## Required submission proof
@@ -36,7 +36,7 @@ loop with quote-grounded evidence, a code-enforced professional gate, and proof 
 - public `.run.app` URL;
 - approximately four-minute public video;
 - visible Cloud Run revision and Firestore case;
-- live Vertex AI Gemini 3.5 recording and adjacent accuracy report;
+- live `/api/demo/full` Gemini 3.5 + Embedding 001 receipts and adjacent accuracy report;
 - architecture diagram;
 - public repository and reproducible commands;
 - explicit synthetic connector and no-clinical-advice statements;

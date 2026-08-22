@@ -170,6 +170,7 @@ function render(caseData) {
   $("#power-state").textContent = latest.power === "on" ? "On" : "Outage";
   renderChart(readings);
   renderTimeline(caseData.timeline);
+  $("#public-trace-link").href = `/api/cases/${encodeURIComponent(caseData.case_id)}/trace`;
   renderJourney(status);
   renderReview(caseData);
   $("#verified-fields").innerHTML = caseData.extraction.fields.map((field) => `<div class="verified-field"><span>${escapeHtml(field.key)}</span><b>${escapeHtml(field.value)}</b><small>Exact quote verified</small></div>`).join("");

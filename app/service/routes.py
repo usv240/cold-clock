@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from cold_clock.store import CaseStore
+from spine.public_trace import public_action_trace
 from cold_clock.workflow import (
     ALLOWED_DISPOSITIONS,
     advance_safe_automation,
@@ -30,7 +31,7 @@ class ReviewRequest(BaseModel):
     rationale: str = Field(min_length=8, max_length=800)
 
 
-def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool = False) -> APIRouter:
+def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool = False, model_runner=None) -> APIRouter:
     router = APIRouter(prefix="/api", tags=["cold-clock"])
 
     def schedule(case: dict[str, Any], kind: str, minutes: int) -> None:
@@ -113,6 +114,10 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
     def get_case(case_id: str) -> dict[str, Any]:
         return public_view(require(case_id))
 
+    @router.get("/cases/{case_id}/trace")
+    def get_case_trace(case_id: str) -> dict[str, Any]:
+        return public_action_trace(require(case_id), "case_id")
+
     @router.post("/cases/{case_id}/autopilot")
     def autopilot(case_id: str) -> dict[str, Any]:
         """Resume all currently safe work and stop at the next external or authority event."""
@@ -154,9 +159,26 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
 
     @router.post("/demo/full")
     def full_demo() -> dict[str, Any]:
-        case = run_full_demo()
+        case = create_case()
+        if model_runner is not None:
+            try:
+                model_runner.apply(case)
+            except Exception as exc:
+                raise HTTPException(status_code=503, detail="live model evidence unavailable; no replay substituted") from exc
+        case = run_full_demo(case)
         store.put(case)
         return case
+
+    @router.get("/model-evidence")
+    def model_evidence() -> dict[str, Any]:
+        return {
+            "execution": "POST /api/demo/full returns live, fail-closed model receipts",
+            "models": [
+                {"name": "gemini-3.5-flash", "purpose": "quote-grounded synthetic artifact extraction", "docs": "https://cloud.google.com/vertex-ai/generative-ai/docs/models/gemini/3-5-flash"},
+                {"name": "gemini-embedding-001", "purpose": "semantic evidence routing without authority decisions", "docs": "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/embeddings/get-text-embeddings"},
+            ],
+            "replay_policy": "recorded outputs are test-only; deployed full workflows do not silently substitute them",
+        }
 
     @router.post("/reset")
     def reset() -> dict[str, Any]:
@@ -224,8 +246,8 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
                 },
                 {
                     "requirement": "Gemini 3.5 or newer",
-                    "implementation": "Gemini 3.5 Flash package reader with recorded replay for public demo",
-                    "proof": "fixtures/package.recording.json and recording script",
+                    "implementation": "Live fail-closed Gemini 3.5 Flash package reader plus Gemini Embedding 001 evidence routing",
+                    "proof": "POST /api/demo/full model_execution and semantic_routing receipts; fixtures are test-only",
                 },
                 {
                     "requirement": "Google Cloud infrastructure",
@@ -236,7 +258,7 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
             "limitations": [
                 "The public service accepts synthetic pilot evidence only; authorized de-identified mode requires a separate protected deployment.",
                 "ColdClock does not make medication-use decisions.",
-                "The replay fixture must not be described as a live model call.",
+                "Recorded fixtures are test-only and must never be described as live calls.",
                 "No clinical outcome claim has been validated.",
             ],
         }

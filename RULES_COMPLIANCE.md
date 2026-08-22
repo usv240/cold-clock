@@ -3,7 +3,7 @@
 | Rules.md requirement | Evidence | Status |
 |---|---|---|
 | One category | The Taskmaster | Pass |
-| Gemini 3.5+ | Live Vertex AI Gemini 3.5 Flash recording, adjacent truth and accuracy files | Pass |
+| Gemini 3.5+ | Deployed `/api/demo/full` live fail-closed Gemini 3.5 Flash receipt, plus adjacent truth/accuracy files | Pass |
 | Google agent framework | Google Gen AI SDK (`google-genai`) | Pass |
 | Google Cloud service | Cloud Run, Firestore, Cloud Trace | Pass |
 | Autonomous workflow beyond chat | Event → evidence → human gate → sandbox fulfillment → delivery → receipt, with durable follow-up wakes | Pass |
@@ -15,6 +15,7 @@
 | Findings and learnings | README section and validation ledger | Pass |
 | New-work disclosure | README identifies the reused production-spine primitives and independent work | Pass |
 | Under-four-minute public video | Must be published by entrant with Cloud execution visible | Entrant action |
+| Additional Google AI model | Gemini Embedding 001 performs operational semantic routing; claim only with a live `semantic_routing` receipt | Implemented; live evidence recorded |
 | Optional public content/social post | Drafts are in `docs/`; eligible platform publication remains entrant action | Entrant action |
 
 ColdClock uses only fictional people and synthetic operational connectors. It makes no clinical outcome claim.

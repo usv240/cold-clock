@@ -20,7 +20,7 @@ when its nonempty quote occurs in the model's own transcription and confidence i
 
 Replay and live recording are separate classes. Tests never spend model tokens. The committed
 recording came from an explicit Vertex AI call and passed `4/4` adjacent truth checks; tests and the
-public rehearsal replay it deterministically.
+tests replay it deterministically; the deployed full workflow calls it live and fails closed.
 
 ## Evidence and authority
 
@@ -43,7 +43,7 @@ The interface, API, README, and conformance endpoint state this boundary.
 - `Dockerfile`: non-root Python 3.12 runtime.
 - `deploy.sh`: Cloud Run source deployment to `us-central1`, unauthenticated judging access, and
   Firestore mode.
-- `/health`: identifies project, persistence, model, replay mode, synthetic data, and human-only
+- `/health`: identifies project, persistence, models, live fail-closed mode, synthetic data, and human-only
   clinical authority.
 - `/api/proof`: executable safety and action assertions.
 - `/api/conformance`: contest requirement mapping and limitations.

@@ -9,7 +9,9 @@ gcloud run deploy cold-clock \
   --project "$GOOGLE_CLOUD_PROJECT" \
   --region "$REGION" \
   --allow-unauthenticated \
-  --set-env-vars "GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT,USE_FIRESTORE=true,ENABLE_CLOUD_TRACE=true,ALLOW_GLOBAL_RESET=false,ALLOW_DEIDENTIFIED_PILOT=false" \
+  --max-instances 1 \
+  --concurrency 10 \
+  --set-env-vars "GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT,USE_FIRESTORE=true,ENABLE_CLOUD_TRACE=true,ALLOW_GLOBAL_RESET=false,ALLOW_DEIDENTIFIED_PILOT=false,ENABLE_LIVE_MODELS=true" \
   --quiet
 
 SERVICE_URL="$(gcloud run services describe cold-clock --project "$GOOGLE_CLOUD_PROJECT" --region "$REGION" --format='value(status.url)')"

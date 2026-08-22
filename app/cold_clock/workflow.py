@@ -363,8 +363,8 @@ def public_view(case: dict[str, Any]) -> dict[str, Any]:
     return view
 
 
-def run_full_demo() -> dict[str, Any]:
-    case = create_case()
+def run_full_demo(case: dict[str, Any] | None = None) -> dict[str, Any]:
+    case = case or create_case()
     trigger_outage(case)
     advance_safe_automation(case)
     record_review(

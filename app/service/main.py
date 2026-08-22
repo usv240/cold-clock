@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from cold_clock.store import FirestoreCaseStore, MemoryCaseStore
+from cold_clock.live_evidence import LiveEvidenceRunner
 from service.routes import build_router
 from service.pilot_routes import build_pilot_router
 from service.hardening_routes import build_hardening_router
@@ -18,9 +19,11 @@ PROJECT=os.environ.get("GOOGLE_CLOUD_PROJECT","local")
 USE_FIRESTORE=os.environ.get("USE_FIRESTORE","").lower() in {"1","true","yes"}
 ALLOW_GLOBAL_RESET=os.environ.get("ALLOW_GLOBAL_RESET","").lower() in {"1","true","yes"}
 ALLOW_DEIDENTIFIED=os.environ.get("ALLOW_DEIDENTIFIED_PILOT","").lower() in {"1","true","yes"}
+ENABLE_LIVE_MODELS=os.environ.get("ENABLE_LIVE_MODELS","").lower() in {"1","true","yes"}
 GOOGLE_SERVICES=[
- {"name":"Gemini 3.5 Flash on Vertex AI","role":"Grounded package extraction with deterministic replay"},
+ {"name":"Gemini 3.5 Flash on Vertex AI","role":"Live fail-closed grounded package extraction"},
  {"name":"Google Gen AI SDK","role":"Required Google agent framework"},
+ {"name":"Gemini Embedding 001","role":"Semantic evidence routing; never authority decisions"},
  {"name":"Cloud Run","role":"Public container service"},
  {"name":"Firestore","role":"Durable cases and transactional wake state"},
  {"name":"Cloud Scheduler","role":"OIDC-authenticated background wake scans"},
@@ -33,12 +36,13 @@ else: case_store=MemoryCaseStore(); persistence="memory-local"
 clock,wake_scheduler=build_runtime(PROJECT,USE_FIRESTORE)
 app=FastAPI(title="ColdClock",description="Event-to-resolution coordination for refrigerated medicine excursions.",version="0.3.0")
 trace_status=install_http_tracing(app,PROJECT,"cold-clock")
-app.include_router(build_router(case_store,wake_scheduler,allow_global_reset=ALLOW_GLOBAL_RESET)); app.include_router(build_pilot_router(case_store,wake_scheduler,allow_deidentified=ALLOW_DEIDENTIFIED)); app.include_router(build_hardening_router(case_store,wake_scheduler,clock))
+model_runner=LiveEvidenceRunner(PROJECT,Path(__file__).resolve().parent.parent/"web") if ENABLE_LIVE_MODELS else None
+app.include_router(build_router(case_store,wake_scheduler,allow_global_reset=ALLOW_GLOBAL_RESET,model_runner=model_runner)); app.include_router(build_pilot_router(case_store,wake_scheduler,allow_deidentified=ALLOW_DEIDENTIFIED)); app.include_router(build_hardening_router(case_store,wake_scheduler,clock))
 app.include_router(build_scheduler_router(case_store,wake_scheduler))
 WEB=Path(__file__).resolve().parent.parent/"web"; app.mount("/static",StaticFiles(directory=WEB),name="static")
 
 @app.get("/health")
 def health()->dict[str,Any]:
- return {"ok":True,"project":"cold-clock","google_cloud_project":PROJECT,"persistence":persistence,"synthetic_demo":True,"operating_mode":"protected-deidentified-pilot" if ALLOW_DEIDENTIFIED else "public-synthetic-pilot","pilot_api":"/api/pilot","public_data_policy":"authorized-deidentified" if ALLOW_DEIDENTIFIED else "synthetic-only","global_reset":ALLOW_GLOBAL_RESET,"clinical_decisions":"human-only","model":"gemini-3.5-flash","model_mode":"live Vertex AI recording with deterministic replay","tracing":trace_status,"durable_wakes":"firestore-transactional" if USE_FIRESTORE else "memory-transactional","simulation_clock":True,"autonomy":"event-driven-safe-auto-continuation","google_services":GOOGLE_SERVICES}
+ return {"ok":True,"project":"cold-clock","google_cloud_project":PROJECT,"persistence":persistence,"synthetic_demo":True,"operating_mode":"protected-deidentified-pilot" if ALLOW_DEIDENTIFIED else "public-synthetic-pilot","pilot_api":"/api/pilot","public_data_policy":"authorized-deidentified" if ALLOW_DEIDENTIFIED else "synthetic-only","global_reset":ALLOW_GLOBAL_RESET,"clinical_decisions":"human-only","model":"gemini-3.5-flash","models":["gemini-3.5-flash","gemini-embedding-001"],"model_mode":"live-fail-closed" if ENABLE_LIVE_MODELS else "local-test-no-model","tracing":trace_status,"durable_wakes":"firestore-transactional" if USE_FIRESTORE else "memory-transactional","simulation_clock":True,"autonomy":"event-driven-safe-auto-continuation","google_services":GOOGLE_SERVICES}
 @app.get("/",include_in_schema=False)
 def index()->FileResponse:return FileResponse(WEB/"index.html")
