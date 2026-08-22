@@ -22,6 +22,7 @@
     <nav aria-label="Main navigation">
       <a href="#how">How it works</a>
       <a href="#evidence">Evidence</a>
+      <button class="nav-developer" type="button" data-dev-open>Developer API</button>
 <div class="cloud-status" data-cloud-status><button class="cloud-status-trigger" id="cloud-status-trigger" type="button" data-state="checking" aria-expanded="false" aria-controls="cloud-status-panel"><span class="cloud-status-dot" aria-hidden="true"></span><span class="cloud-status-copy">Live stack</span></button><div class="cloud-status-panel" id="cloud-status-panel" role="region" aria-label="Google services used by ColdClock" aria-hidden="true"><div class="cloud-status-head"><span><strong>Built and running on Google</strong><small data-cloud-summary>Checking live deployment...</small></span><b class="cloud-status-live" data-cloud-badge>Checking</b></div><ul class="cloud-status-services"><li><b>Connecting</b><span>Reading the live service inventory.</span></li></ul><small class="cloud-status-note">Verified from <a href="/health" target="_blank" rel="noreferrer">live health</a>.</small></div></div>
       <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="true" aria-label="Switch to light theme">
         <span class="theme-icon" aria-hidden="true"></span><span class="theme-label">Dark</span>
@@ -37,6 +38,7 @@
         <p class="hero-lede">ColdClock assembles the evidence, reaches a qualified reviewer, and coordinates the approved replacement through delivery—without letting AI make a medication-use decision.</p>
         <div class="hero-actions">
           <a class="button primary" href="#demo">Open operations workspace <span aria-hidden="true">→</span></a>
+          <button class="button secondary" type="button" data-dev-open>Get developer key</button>
         </div>
         <p class="hero-note">Synthetic public demonstration and operations workspace accept synthetic evidence only. Pharmacist authority is never simulated as AI; any authorized de-identified pilot requires a separate protected deployment.</p>
       </div>
@@ -83,6 +85,19 @@
       </div>
     </section>
 
+    <section class="developer-landing shell" id="developer-api" aria-labelledby="developer-api-title">
+      <div class="developer-landing-copy">
+        <p class="developer-kicker">Developer access · live workflow</p>
+        <h2 id="developer-api-title">Build on the resolution engine.</h2>
+        <p>Open a monitored case, submit idempotent sensor events, record the qualified disposition, and receive trace-derived autonomy proof through the same durable workflow as this interface.</p>
+        <div class="developer-landing-actions"><button type="button" data-dev-open>Generate developer key</button><a href="/docs" target="_blank" rel="noreferrer">Explore OpenAPI</a></div>
+      </div>
+      <div class="developer-contract" aria-label="Developer API contract summary">
+        <div><small>Daily access</small><b>50 authenticated calls</b><span>Per key and network · UTC reset</span></div>
+        <div><small>Public data boundary</small><b>Synthetic inputs</b><span>Protected deployment required for authorized de-identified pilots</span></div>
+        <code><span>POST</span> /v1/cases</code>
+      </div>
+    </section>
     <section class="demo-section" id="demo" aria-labelledby="demo-title">
       <div class="shell demo-heading">
         <div><p class="eyebrow">Pilot operations workspace</p><h2 id="demo-title">More than one outage. One accountable queue.</h2></div>
@@ -239,6 +254,6 @@ LOT-42</textarea></label>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="/static/cloud-status.js" defer></script><script src="/static/app.js" defer></script>
-<div class="developer-access" data-developer-api data-product="cold-clock" data-endpoint="/v1/tabletop-runs"><button class="developer-launch" type="button" data-dev-open><i></i>Developer API · 50/day</button><dialog class="developer-dialog"><section class="developer-card"><header class="developer-head"><div><small>Use the working service</small><h2>Connect in two minutes.</h2><p>Create a free key and call the same durable agent workflow running behind this interface.</p></div><button class="developer-close" type="button" data-dev-close aria-label="Close">&times;</button></header><div class="developer-facts"><div><small>Auth</small><b>X-API-Key</b></div><div><small>Daily quota</small><b>50 calls / key + network</b></div><div><small>Persistence</small><b>Firestore transactions</b></div></div><form class="developer-form"><label><span>Key label</span><input type="text" name="label" value="Hackathon evaluator" minlength="2" maxlength="80" required></label><button type="submit">Generate free key</button><label class="developer-consent"><input type="checkbox" required><span>I will use only synthetic data, or authorized de-identified data in a protected deployment and understand the key is displayed once.</span></label></form><p class="developer-error" data-dev-error role="alert"></p><div class="developer-key" data-dev-key hidden><small>Copy now · stored only in this browser tab</small><code data-dev-key-value></code><div class="developer-curl"><pre data-dev-curl></pre><button class="developer-copy" type="button" data-dev-copy>Copy curl</button></div></div><p class="developer-note">The public UI stays keyless for evaluation. The stable <code>/v1</code> integration API is protected and quota-limited. Explore the complete contract in <a href="/docs" target="_blank" rel="noreferrer">OpenAPI docs</a>; review limits at <a href="/api/developer" target="_blank" rel="noreferrer">developer metadata</a>.</p></section></dialog></div><script src="/static/developer.js" defer></script></body>
+<div class="developer-access" data-developer-api data-product="cold-clock" data-endpoint="/v1/cases"><dialog class="developer-dialog"><section class="developer-card"><header class="developer-head"><div><small>Use the working service</small><h2>Connect in two minutes.</h2><p>Create a free key and call the same durable agent workflow running behind this interface.</p></div><button class="developer-close" type="button" data-dev-close aria-label="Close">&times;</button></header><div class="developer-facts"><div><small>Auth</small><b>X-API-Key</b></div><div><small>Daily quota</small><b>50 calls / key + network</b></div><div><small>Persistence</small><b>Firestore transactions</b></div></div><form class="developer-form"><label><span>Key label</span><input type="text" name="label" value="Hackathon evaluator" minlength="2" maxlength="80" required></label><button type="submit">Generate free key</button><label class="developer-consent"><input type="checkbox" required><span>I will use only synthetic data, or authorized de-identified data in a protected deployment and understand the key is displayed once.</span></label></form><p class="developer-error" data-dev-error role="alert"></p><div class="developer-key" data-dev-key hidden><small>Copy now · stored only in this browser tab</small><code data-dev-key-value></code><div class="developer-curl"><pre data-dev-curl></pre><button class="developer-copy" type="button" data-dev-copy>Copy curl</button></div></div><p class="developer-note">The public UI stays keyless for evaluation. The stable <code>/v1</code> integration API is protected and quota-limited. Explore the complete contract in <a href="/docs" target="_blank" rel="noreferrer">OpenAPI docs</a>; review limits at <a href="/api/developer" target="_blank" rel="noreferrer">developer metadata</a>.</p></section></dialog></div><script src="/static/developer.js" defer></script></body>
 </html>
 
