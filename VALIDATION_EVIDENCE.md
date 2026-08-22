@@ -4,7 +4,7 @@
 
 | Gate | Result | Command or endpoint |
 |---|---:|---|
-| Python tests | 120 passed | `cd app; python -m pytest tests -q` |
+| Python tests | 129 passed | `cd app; python -m pytest tests -q` |
 | Static accessibility checks | 10/10 | `python scripts/check_a11y.py` |
 | Executable HTTP demonstration | 12/12 | `python scripts/demo_flow.py --url http://127.0.0.1:8041` |
 | Foundational safety proof | 8/8 |
@@ -56,10 +56,19 @@
 ## 2026-08-22 live release proof
 
 - Cloud Run revision: `cold-clock-00022-6z5` (100% traffic; max instances 1; concurrency 10).
-- Final local suite: **123 passed**.
+- Final local suite: **129 passed**.
 - Live full workflow: case `cc-079cf13efe354425ba86b83457dd289c` resolved in 6.5 seconds.
 - Live model receipt: `gemini-3.5-flash`; live semantic routing: `gemini-embedding-001`.
 - Executable proof endpoint: **8/8**. Public action trace: **9 events** with an explicit redaction contract.
 - `/api/model-evidence` cites the official Vertex AI model documentation and states the test-only replay policy.
 - The in-app browser could not connect because the workspace Windows browser helper failed before opening a tab. No visual-browser result is claimed; static UI/accessibility contracts and deployed HTTP behavior were verified.
 - Stakeholder outcomes and bonus publication points remain unclaimed pending real consented evidence/public URLs.
+
+
+## Developer API and cumulative autonomy proof — 2026-08-22
+
+- Final Cloud Run revision: `cold-clock-00026-khb`, 100% traffic.
+- Live external flow: missing key returned HTTP 401; self-service key issuance succeeded; authenticated table-top returned HTTP 201 with `X-RateLimit-Limit: 50` and `X-RateLimit-Remaining: 49`.
+- Derived autonomy receipt: 7 automatic trace events, 1 protected pharmacist event, 0 continue clicks; synthetic table-top injection is explicitly disclosed.
+- Firestore field audit confirmed digests/fingerprints only: no plaintext key and no raw IP.
+- Secret Manager version 1 is pinned, the developer UI and OpenAPI docs returned HTTP 200, and the live health inventory includes Secret Manager.

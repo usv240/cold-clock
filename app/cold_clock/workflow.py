@@ -10,6 +10,7 @@ from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from uuid import uuid4
+from spine.autonomy_proof import build_autonomy_proof
 
 BASE_TIME = datetime(2026, 8, 16, 14, 0, tzinfo=timezone.utc)
 ALLOWED_DISPOSITIONS = {
@@ -339,6 +340,7 @@ def advance_safe_automation(case: dict[str, Any]) -> list[str]:
             "resolved": None,
         }.get(case["status"], "unsupported_state"),
     }
+    case.setdefault("autonomy_runs", []).append(deepcopy(case["last_autonomy_run"]))
     return actions
 
 def public_view(case: dict[str, Any]) -> dict[str, Any]:
@@ -360,6 +362,13 @@ def public_view(case: dict[str, Any]) -> dict[str, Any]:
         "last_run_actions": (case.get("last_autonomy_run") or {}).get("actions", []),
         "complete": case["status"] in {"resolved", "review_resolved"},
     }
+    view["autonomy_proof"] = build_autonomy_proof(
+        case,
+        id_field="case_id",
+        automatic_actors=("agent", "gateway", "pilot intake", "live evidence"),
+        authority_actors=("pharmd", "reviewer", "human reviewer"),
+        external_actors=("household", "sensor", "outage"),
+    )
     return view
 
 
@@ -375,5 +384,6 @@ def run_full_demo(case: dict[str, Any] | None = None) -> dict[str, Any]:
     )
     advance_safe_automation(case)
     confirm_delivery(case)
+    case["demo_completion_mode"] = "synthetic_tabletop"
     return public_view(case)
 

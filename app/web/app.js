@@ -143,19 +143,21 @@ function renderJourney(status) {
   });
 }
 
-function renderAutonomy(data = {}) {
-  const actions = data.last_run_actions || [];
+function renderAutonomy(data = {}, proof = {}) {
+  const automatic = proof.automatic_trace_events || 0;
+  const human = proof.human_authority_events || 0;
   const wait = String(data.current_wait || "none").replaceAll("_", " ");
   $("#autonomy-receipt").dataset.complete = String(Boolean(data.complete));
-  $("#autonomy-title").textContent = data.complete ? "Autonomous run complete" : actions.length ? "Safe work resumed automatically" : "Monitoring until the next real event";
-  $("#autonomy-trigger").textContent = data.trigger || "Sensor or power event";
-  $("#autonomy-actions").textContent = actions.length + " action" + (actions.length === 1 ? "" : "s") + " this run";
+  $("#autonomy-title").textContent = data.complete ? "Bounded autonomous run complete" : automatic ? "Safe work is advancing automatically" : "Monitoring until the next real event";
+  $("#autonomy-trigger").textContent = (proof.operator_continue_clicks || 0) + " continue clicks";
+  $("#autonomy-actions").textContent = automatic + " traced agent event" + (automatic === 1 ? "" : "s");
+  $("#autonomy-human").textContent = human + " protected decision" + (human === 1 ? "" : "s");
   $("#autonomy-wait").textContent = data.complete ? "Closed with receipt proof" : wait;
 }
 function render(caseData) {
   currentCase = caseData;
   const status = caseData.status;
-  renderAutonomy(caseData.autonomy);
+  renderAutonomy(caseData.autonomy, caseData.autonomy_proof);
   $("#status-title").textContent = statusCopy(status);
   $("#case-id").textContent = `${caseData.household.display_name} · ${caseData.case_id}`;
   $("#case-origin").textContent = caseData.origin === "pilot_input" ? `${caseData.data_class} pilot input` : "sample fixture";
@@ -171,6 +173,7 @@ function render(caseData) {
   renderChart(readings);
   renderTimeline(caseData.timeline);
   $("#public-trace-link").href = `/api/cases/${encodeURIComponent(caseData.case_id)}/trace`;
+  $("#autonomy-proof-link").href = `/api/cases/${encodeURIComponent(caseData.case_id)}/autonomy-proof`;
   renderJourney(status);
   renderReview(caseData);
   $("#verified-fields").innerHTML = caseData.extraction.fields.map((field) => `<div class="verified-field"><span>${escapeHtml(field.key)}</span><b>${escapeHtml(field.value)}</b><small>Exact quote verified</small></div>`).join("");

@@ -52,11 +52,11 @@ def test_primary_demo_is_one_server_request_with_distinct_receipt():
     script = (web / "app.js").read_text(encoding="utf-8")
     css = (web / "autonomy.css").read_text(encoding="utf-8")
     assert 'id="autonomy-receipt"' in html and 'aria-live="polite"' in html
-    assert "/static/autonomy.css" in html and "Run autonomous case" in html
+    assert "/static/autonomy.css" in html and "Complete synthetic tabletop" in html
     assert 'api("/api/demo/full"' in script
     assert "while (" not in script and "while(" not in script
     assert ".autonomy-rail" in css
-    assert "renderAutonomy(caseData.autonomy)" in script
+    assert "renderAutonomy(caseData.autonomy, caseData.autonomy_proof)" in script
 
 def test_health_declares_autonomy_mode():
     assert client.get("/health").json()["autonomy"] == "event-driven-safe-auto-continuation"

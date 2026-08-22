@@ -19,3 +19,11 @@
 | Optional public content/social post | Drafts are in `docs/`; eligible platform publication remains entrant action | Entrant action |
 
 ColdClock uses only fictional people and synthetic operational connectors. It makes no clinical outcome claim.
+
+## Additional production evidence
+
+| Requirement | Implementation | Status |
+|---|---|---|
+| Self-service integration | Keyless judge UI plus protected `/v1`, no account required, 50 requests per key and network per UTC day | Pass |
+| Secure public endpoint | HMAC-only keys, fingerprint-only IP handling, Secret Manager pepper, atomic Firestore quota transactions | Pass |
+| Visible autonomy | Cumulative trace-derived receipt, direct proof endpoint, zero continue-click count, honest synthetic-event disclosure | Pass |

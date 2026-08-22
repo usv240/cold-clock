@@ -118,6 +118,10 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
     def get_case_trace(case_id: str) -> dict[str, Any]:
         return public_action_trace(require(case_id), "case_id")
 
+    @router.get("/cases/{case_id}/autonomy-proof")
+    def get_case_autonomy_proof(case_id: str) -> dict[str, Any]:
+        return public_view(require(case_id))["autonomy_proof"]
+
     @router.post("/cases/{case_id}/autopilot")
     def autopilot(case_id: str) -> dict[str, Any]:
         """Resume all currently safe work and stop at the next external or authority event."""

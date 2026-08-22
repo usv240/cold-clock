@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="/static/styles.css">
   <link rel="stylesheet" href="/static/cloud-status.css">
   <link rel="stylesheet" href="/static/autonomy.css">
-</head>
+<link rel="stylesheet" href="/static/developer.css"></head>
 <body>
   <a class="skip-link" href="#demo">Skip to live demonstration</a>
   <header class="site-header">
@@ -88,7 +88,7 @@
         <div><p class="eyebrow">Pilot operations workspace</p><h2 id="demo-title">More than one outage. One accountable queue.</h2></div>
         <div class="demo-controls">
           <button id="new-case" class="button secondary compact" type="button">New pilot case</button><button id="reset-demo" class="button secondary compact" type="button">Load sample</button>
-          <button id="auto-demo" class="button primary compact" type="button">Run autonomous case</button>
+          <button id="auto-demo" class="button primary compact" type="button">Complete synthetic tabletop</button>
         </div>
       </div>
 
@@ -165,7 +165,7 @@ LOT-42</textarea></label>
 
         <section class="autonomy-rail" id="autonomy-receipt" data-complete="false" aria-live="polite" aria-label="ColdClock autonomy receipt">
           <div class="autonomy-identity"><span class="autonomy-beacon" aria-hidden="true"></span><p><small>Autonomy receipt</small><b id="autonomy-title">Waiting for a monitored event</b></p></div>
-          <dl><div><dt>Trigger</dt><dd id="autonomy-trigger">Sensor or power event</dd></div><div><dt>Safe work resumed</dt><dd id="autonomy-actions">0 actions this run</dd></div><div><dt>Current hold</dt><dd id="autonomy-wait">Sensor event</dd></div></dl>
+          <dl><div><dt>Operator prompts</dt><dd id="autonomy-trigger">0 continue clicks</dd></div><div><dt>Agent operations</dt><dd id="autonomy-actions">0 traced events</dd></div><div><dt>Human authority</dt><dd id="autonomy-human">0 decisions</dd></div><div><dt>Current hold</dt><dd id="autonomy-wait">Sensor event</dd></div></dl>
         </section>        <div class="console-grid">
           <aside class="journey-panel" aria-label="Workflow controls">
             <h3>Resolution path</h3>
@@ -214,7 +214,7 @@ LOT-42</textarea></label>
           <aside class="activity-panel" aria-label="Agent activity">
             <div class="activity-heading"><div><p class="eyebrow">Immutable timeline</p><h3>Who did what</h3></div><span class="live-label">Live</span></div>
             <div class="timeline" id="timeline" aria-live="polite"></div>
-            <div class="audit-footer"><span>Public action receipt only — no prompts, personal data, secrets, or stack traces.</span><a id="public-trace-link" href="/api/proof" target="_blank" rel="noreferrer">Open safe trace</a></div>
+            <div class="audit-footer"><span>Public action receipt only — no prompts, personal data, secrets, or stack traces.</span><a id="public-trace-link" href="/api/proof" target="_blank" rel="noreferrer">Open safe trace</a><a id="autonomy-proof-link" href="/api/proof" target="_blank" rel="noreferrer">Open autonomy proof</a></div>
           </aside>
         </div>
       </div>
@@ -239,6 +239,6 @@ LOT-42</textarea></label>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="/static/cloud-status.js" defer></script><script src="/static/app.js" defer></script>
-</body>
+<div class="developer-access" data-developer-api data-product="cold-clock" data-endpoint="/v1/tabletop-runs"><button class="developer-launch" type="button" data-dev-open><i></i>Developer API · 50/day</button><dialog class="developer-dialog"><section class="developer-card"><header class="developer-head"><div><small>Use the working service</small><h2>Connect in two minutes.</h2><p>Create a free key and call the same durable agent workflow running behind this interface.</p></div><button class="developer-close" type="button" data-dev-close aria-label="Close">&times;</button></header><div class="developer-facts"><div><small>Auth</small><b>X-API-Key</b></div><div><small>Daily quota</small><b>50 calls / key + network</b></div><div><small>Persistence</small><b>Firestore transactions</b></div></div><form class="developer-form"><label><span>Key label</span><input type="text" name="label" value="Hackathon evaluator" minlength="2" maxlength="80" required></label><button type="submit">Generate free key</button><label class="developer-consent"><input type="checkbox" required><span>I will use only synthetic data, or authorized de-identified data in a protected deployment and understand the key is displayed once.</span></label></form><p class="developer-error" data-dev-error role="alert"></p><div class="developer-key" data-dev-key hidden><small>Copy now · stored only in this browser tab</small><code data-dev-key-value></code><div class="developer-curl"><pre data-dev-curl></pre><button class="developer-copy" type="button" data-dev-copy>Copy curl</button></div></div><p class="developer-note">The public UI stays keyless for evaluation. The stable <code>/v1</code> integration API is protected and quota-limited. Explore the complete contract in <a href="/docs" target="_blank" rel="noreferrer">OpenAPI docs</a>; review limits at <a href="/api/developer" target="_blank" rel="noreferrer">developer metadata</a>.</p></section></dialog></div><script src="/static/developer.js" defer></script></body>
 </html>
 
