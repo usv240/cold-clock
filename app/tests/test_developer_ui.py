@@ -7,7 +7,7 @@ def test_developer_console_is_visible_and_wired():
     html = (web / "index.html").read_text(encoding="utf-8")
     script = (web / "developer.js").read_text(encoding="utf-8")
     css = (web / "developer.css").read_text(encoding="utf-8")
-    assert "Developer API" in html
+    assert "Developer key" in html
     assert "Get developer key" in html
     assert "Generate developer key" in html
     assert html.count("data-dev-open") >= 3
