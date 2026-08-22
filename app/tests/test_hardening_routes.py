@@ -20,8 +20,6 @@ def test_failure_lab_routes_and_recovery():
 def test_review_wake_is_durable_and_idempotent():
     case_id = create_case()
     assert client.post(f"/api/cases/{case_id}/outage").status_code == 200
-    response = client.post(f"/api/hardening/cases/{case_id}/request-review")
-    assert response.status_code == 200
     wakes = client.get(f"/api/hardening/cases/{case_id}/wakes").json()["wakes"]
     assert len(wakes) == 1
     assert wakes[0]["kind"] == "review_followup"

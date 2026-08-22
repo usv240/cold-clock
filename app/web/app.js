@@ -9,11 +9,11 @@ const stateOrder = [
 ];
 
 const actionMap = {
-  monitoring: { label: "Trigger power outage", note: "Starts a synthetic utility and sensor event.", endpoint: "outage" },
-  excursion_detected: { label: "Assemble reviewer packet", note: "Routes observed facts without a clinical conclusion.", endpoint: "request-review" },
+  monitoring: { label: "Inject synthetic outage event", note: "One event automatically routes the evidence packet to review.", endpoint: "outage" },
+  excursion_detected: { label: "Resume safe automation", note: "Routes observed facts without a clinical conclusion.", endpoint: "autopilot" },
   awaiting_professional_review: { label: "Record human disposition", note: "A qualified reviewer must enter their own decision and rationale.", endpoint: "review" },
-  replacement_approved: { label: "Reserve approved replacement", note: "Sandbox inventory cannot be touched before approval.", endpoint: "fulfillment" },
-  fulfillment_prepared: { label: "Dispatch accessible delivery", note: "Books a synthetic accessible courier slot.", endpoint: "dispatch" },
+  replacement_approved: { label: "Resume safe automation", note: "The approved path reserves and dispatches without more operator steps.", endpoint: "autopilot" },
+  fulfillment_prepared: { label: "Resume safe automation", note: "Books the accessible synthetic courier slot.", endpoint: "autopilot" },
   delivery_dispatched: { label: "Confirm household receipt", note: "Closes the loop with synthetic receipt proof.", endpoint: "confirm-delivery" },
   resolved: { label: "Case resolved", note: "Reset the case to run the story again.", endpoint: null },
 };
@@ -143,9 +143,19 @@ function renderJourney(status) {
   });
 }
 
+function renderAutonomy(data = {}) {
+  const actions = data.last_run_actions || [];
+  const wait = String(data.current_wait || "none").replaceAll("_", " ");
+  $("#autonomy-receipt").dataset.complete = String(Boolean(data.complete));
+  $("#autonomy-title").textContent = data.complete ? "Autonomous run complete" : actions.length ? "Safe work resumed automatically" : "Monitoring until the next real event";
+  $("#autonomy-trigger").textContent = data.trigger || "Sensor or power event";
+  $("#autonomy-actions").textContent = actions.length + " action" + (actions.length === 1 ? "" : "s") + " this run";
+  $("#autonomy-wait").textContent = data.complete ? "Closed with receipt proof" : wait;
+}
 function render(caseData) {
   currentCase = caseData;
   const status = caseData.status;
+  renderAutonomy(caseData.autonomy);
   $("#status-title").textContent = statusCopy(status);
   $("#case-id").textContent = `${caseData.household.display_name} · ${caseData.case_id}`;
   $("#case-origin").textContent = caseData.origin === "pilot_input" ? `${caseData.data_class} pilot input` : "sample fixture";
@@ -214,20 +224,23 @@ async function advance(autoApproval = false) {
   finally { $("#console").setAttribute("aria-busy", "false"); }
 }
 
-const sleep = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 async function runAuto() {
   if (autoRunning) return;
   autoRunning = true;
   $("#auto-demo").disabled = true;
-  await resetCase();
-  while (currentCase?.status !== "resolved") {
-    await sleep(650);
-    await advance(true);
+  $("#console").setAttribute("aria-busy", "true");
+  try {
+    const completed = await api("/api/demo/full", { method: "POST" });
+    render(completed);
+    await refreshCases(completed.case_id);
+    toast("One trigger completed the outage-to-receipt workflow.");
+  } catch (error) {
+    toast(error.message);
+  } finally {
+    autoRunning = false;
+    $("#auto-demo").disabled = false;
+    $("#console").setAttribute("aria-busy", "false");
   }
-  autoRunning = false;
-  $("#auto-demo").disabled = false;
-  render(currentCase);
-  toast("Complete outage-to-receipt story finished.");
 }
 
 function setupTabs() {

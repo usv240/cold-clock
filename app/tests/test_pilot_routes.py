@@ -41,7 +41,7 @@ def test_pilot_api_creates_lists_and_ingests_real_event_shape():
         "power": "off",
     }
     updated = client.post(f"/api/pilot/cases/{case_id}/sensor-events", json=event).json()
-    assert updated["status"] == "excursion_detected"
+    assert updated["status"] == "awaiting_professional_review"
     assert updated["excursion"]["source_event_id"] == "device-evt-9001"
     assert updated["excursion"]["ai_disposition"] is None
     duplicate = client.post(f"/api/pilot/cases/{case_id}/sensor-events", json=event).json()

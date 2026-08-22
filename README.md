@@ -17,6 +17,10 @@ courier, reviewer, and sensor events.
 
 The header's **Live stack** control reads `/health` at runtime. It turns green only on a healthy non-local deployment; hover, click, or keyboard focus reveals the services actually used: Gemini 3.5 Flash on Vertex AI, Google Gen AI SDK, Cloud Run, Firestore, Cloud Scheduler, and Cloud Trace. The panel links to the same machine-readable evidence.
 
+## Autonomy contract and design identity
+
+POST /api/demo/full completes the synthetic outage-to-receipt story in one server request. In the input-driven path, a sensor excursion automatically verifies and routes the reviewer packet; the single qualified disposition automatically resumes reservation, dispatch, and durable receipt follow-up. ColdClock stops only for the clinical authority it cannot own and for real receipt evidence. The UI is intentionally an ambient clinical instrument: cool telemetry color, rounded monitoring surfaces, and a live autonomy rail.
+
 ## From reproducible proof to operational pilot
 
 The public Cloud Run workspace is intentionally signup-free for hackathon evaluation and accepts synthetic inputs only. It supports multiple durable cases and typed event ingestion without inviting real patient information. New cases use complete random UUIDs, destructive global reset is disabled, and internal scheduler workers remain OIDC-authenticated. A real-data deployment would be a separate protected partner environment.

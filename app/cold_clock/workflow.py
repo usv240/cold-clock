@@ -311,13 +311,54 @@ def confirm_delivery(case: dict[str, Any]) -> dict[str, Any]:
     return case
 
 
+def advance_safe_automation(case: dict[str, Any]) -> list[str]:
+    """Advance every transition that does not require new external evidence or authority."""
+    actions: list[str] = []
+    while True:
+        if case["status"] == "excursion_detected":
+            request_review(case)
+            actions.append("review_packet_routed")
+            continue
+        if case["status"] == "replacement_approved":
+            prepare_fulfillment(case)
+            actions.append("replacement_reserved")
+            continue
+        if case["status"] == "fulfillment_prepared":
+            dispatch_delivery(case)
+            actions.append("accessible_delivery_dispatched")
+            continue
+        break
+    case["last_autonomy_run"] = {
+        "actions": actions,
+        "stopped_at": case["status"],
+        "waiting_for": {
+            "monitoring": "sensor_event",
+            "awaiting_professional_review": "qualified_human_disposition",
+            "delivery_dispatched": "household_receipt_event",
+            "review_resolved": "no_further_logistics_required",
+            "resolved": None,
+        }.get(case["status"], "unsupported_state"),
+    }
+    return actions
+
 def public_view(case: dict[str, Any]) -> dict[str, Any]:
     view = deepcopy(case)
     view["progress"] = {
         "current": case["status"],
         "completed_steps": len(case["timeline"]),
-        "resolution_complete": case["status"] == "resolved",
+        "resolution_complete": case["status"] in {"resolved", "review_resolved"},
         "clinical_authority": "human",
+    }
+    view["autonomy"] = {
+        "trigger": "sensor or power event",
+        "automatic_actions": ["verify evidence", "route review packet", "reserve approved replacement", "dispatch accessible delivery"],
+        "authority_checkpoints": ["qualified medication disposition"],
+        "external_completion_event": "household receipt",
+        "current_wait": None
+        if case["status"] in {"resolved", "review_resolved"}
+        else (case.get("last_autonomy_run") or {}).get("waiting_for", "sensor_event"),
+        "last_run_actions": (case.get("last_autonomy_run") or {}).get("actions", []),
+        "complete": case["status"] in {"resolved", "review_resolved"},
     }
     return view
 
@@ -325,15 +366,14 @@ def public_view(case: dict[str, Any]) -> dict[str, Any]:
 def run_full_demo() -> dict[str, Any]:
     case = create_case()
     trigger_outage(case)
-    request_review(case)
+    advance_safe_automation(case)
     record_review(
         case,
         "replace",
         "Avery Chen, PharmD — synthetic",
         "The documented demonstration excursion requires replacement in this tabletop case.",
     )
-    prepare_fulfillment(case)
-    dispatch_delivery(case)
+    advance_safe_automation(case)
     confirm_delivery(case)
     return public_view(case)
 

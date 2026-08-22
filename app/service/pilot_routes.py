@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException
@@ -9,7 +10,7 @@ from pydantic import BaseModel, Field, HttpUrl
 
 from cold_clock.pilot import create_pilot_case, ingest_sensor_event
 from cold_clock.store import CaseStore
-from cold_clock.workflow import public_view
+from cold_clock.workflow import advance_safe_automation, public_view
 
 
 class MedicationInput(BaseModel):
@@ -65,7 +66,7 @@ def _summary(case: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def build_pilot_router(store: CaseStore, *, allow_deidentified: bool = False) -> APIRouter:
+def build_pilot_router(store: CaseStore, scheduler=None, *, allow_deidentified: bool = False) -> APIRouter:
     router = APIRouter(prefix="/api/pilot", tags=["cold-clock-pilot"])
 
     @router.get("/cases")
@@ -94,6 +95,12 @@ def build_pilot_router(store: CaseStore, *, allow_deidentified: bool = False) ->
             raise HTTPException(status_code=404, detail=f"no ColdClock case {case_id}")
         try:
             ingest_sensor_event(case, request.model_dump())
+            advance_safe_automation(case)
+            if scheduler is not None and case["status"] == "awaiting_professional_review":
+                wake = scheduler.sleep_for(case_id, "review_followup", timedelta(minutes=30))
+                rows = case.setdefault("scheduled_wakes", [])
+                if not any(row["wake_id"] == wake.wake_id for row in rows):
+                    rows.append({"wake_id": wake.wake_id, "kind": wake.kind, "due_at": wake.due_at.isoformat()})
         except ValueError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
         store.put(case)

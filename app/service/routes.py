@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -10,6 +11,7 @@ from pydantic import BaseModel, Field
 from cold_clock.store import CaseStore
 from cold_clock.workflow import (
     ALLOWED_DISPOSITIONS,
+    advance_safe_automation,
     confirm_delivery,
     create_case,
     dispatch_delivery,
@@ -28,8 +30,16 @@ class ReviewRequest(BaseModel):
     rationale: str = Field(min_length=8, max_length=800)
 
 
-def build_router(store: CaseStore, *, allow_global_reset: bool = False) -> APIRouter:
+def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool = False) -> APIRouter:
     router = APIRouter(prefix="/api", tags=["cold-clock"])
+
+    def schedule(case: dict[str, Any], kind: str, minutes: int) -> None:
+        if scheduler is None:
+            return
+        wake = scheduler.sleep_for(case["case_id"], kind, timedelta(minutes=minutes))
+        rows = case.setdefault("scheduled_wakes", [])
+        if not any(row["wake_id"] == wake.wake_id for row in rows):
+            rows.append({"wake_id": wake.wake_id, "kind": wake.kind, "due_at": wake.due_at.isoformat()})
 
     def require(case_id: str) -> dict[str, Any]:
         case = store.get(case_id)
@@ -103,9 +113,18 @@ def build_router(store: CaseStore, *, allow_global_reset: bool = False) -> APIRo
     def get_case(case_id: str) -> dict[str, Any]:
         return public_view(require(case_id))
 
+    @router.post("/cases/{case_id}/autopilot")
+    def autopilot(case_id: str) -> dict[str, Any]:
+        """Resume all currently safe work and stop at the next external or authority event."""
+        return mutate(case_id, advance_safe_automation)
     @router.post("/cases/{case_id}/outage")
     def outage(case_id: str) -> dict[str, Any]:
-        return mutate(case_id, trigger_outage)
+        def handle_event(case: dict[str, Any]) -> None:
+            trigger_outage(case)
+            advance_safe_automation(case)
+            schedule(case, "review_followup", 30)
+
+        return mutate(case_id, handle_event)
 
     @router.post("/cases/{case_id}/request-review")
     def review_request(case_id: str) -> dict[str, Any]:
@@ -113,15 +132,13 @@ def build_router(store: CaseStore, *, allow_global_reset: bool = False) -> APIRo
 
     @router.post("/cases/{case_id}/review")
     def review(case_id: str, request: ReviewRequest) -> dict[str, Any]:
-        return mutate(
-            case_id,
-            lambda case: record_review(
-                case,
-                request.disposition,
-                request.reviewer_name,
-                request.rationale,
-            ),
-        )
+        def apply_review_and_resume(case: dict[str, Any]) -> None:
+            record_review(case, request.disposition, request.reviewer_name, request.rationale)
+            advance_safe_automation(case)
+            if case["status"] == "delivery_dispatched":
+                schedule(case, "receipt_followup", 60)
+
+        return mutate(case_id, apply_review_and_resume)
 
     @router.post("/cases/{case_id}/fulfillment")
     def fulfillment(case_id: str) -> dict[str, Any]:

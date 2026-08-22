@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/styles.css">
   <link rel="stylesheet" href="/static/cloud-status.css">
+  <link rel="stylesheet" href="/static/autonomy.css">
 </head>
 <body>
   <a class="skip-link" href="#demo">Skip to live demonstration</a>
@@ -87,7 +88,7 @@
         <div><p class="eyebrow">Pilot operations workspace</p><h2 id="demo-title">More than one outage. One accountable queue.</h2></div>
         <div class="demo-controls">
           <button id="new-case" class="button secondary compact" type="button">New pilot case</button><button id="reset-demo" class="button secondary compact" type="button">Load sample</button>
-          <button id="auto-demo" class="button primary compact" type="button">Run sample story</button>
+          <button id="auto-demo" class="button primary compact" type="button">Run autonomous case</button>
         </div>
       </div>
 
@@ -162,10 +163,13 @@ LOT-42</textarea></label>
           <div class="run-counter"><span id="progress-count">0</span><small>verified actions</small></div>
         </div>
 
-        <div class="console-grid">
+        <section class="autonomy-rail" id="autonomy-receipt" data-complete="false" aria-live="polite" aria-label="ColdClock autonomy receipt">
+          <div class="autonomy-identity"><span class="autonomy-beacon" aria-hidden="true"></span><p><small>Autonomy receipt</small><b id="autonomy-title">Waiting for a monitored event</b></p></div>
+          <dl><div><dt>Trigger</dt><dd id="autonomy-trigger">Sensor or power event</dd></div><div><dt>Safe work resumed</dt><dd id="autonomy-actions">0 actions this run</dd></div><div><dt>Current hold</dt><dd id="autonomy-wait">Sensor event</dd></div></dl>
+        </section>        <div class="console-grid">
           <aside class="journey-panel" aria-label="Workflow controls">
             <h3>Resolution path</h3>
-            <p class="panel-intro">Advance one truthful state at a time.</p>
+            <p class="panel-intro">Event-driven by default; manual stepping remains available for inspection.</p>
             <ol class="journey" id="journey">
               <li data-state="monitoring"><span>1</span><div><b>Package enrolled</b><small>Verified from transcript</small></div></li>
               <li data-state="excursion_detected"><span>2</span><div><b>Excursion recorded</b><small>No clinical conclusion</small></div></li>

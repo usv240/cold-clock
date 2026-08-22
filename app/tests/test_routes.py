@@ -22,8 +22,6 @@ def test_http_flow_end_to_end():
     case_id = case["case_id"]
     assert post(f"/api/cases/{case_id}/fulfillment").status_code == 409
     case = post(f"/api/cases/{case_id}/outage").json()
-    assert case["status"] == "excursion_detected"
-    case = post(f"/api/cases/{case_id}/request-review").json()
     assert case["status"] == "awaiting_professional_review"
     case = post(
         f"/api/cases/{case_id}/review",
@@ -34,8 +32,7 @@ def test_http_flow_end_to_end():
         },
     ).json()
     assert case["review"]["decision"]["made_by_ai"] is False
-    assert post(f"/api/cases/{case_id}/fulfillment").json()["status"] == "fulfillment_prepared"
-    assert post(f"/api/cases/{case_id}/dispatch").json()["status"] == "delivery_dispatched"
+    assert case["status"] == "delivery_dispatched"
     case = post(f"/api/cases/{case_id}/confirm-delivery").json()
     assert case["status"] == "resolved"
     assert client.get(f"/api/cases/{case_id}").json()["progress"]["resolution_complete"]
