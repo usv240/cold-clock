@@ -280,7 +280,7 @@ The deployed cold-clock-wake-scan Cloud Scheduler job calls the internal wake wo
 
 ## Public developer service
 
-Judges can use the visual sandbox without authentication. Any developer can open **Developer API · 50/day**, generate a key without creating an account, and call the same durable workflow through `/v1`. The key is displayed once; only an HMAC digest and a keyed network fingerprint are stored. Firestore transactions enforce 50 calls per key and originating network per UTC day.
+Judges can use the visual sandbox without authentication. Any developer can select **Developer key**, generate a key without creating an account, then choose **Run live API test** to send a valid synthetic `/v1/cases` request and inspect its HTTP status, remaining quota, and formatted JSON response. **API docs** opens the complete OpenAPI contract. The key is displayed once; only an HMAC digest and a keyed network fingerprint are stored. Firestore transactions enforce 50 calls per key and originating network per UTC day.
 
 Start with [DEVELOPER_API.md](DEVELOPER_API.md), the live `/docs` contract, or `GET /api/developer`. Public input is synthetic-only; the code can accept explicitly authorized de-identified input only in a separately protected deployment. Google recommends Secret Manager for Cloud Run secrets, so `API_KEY_PEPPER` is pinned to Secret Manager version 1 rather than committed or stored as ordinary configuration: [Cloud Run secret configuration](https://docs.cloud.google.com/run/docs/configuring/services/secrets).
 

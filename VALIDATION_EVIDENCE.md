@@ -65,10 +65,11 @@
 - Stakeholder outcomes and bonus publication points remain unclaimed pending real consented evidence/public URLs.
 
 
-## Developer API and cumulative autonomy proof — 2026-08-22
+## Developer API and cumulative autonomy proof — 2026-08-23
 
-- Final Cloud Run revision: `cold-clock-00028-7hw`, 100% traffic.
+- Final Cloud Run revision: `cold-clock-00029-gfq`, 100% traffic.
 - Live external flow: missing key returned HTTP 401; self-service key issuance succeeded; authenticated table-top returned HTTP 201 with `X-RateLimit-Limit: 50` and `X-RateLimit-Remaining: 49`.
 - Derived autonomy receipt: 7 automatic trace events, 1 protected pharmacist event, 0 continue clicks; synthetic table-top injection is explicitly disclosed.
 - Firestore field audit confirmed digests/fingerprints only: no plaintext key and no raw IP.
 - Secret Manager version 1 is pinned, the developer UI and OpenAPI docs returned HTTP 200, and the live health inventory includes Secret Manager.
+- The in-dialog runner sent a valid product-specific synthetic payload, returned HTTP 201 with **origin: pilot_input**, displayed the JSON response and remaining quota, and its prominent API Docs button returned HTTP 200.

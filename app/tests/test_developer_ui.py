@@ -19,6 +19,16 @@ def test_developer_console_is_visible_and_wired():
     assert ".nav-developer" in css
     assert ".developer-landing" in css
     assert ".developer-dialog" in css
+    assert "data-dev-run" in html
+    assert "data-dev-output" in html
+    assert 'class="developer-docs"' in html
+    assert "API docs" in html
+    assert "Run live API test" in html
+    assert "samplePayloads" in script
+    assert '"Content-Type":"application/json"' in script
+    assert "X-RateLimit-Remaining" in script
+    assert ".developer-runbar" in css
+    assert ".developer-output" in css
     assert "/static/developer.js" in html and "/static/developer.css" in html
 
 
