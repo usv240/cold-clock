@@ -3,10 +3,10 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from typing import Any
-from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from cold_clock.store import FirestoreCaseStore, MemoryCaseStore
+from cold_clock.store import ConcurrentWriteError, FirestoreCaseStore, MemoryCaseStore
 from cold_clock.live_evidence import LiveEvidenceRunner
 from service.routes import build_router
 from service.pilot_routes import build_pilot_router
@@ -47,6 +47,11 @@ clock,wake_scheduler=build_runtime(PROJECT,USE_FIRESTORE)
 app=FastAPI(title="ColdClock",description="Event-to-resolution coordination for refrigerated medicine excursions.",version="0.3.0")
 trace_status=install_http_tracing(app,PROJECT,"cold-clock")
 model_runner=LiveEvidenceRunner(PROJECT,Path(__file__).resolve().parent.parent/"web") if ENABLE_LIVE_MODELS else None
+
+@app.exception_handler(ConcurrentWriteError)
+async def concurrent_write(_request: Request, exc: ConcurrentWriteError) -> JSONResponse:
+ return JSONResponse(status_code=409,content={"error":{"code":"concurrent_write","message":str(exc),"record_id":exc.record_id,"expected_version":exc.expected,"actual_version":exc.actual,"retryable":True}})
+
 app.include_router(build_router(case_store,wake_scheduler,allow_global_reset=ALLOW_GLOBAL_RESET,model_runner=model_runner)); app.include_router(build_pilot_router(case_store,wake_scheduler,allow_deidentified=ALLOW_DEIDENTIFIED)); app.include_router(build_hardening_router(case_store,wake_scheduler,clock))
 app.include_router(build_scheduler_router(case_store,wake_scheduler))
 app.include_router(build_access_router(access_manager,"ColdClock","/v1/cases"))
@@ -55,6 +60,6 @@ WEB=Path(__file__).resolve().parent.parent/"web"; app.mount("/static",StaticFile
 
 @app.get("/health")
 def health()->dict[str,Any]:
- return {"ok":True,"project":"cold-clock","google_cloud_project":PROJECT,"persistence":persistence,"synthetic_demo":True,"operating_mode":"protected-deidentified-pilot" if ALLOW_DEIDENTIFIED else "public-synthetic-pilot","pilot_api":"/api/pilot","public_data_policy":"authorized-deidentified" if ALLOW_DEIDENTIFIED else "synthetic-only","global_reset":ALLOW_GLOBAL_RESET,"clinical_decisions":"human-only","model":"gemini-3.5-flash","models":["gemini-3.5-flash","gemini-embedding-001"],"model_mode":"live-fail-closed" if ENABLE_LIVE_MODELS else "local-test-no-model","tracing":trace_status,"durable_wakes":"firestore-transactional" if USE_FIRESTORE else "memory-transactional","simulation_clock":True,"autonomy":"event-driven-safe-auto-continuation","developer_api":{"base":"/v1","key_issuance":"/api/developer/keys","daily_limit":50},"google_services":GOOGLE_SERVICES}
+ return {"ok":True,"project":"cold-clock","google_cloud_project":PROJECT,"persistence":persistence,"synthetic_demo":True,"operating_mode":"protected-deidentified-pilot" if ALLOW_DEIDENTIFIED else "public-synthetic-pilot","pilot_api":"/api/pilot","public_data_policy":"authorized-deidentified" if ALLOW_DEIDENTIFIED else "synthetic-only","global_reset":ALLOW_GLOBAL_RESET,"clinical_decisions":"human-only","model":"gemini-3.5-flash","models":["gemini-3.5-flash","gemini-embedding-001"],"model_mode":"live-fail-closed" if ENABLE_LIVE_MODELS else "local-test-no-model","tracing":trace_status,"durable_wakes":"firestore-transactional" if USE_FIRESTORE else "memory-transactional","domain_state_writes":"transactional-optimistic-versioning","simulation_clock":True,"autonomy":"event-driven-safe-auto-continuation","developer_api":{"base":"/v1","key_issuance":"/api/developer/keys","daily_limit":50},"google_services":GOOGLE_SERVICES}
 @app.get("/",include_in_schema=False)
 def index()->FileResponse:return FileResponse(WEB/"index.html")

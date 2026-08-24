@@ -11,3 +11,14 @@ This release closes the “simulation-only” and proof-clarity gaps without ove
 - Stakeholder validation remains unclaimed; use `EXTERNAL_VALIDATION_PROTOCOL.md` and record only real, consented evidence.
 
 The remaining Stage 1 blocker is entrant-owned: attach a public, narrated, under-four-minute YouTube or Vimeo demo URL before submission.
+
+## 2026-08-24 production-hardening addendum
+
+- Revision `cold-clock-fs1` serves 100% of traffic.
+- Fresh public checks: functional proof 8/8, hardening proof 8/8, live Gemini and Embedding 001, verified autonomy, zero unclassified actors, and zero continuation clicks.
+- Primary cases now use Firestore transactions with optimistic `record_version`; stale writes return a retryable HTTP 409.
+- The dependency set is pinned to the exact previously verified Firestore/API Core boundary after a zero-traffic canary exposed and prevented a floating-client regression.
+- Cloud Scheduler is enabled with OIDC service identity and a successful post-promotion status.
+- Local release suite: 132 passing tests.
+
+External stakeholder outcomes, the public video, public build-content URL, and social-post URL remain unclaimed entrant actions.

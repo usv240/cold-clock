@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1500" height="850" viewBox="0 0 1500 850" role="img" aria-labelledby="title desc">
   <title id="title">ColdClock architecture</title>
-  <desc id="desc">Event sources flow through a Cloud Run agent service, Gemini package evidence, Firestore case state, a mandatory human pharmacist gate, sandbox fulfillment, delivery, and receipt proof.</desc>
+  <desc id="desc">Event and API sources flow through a Cloud Run agent service, Gemini package evidence, transactionally versioned Firestore state, Scheduler wakes, Trace observability, a mandatory pharmacist gate, fulfillment, delivery, and receipt proof.</desc>
   <rect width="1500" height="850" fill="#08110f"/>
   <text x="80" y="92" fill="#effaf6" font-family="Arial" font-size="46" font-weight="700">ColdClock architecture</text>
   <text x="80" y="132" fill="#91aaa0" font-family="Arial" font-size="20">The coordination system cannot cross the professional decision gate by itself.</text>
@@ -12,10 +12,10 @@
     <path d="M405 420H485" stroke="#55d9bd" stroke-width="3"/><path d="M475 410L490 420L475 430" fill="none" stroke="#55d9bd" stroke-width="3"/>
     <text x="505" y="212" fill="#55d9bd" font-size="15" font-weight="700">GOOGLE CLOUD RUNTIME</text>
     <rect x="500" y="235" width="430" height="370" rx="24" fill="#10251f" stroke="#55d9bd" stroke-width="3"/>
-    <rect x="535" y="275" width="360" height="82" rx="14" fill="#19352d"/><text x="565" y="310" fill="#effaf6" font-size="23" font-weight="700">Cloud Run · FastAPI</text><text x="565" y="338" fill="#9eb7ad" font-size="15">Safety-bounded state machine</text>
+    <rect x="535" y="275" width="360" height="82" rx="14" fill="#19352d"/><text x="565" y="310" fill="#effaf6" font-size="23" font-weight="700">Cloud Run · FastAPI</text><text x="565" y="338" fill="#9eb7ad" font-size="15">API keys · quotas · bounded state machine</text>
     <rect x="535" y="375" width="170" height="102" rx="14" fill="#19352d"/><text x="558" y="411" fill="#effaf6" font-size="20" font-weight="700">Vertex AI</text><text x="558" y="438" fill="#9eb7ad" font-size="14">Gemini 3.5</text><text x="558" y="459" fill="#9eb7ad" font-size="14">package reader</text>
-    <rect x="725" y="375" width="170" height="102" rx="14" fill="#19352d"/><text x="748" y="411" fill="#effaf6" font-size="20" font-weight="700">Firestore</text><text x="748" y="438" fill="#9eb7ad" font-size="14">Cases, evidence,</text><text x="748" y="459" fill="#9eb7ad" font-size="14">audit timeline</text>
-    <rect x="535" y="495" width="360" height="75" rx="14" fill="#19352d"/><text x="558" y="526" fill="#effaf6" font-size="18" font-weight="700">Verifier + approval policy</text><text x="558" y="551" fill="#9eb7ad" font-size="14">Reject unsupported facts and premature action</text>
+    <rect x="725" y="375" width="170" height="102" rx="14" fill="#19352d"/><text x="748" y="411" fill="#effaf6" font-size="20" font-weight="700">Firestore</text><text x="748" y="438" fill="#9eb7ad" font-size="14">Versioned cases</text><text x="748" y="459" fill="#9eb7ad" font-size="14">transactional writes</text>
+    <rect x="535" y="495" width="360" height="75" rx="14" fill="#19352d"/><text x="558" y="526" fill="#effaf6" font-size="18" font-weight="700">Fail-closed policy + proof</text><text x="558" y="551" fill="#9eb7ad" font-size="14">Unknown actors invalidate autonomy evidence</text>
     <path d="M955 420H1027" stroke="#ffc85f" stroke-width="4"/><path d="M1017 410L1032 420L1017 430" fill="none" stroke="#ffc85f" stroke-width="4"/>
     <text x="1038" y="212" fill="#ffc85f" font-size="15" font-weight="700">MANDATORY AUTHORITY GATE</text>
     <rect x="1035" y="235" width="385" height="130" rx="22" fill="#2c3d27" stroke="#ffc85f" stroke-width="3"/>
@@ -25,8 +25,9 @@
     <rect x="1240" y="455" width="180" height="115" rx="18" fill="#12241f" stroke="#355449" stroke-width="2"/><text x="1265" y="495" fill="#effaf6" font-size="20" font-weight="700">Courier</text><text x="1265" y="525" fill="#91aaa0" font-size="14">Sandbox delivery</text><text x="1265" y="548" fill="#91aaa0" font-size="14">and receipt</text>
     <path d="M1215 512H1232" stroke="#55d9bd" stroke-width="3"/><path d="M1224 504L1236 512L1224 520" fill="none" stroke="#55d9bd" stroke-width="3"/>
   </g>
+  <rect x="500" y="620" width="920" height="50" rx="14" fill="#10251f" stroke="#355449"/>
+  <text x="525" y="651" fill="#9eb7ad" font-family="Arial" font-size="15">Cloud Scheduler wakes · Cloud Trace correlation · Secret Manager key pepper · retryable conflict receipts</text>
   <rect x="80" y="690" width="1340" height="95" rx="18" fill="#10201c" stroke="#2a453c"/>
   <text x="110" y="730" fill="#55d9bd" font-family="Arial" font-size="17" font-weight="700">HONEST PUBLIC BOUNDARY</text>
   <text x="110" y="760" fill="#abc0b8" font-family="Arial" font-size="17">All people, events, medication lot, inventory, coverage, and delivery are synthetic. The demo proves workflow execution—not clinical benefit or production integration.</text>
 </svg>
-

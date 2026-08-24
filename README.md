@@ -1,6 +1,6 @@
 # ColdClock
 
-Release proof: [2026-08-22 release audit](RELEASE_AUDIT_2026-08-22.md) · [bonus ledger](BONUS_SCORE_LEDGER.md) · [real-world validation protocol](EXTERNAL_VALIDATION_PROTOCOL.md) · [live model contract](https://cold-clock-109051079423.us-central1.run.app/api/model-evidence)
+Release proof: [2026-08-22 release audit](RELEASE_AUDIT_2026-08-22.md) · [bonus ledger](BONUS_SCORE_LEDGER.md) · [impact evidence scorecard](IMPACT_EVIDENCE_SCORECARD.md) · [real-world validation protocol](EXTERNAL_VALIDATION_PROTOCOL.md) · [live model contract](https://cold-clock-109051079423.us-central1.run.app/api/model-evidence)
 
 > When refrigeration fails, the alarm is only step one.
 
@@ -121,6 +121,8 @@ safe, or tell a patient to discard it.
 The customer-facing application intentionally omits rubric language, test counts, infrastructure pages, and judge-only navigation. Technical and submission reviewers can verify the same claims through the architecture below, the API documentation at `/docs`, the executable proof endpoints, `TECHNICAL_DESIGN.md`, and `VALIDATION_EVIDENCE.md`.
 
 ![ColdClock architecture](docs/architecture.svg)
+
+Primary case writes use optimistic record versions inside Firestore transactions. A stale concurrent sensor, reviewer, fulfillment, or wake update is rejected with a retryable HTTP 409 rather than silently overwriting newer evidence. Autonomy receipts also fail closed: an unknown actor is reported as unclassified and invalidates the proof instead of being counted as an agent.
 
 | Layer | Running implementation |
 |---|---|
