@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
 from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field, HttpUrl
 
+from cold_clock.followups import register_followups
 from cold_clock.pilot import create_pilot_case, ingest_sensor_event
 from cold_clock.store import CaseStore
 from cold_clock.workflow import advance_safe_automation, public_view
@@ -96,11 +96,7 @@ def build_pilot_router(store: CaseStore, scheduler=None, *, allow_deidentified: 
         try:
             ingest_sensor_event(case, request.model_dump())
             advance_safe_automation(case)
-            if scheduler is not None and case["status"] == "awaiting_professional_review":
-                wake = scheduler.sleep_for(case_id, "review_followup", timedelta(minutes=30))
-                rows = case.setdefault("scheduled_wakes", [])
-                if not any(row["wake_id"] == wake.wake_id for row in rows):
-                    rows.append({"wake_id": wake.wake_id, "kind": wake.kind, "due_at": wake.due_at.isoformat()})
+            register_followups(case, scheduler)
         except ValueError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
         store.put(case)

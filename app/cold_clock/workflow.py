@@ -13,6 +13,7 @@ from uuid import uuid4
 from spine.autonomy_proof import build_autonomy_proof
 
 BASE_TIME = datetime(2026, 8, 16, 14, 0, tzinfo=timezone.utc)
+DEFAULT_COURIER_ETA_MINUTES = 34
 ALLOWED_DISPOSITIONS = {
     "continue_labeled",
     "shorten_window",
@@ -69,11 +70,12 @@ def _append(
     detail: str,
     status: str = "complete",
     evidence_ids: list[str] | None = None,
+    at: datetime | None = None,
 ) -> None:
     case["timeline"].append(
         {
             "sequence": len(case["timeline"]) + 1,
-            "at": _iso(_case_moment(case, len(case["timeline"]) * 4)),
+            "at": _iso(at) if at is not None else _iso(_case_moment(case, len(case["timeline"]) * 4)),
             "actor": actor,
             "action": action,
             "detail": detail,
@@ -275,33 +277,66 @@ def prepare_fulfillment(case: dict[str, Any]) -> dict[str, Any]:
 def dispatch_delivery(case: dict[str, Any]) -> dict[str, Any]:
     if case["fulfillment"].get("status") != "prepared":
         raise ValueError("a prepared replacement is required before dispatch")
+    eta_minutes = int(case.get("delivery_eta_minutes") or DEFAULT_COURIER_ETA_MINUTES)
     case["fulfillment"]["status"] = "confirmed"
     case["delivery"] = {
         "status": "dispatched",
         "sandbox": True,
         "courier": "AccessRoute Courier — synthetic",
         "delivery_id": f"dlv-{case['case_id'][3:]}",
-        "eta_minutes": 34,
+        "eta_minutes": eta_minutes,
+        "dispatched_at": _iso(_case_moment(case, 181)),
         "accessible_handoff": True,
+        "background_status_poll": "courier_status_poll wake due at the sandbox ETA",
     }
     case["status"] = "delivery_dispatched"
     _append(
         case,
         "Logistics agent",
         "Courier dispatched",
-        "An accessible synthetic delivery slot was booked and linked to the approved replacement.",
+        "An accessible synthetic delivery slot was booked and linked to the approved replacement. "
+        "A durable wake will poll the sandbox courier at the ETA.",
         evidence_ids=["review-decision", "sandbox-inventory", "sandbox-delivery"],
     )
     return case
 
 
-def confirm_delivery(case: dict[str, Any]) -> dict[str, Any]:
+def confirm_delivery(
+    case: dict[str, Any],
+    *,
+    source: str = "household",
+    wake_id: str | None = None,
+    at: datetime | None = None,
+) -> dict[str, Any]:
+    """Close the case with receipt evidence.
+
+    ``source`` is ``household`` for a receipt event supplied from outside, or ``courier`` when the
+    background wake polled the sandbox courier at the ETA and it reported the handoff complete.
+    Either way the closure is evidence-driven; the agent never invents a receipt.
+    """
     if case["delivery"].get("status") != "dispatched":
         raise ValueError("a dispatched delivery is required")
+    if source not in {"household", "courier"}:
+        raise ValueError("unsupported receipt source")
     case["delivery"]["status"] = "received"
-    case["delivery"]["received_at"] = _iso(_case_moment(case, 215))
-    case["delivery"]["proof"] = "Synthetic household confirmation"
+    case["delivery"]["received_at"] = _iso(at) if at is not None else _iso(_case_moment(case, 215))
     case["status"] = "resolved"
+    if source == "courier":
+        case["delivery"]["proof"] = "Sandbox courier delivery confirmation polled by background wake"
+        case["delivery"]["confirmed_by"] = "background-wake"
+        case["delivery"]["confirming_wake_id"] = wake_id
+        _append(
+            case,
+            "Background wake agent",
+            "Courier confirmed handoff",
+            "The Cloud Scheduler wake polled the sandbox courier at the ETA; it reported the accessible "
+            "handoff complete, so the case closed with no operator action.",
+            evidence_ids=["sandbox-delivery", "courier-delivery-confirmation", *( [wake_id] if wake_id else [] )],
+            at=at,
+        )
+        return case
+    case["delivery"]["proof"] = "Synthetic household confirmation"
+    case["delivery"]["confirmed_by"] = "household"
     _append(
         case,
         "Household",
@@ -335,7 +370,7 @@ def advance_safe_automation(case: dict[str, Any]) -> list[str]:
         "waiting_for": {
             "monitoring": "sensor_event",
             "awaiting_professional_review": "qualified_human_disposition",
-            "delivery_dispatched": "household_receipt_event",
+            "delivery_dispatched": "courier_confirmation_wake_or_household_receipt",
             "review_resolved": "no_further_logistics_required",
             "resolved": None,
         }.get(case["status"], "unsupported_state"),
@@ -351,16 +386,30 @@ def public_view(case: dict[str, Any]) -> dict[str, Any]:
         "resolution_complete": case["status"] in {"resolved", "review_resolved"},
         "clinical_authority": "human",
     }
+    background = case.get("background_executions") or []
     view["autonomy"] = {
         "trigger": "sensor or power event",
-        "automatic_actions": ["verify evidence", "route review packet", "reserve approved replacement", "dispatch accessible delivery"],
+        "automatic_actions": [
+            "verify evidence",
+            "route review packet",
+            "reserve approved replacement",
+            "dispatch accessible delivery",
+            "poll courier at ETA from a Cloud Scheduler wake",
+        ],
         "authority_checkpoints": ["qualified medication disposition"],
-        "external_completion_event": "household receipt",
+        "external_completion_event": "courier handoff confirmation or household receipt",
         "current_wait": None
         if case["status"] in {"resolved", "review_resolved"}
         else (case.get("last_autonomy_run") or {}).get("waiting_for", "sensor_event"),
         "last_run_actions": (case.get("last_autonomy_run") or {}).get("actions", []),
         "complete": case["status"] in {"resolved", "review_resolved"},
+        "background_wakes_fired": len(background),
+        "closed_by_background_wake": (case.get("delivery") or {}).get("confirmed_by") == "background-wake",
+        "pending_background_wakes": [
+            row for row in (case.get("scheduled_wakes") or [])
+            if row.get("wake_id") not in {item.get("wake_id") for item in background}
+            and row.get("wake_id") not in set(case.get("cancelled_wakes") or [])
+        ],
     }
     view["autonomy_proof"] = build_autonomy_proof(
         case,
@@ -386,4 +435,26 @@ def run_full_demo(case: dict[str, Any] | None = None) -> dict[str, Any]:
     confirm_delivery(case)
     case["demo_completion_mode"] = "synthetic_tabletop"
     return public_view(case)
+
+
+def run_unattended_demo(case: dict[str, Any] | None = None, *, courier_eta_minutes: int = 1) -> dict[str, Any]:
+    """Run every safe transition and then stop at the courier ETA.
+
+    Unlike ``run_full_demo`` this never fabricates the receipt inside the request. The case is
+    left in ``delivery_dispatched`` with a short sandbox ETA so the Cloud Scheduler wake worker,
+    not the caller, is what polls the courier and closes the case.
+    """
+    case = case or create_case()
+    case["delivery_eta_minutes"] = int(courier_eta_minutes)
+    trigger_outage(case)
+    advance_safe_automation(case)
+    record_review(
+        case,
+        "replace",
+        "Avery Chen, PharmD — synthetic",
+        "The documented demonstration excursion requires replacement in this unattended case.",
+    )
+    advance_safe_automation(case)
+    case["demo_completion_mode"] = "background_wake_pending"
+    return case
 

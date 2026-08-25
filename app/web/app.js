@@ -14,13 +14,16 @@ const actionMap = {
   awaiting_professional_review: { label: "Record human disposition", note: "A qualified reviewer must enter their own decision and rationale.", endpoint: "review" },
   replacement_approved: { label: "Resume safe automation", note: "The approved path reserves and dispatches without more operator steps.", endpoint: "autopilot" },
   fulfillment_prepared: { label: "Resume safe automation", note: "Books the accessible synthetic courier slot.", endpoint: "autopilot" },
-  delivery_dispatched: { label: "Confirm household receipt", note: "Closes the loop with synthetic receipt proof.", endpoint: "confirm-delivery" },
+  delivery_dispatched: { label: "Confirm household receipt", note: "Optional. If nobody clicks, the Cloud Scheduler wake polls the sandbox courier at the ETA and closes the case by itself.", endpoint: "confirm-delivery" },
   resolved: { label: "Case resolved", note: "Reset the case to run the story again.", endpoint: null },
 };
 
 let currentCase = null;
 let autoRunning = false;
 let caseSummaries = [];
+let pollTimer = null;
+const POLL_INTERVAL_MS = 5000;
+const WAITING_STATES = new Set(["awaiting_professional_review", "delivery_dispatched", "excursion_detected", "replacement_approved", "fulfillment_prepared"]);
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -66,6 +69,53 @@ async function loadCase(caseId) {
   try { render(await api(`/api/cases/${caseId}`)); }
   catch (error) { toast(error.message); }
   finally { $("#console").setAttribute("aria-busy", "false"); }
+}
+
+function wakeCopy(kind) {
+  return {
+    courier_status_poll: "Poll sandbox courier at ETA",
+    review_followup: "Review reminder",
+    receipt_followup: "Receipt reminder",
+  }[kind] || kind.replaceAll("_", " ");
+}
+
+async function renderWakes(caseId) {
+  const list = $("#wake-list");
+  if (!list || !caseId) return;
+  try {
+    const data = await api(`/api/cases/${encodeURIComponent(caseId)}/wakes`);
+    if (!data.wakes.length) {
+      list.innerHTML = '<li class="wake-empty">No durable wakes yet. Dispatching a delivery registers one.</li>';
+      return;
+    }
+    list.innerHTML = data.wakes.map((row) => `
+      <li class="wake-row" data-status="${escapeHtml(row.status)}">
+        <span class="wake-state" aria-hidden="true"></span>
+        <div><b>${escapeHtml(wakeCopy(row.kind))}</b><small>${escapeHtml(row.status)} · due ${new Date(row.due_at).toLocaleTimeString([], {hour: "numeric", minute: "2-digit"})}${row.cancelled_reason ? ` · ${escapeHtml(row.cancelled_reason)}` : ""}</small></div>
+      </li>`).join("");
+    $("#simulated-now").textContent = `Simulated now ${new Date(data.simulated_now).toLocaleTimeString([], {hour: "numeric", minute: "2-digit"})}`;
+  } catch (error) {
+    list.innerHTML = `<li class="wake-empty">${escapeHtml(error.message)}</li>`;
+  }
+}
+
+async function pollActiveCase() {
+  if (document.hidden || !currentCase || autoRunning) return;
+  try {
+    const fresh = await api(`/api/cases/${encodeURIComponent(currentCase.case_id)}`);
+    if (fresh.record_version === currentCase.record_version) return;
+    const before = currentCase.autonomy?.background_wakes_fired || 0;
+    render(fresh);
+    await refreshCases(fresh.case_id);
+    if ((fresh.autonomy?.background_wakes_fired || 0) > before) {
+      toast(fresh.autonomy?.closed_by_background_wake ? "Cloud Scheduler wake closed the case. Nobody clicked." : "A background wake advanced the case.");
+    }
+  } catch (error) { /* transient poll failure; the next tick retries */ }
+}
+
+function startPolling() {
+  if (pollTimer) return;
+  pollTimer = window.setInterval(pollActiveCase, POLL_INTERVAL_MS);
 }
 
 function openDialog(id) {
@@ -131,7 +181,7 @@ function renderReview(caseData) {
     <div class="packet-row"><span>Medicine</span><b>${escapeHtml(packet.medicine)}</b></div>
     <div class="packet-row"><span>Observed duration</span><b>${packet.observed_minutes} minutes</b></div>
     <div class="packet-row"><span>Maximum observed</span><b>${packet.maximum_fahrenheit}°F</b></div>
-    <div class="packet-row"><span>Verified package fields</span><b>${packet.package_fields_verified}/4</b></div>
+    <div class="packet-row"><span>Verified package fields</span><b>${packet.package_fields_verified}/${caseData.extraction?.accuracy?.total ?? packet.package_fields_verified}</b></div>
     ${decision ? `<div class="human-stamp">HUMAN REVIEW · ${escapeHtml(decision.reviewer)}</div><p>${escapeHtml(decision.rationale)}</p>` : `<div class="human-stamp">AI DISPOSITION: NONE · HUMAN DECISION REQUIRED</div>`}`;
 }
 
@@ -146,13 +196,29 @@ function renderJourney(status) {
 function renderAutonomy(data = {}, proof = {}) {
   const automatic = proof.automatic_trace_events || 0;
   const human = proof.human_authority_events || 0;
+  const fired = data.background_wakes_fired || 0;
   const wait = String(data.current_wait || "none").replaceAll("_", " ");
   $("#autonomy-receipt").dataset.complete = String(Boolean(data.complete));
-  $("#autonomy-title").textContent = data.complete ? "Bounded autonomous run complete" : automatic ? "Safe work is advancing automatically" : "Monitoring until the next real event";
+  $("#autonomy-title").textContent = data.closed_by_background_wake
+    ? "Closed by a Cloud Scheduler wake — no operator"
+    : data.complete ? "Bounded autonomous run complete" : automatic ? "Safe work is advancing automatically" : "Monitoring until the next real event";
   $("#autonomy-trigger").textContent = (proof.operator_continue_clicks || 0) + " continue clicks";
   $("#autonomy-actions").textContent = automatic + " traced agent event" + (automatic === 1 ? "" : "s");
   $("#autonomy-human").textContent = human + " protected decision" + (human === 1 ? "" : "s");
-  $("#autonomy-wait").textContent = data.complete ? "Closed with receipt proof" : wait;
+  $("#autonomy-background").textContent = fired + " fired" + (data.closed_by_background_wake ? " · closed case" : (data.pending_background_wakes || []).length ? ` · ${data.pending_background_wakes.length} pending` : "");
+  $("#autonomy-wait").textContent = data.complete ? (data.closed_by_background_wake ? "Closed by courier confirmation" : "Closed with receipt proof") : wait;
+}
+
+function renderInjectionScreen(screen) {
+  const node = $("#injection-screen");
+  if (!node) return;
+  if (!screen) {
+    node.className = "injection-screen";
+    node.innerHTML = `<b>Injection screen</b><span>Runs with live models on the deployed service: pattern layer plus Gemma 4 quarantine instruction-shaped package text before routing.</span>`;
+    return;
+  }
+  node.className = `injection-screen ${screen.clean ? "clean" : "flagged"}`;
+  node.innerHTML = `<b>${screen.clean ? "Package text screened — clean" : `${screen.quarantined_spans} instruction-shaped span${screen.quarantined_spans === 1 ? "" : "s"} quarantined`}</b><span>${escapeHtml(screen.model)} · ${escapeHtml(screen.mode)}${screen.live ? "" : " · pattern layer only"} · ${screen.latency_ms} ms · never a medication decision</span>`;
 }
 function render(caseData) {
   currentCase = caseData;
@@ -183,11 +249,14 @@ function render(caseData) {
   $("#package-form").textContent = caseData.medication.form;
   $("#package-lot").textContent = `Lot ${caseData.medication.lot}`;
   $("#label-source").href = caseData.label_evidence.url;
+  renderInjectionScreen(caseData.injection_screen);
   const action = actionMap[status];
   const button = $("#next-action");
   button.textContent = action?.label || "Workflow complete";
   button.disabled = !action?.endpoint || autoRunning;
   $("#control-note").textContent = action?.note || "Reset to replay the synthetic case.";
+  $("#advance-clock").disabled = !WAITING_STATES.has(status);
+  renderWakes(caseData.case_id);
 }
 
 function escapeHtml(value) {
@@ -245,6 +314,36 @@ async function runAuto() {
     $("#auto-demo").disabled = false;
     $("#console").setAttribute("aria-busy", "false");
   }
+}
+
+async function runUnattended() {
+  if (autoRunning) return;
+  autoRunning = true;
+  $("#unattended-demo").disabled = true;
+  $("#console").setAttribute("aria-busy", "true");
+  try {
+    const started = await api("/api/demo/unattended", { method: "POST" });
+    render(started);
+    await refreshCases(started.case_id);
+    toast("Safe work done. The Cloud Scheduler wake will close this case at the courier ETA — no clicks needed.");
+  } catch (error) {
+    toast(error.message);
+  } finally {
+    autoRunning = false;
+    $("#unattended-demo").disabled = false;
+    $("#console").setAttribute("aria-busy", "false");
+  }
+}
+
+async function advanceClock() {
+  const button = $("#advance-clock");
+  button.disabled = true;
+  try {
+    const result = await api("/api/hardening/advance", { method: "POST", body: JSON.stringify({ minutes: 35, dispatch: false }) });
+    toast(`Simulated clock advanced to ${new Date(result.now).toLocaleTimeString([], {hour: "numeric", minute: "2-digit"})}. The next Cloud Scheduler scan fires whatever is due.`);
+    if (currentCase) await renderWakes(currentCase.case_id);
+  } catch (error) { toast(error.message); }
+  finally { button.disabled = !currentCase || !WAITING_STATES.has(currentCase.status); }
 }
 
 function setupTabs() {
@@ -316,6 +415,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("#next-action").addEventListener("click", () => advance(false));
   $("#reset-demo").addEventListener("click", resetCase);
   $("#auto-demo").addEventListener("click", runAuto);
+  $("#unattended-demo").addEventListener("click", runUnattended);
+  $("#advance-clock").addEventListener("click", advanceClock);
   $("#new-case").addEventListener("click", () => openDialog("intake-dialog"));
   $("#record-sensor").addEventListener("click", () => openDialog("sensor-dialog"));
   $("#case-select").addEventListener("change", (event) => loadCase(event.target.value));
@@ -329,4 +430,5 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (caseSummaries.length) await loadCase(caseSummaries[0].case_id);
     else await resetCase();
   } catch (error) { toast(error.message); }
+  startPolling();
 });

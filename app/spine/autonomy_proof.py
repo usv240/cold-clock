@@ -57,6 +57,10 @@ def build_autonomy_proof(
     if not runs:
         automatic_actions = len(last_actions)
 
+    background = record.get("background_executions") or []
+    background_state_changes = [row for row in background if row.get("outcome") == "case_closed"]
+    scheduler_triggered = [row for row in background if row.get("trigger") == "google-oidc"]
+
     operator_interactions = record.get("operator_interactions") or []
     continue_actions = {"continue", "continue_clicked", "manual_continue", "operator_continue"}
     operator_continue_clicks = sum(
@@ -77,6 +81,10 @@ def build_autonomy_proof(
         "unclassified_trace_events": counts["unclassified"],
         "managed_agent_commands": len(managed),
         "durable_background_wakes": len(wakes),
+        "background_wake_executions": len(background),
+        "background_state_changes": len(background_state_changes),
+        "cloud_scheduler_triggered_executions": len(scheduler_triggered),
+        "closed_by_background_wake": (record.get("delivery") or {}).get("confirmed_by") == "background-wake",
         "autonomous_resume_batches": len(runs) or (1 if last_actions else 0),
         "operator_continue_clicks": operator_continue_clicks,
         "operator_interactions_observed": len(operator_interactions),

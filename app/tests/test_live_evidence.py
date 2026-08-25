@@ -21,7 +21,14 @@ class Router:
 
 def test_live_models_change_the_operational_record():
     web = Path(__file__).resolve().parents[1] / "web"
-    case = LiveEvidenceRunner("test", web, Reader(), Router()).apply(create_case())
+    class NoScreen:
+        pass
+
+    runner = LiveEvidenceRunner("test", web, Reader(), Router(), NoScreen())
+    runner.screen_reviewer = None
+    case = runner.apply(create_case())
     assert case["extraction"]["mode"] == "live-vertex-ai"
     assert case["semantic_routing"]["model"] == "gemini-embedding-001"
-    assert case["timeline"][-1]["actor"] == "Live evidence agent"
+    assert case["timeline"][-2]["actor"] == "Live evidence agent"
+    assert case["timeline"][-1]["actor"] == "Guardrail agent"
+    assert case["injection_screen"]["mode"] == "pattern-only"

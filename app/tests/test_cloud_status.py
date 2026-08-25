@@ -11,7 +11,10 @@ WEB = Path(__file__).resolve().parents[1] / "web"
 
 def test_health_exposes_truthful_google_service_inventory():
     services = {row["name"] for row in client.get("/health").json()["google_services"]}
-    assert {"Gemini 3.5 Flash on Vertex AI", "Google Gen AI SDK", "Cloud Run", "Firestore", "Cloud Scheduler", "Cloud Trace"} <= services
+    assert {"Gemini 3.5 Flash on Vertex AI", "Google Gen AI SDK", "Gemma 4 on Vertex AI", "Cloud Run", "Firestore", "Cloud Scheduler", "Cloud Trace"} <= services
+    health = client.get("/health").json()
+    assert "gemma-4-26b-a4b-it-maas" in health["models"]
+    assert health["background_execution"]["unattended_demo"] == "/api/demo/unattended"
 
 
 def test_header_has_accessible_live_stack_control():

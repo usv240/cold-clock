@@ -19,8 +19,36 @@ the Vertex AI global endpoint. The JSON schema permits only five fields. A field
 when its nonempty quote occurs in the model's own transcription and confidence is in `[0, 1]`.
 
 Replay and live recording are separate classes. Tests never spend model tokens. The committed
-recording came from an explicit Vertex AI call and passed `4/4` adjacent truth checks; tests and the
-tests replay it deterministically; the deployed full workflow calls it live and fails closed.
+recording came from an explicit Vertex AI call and passed `4/4` adjacent truth checks; tests replay
+it deterministically; the deployed workflow calls it live and fails closed.
+
+Two more models run live in the deployed workflow. `spine/semantic_routing.py` uses Gemini
+Embedding 001 to rank the transcription against three operational focuses; the winner is a routing
+hint, never a decision. `cold_clock/injection_screen.py` runs a deterministic pattern scan and then
+asks Gemma 4 (`gemma-4-26b-a4b-it-maas`, Vertex AI Model-as-a-Service, `global`) for verbatim
+instruction-shaped spans; each returned span must occur in the text or it is ignored, and every
+accepted span is replaced with a visible `[quarantined]` marker before the text is embedded. If the
+Gemma call fails the receipt reports `live: false` and the pattern layer stands alone.
+
+## Background execution
+
+Every path that advances a case calls `cold_clock/followups.py`, which registers durable wakes
+idempotently by `(case, kind)`: `review_followup` thirty minutes after routing, and after dispatch
+both `courier_status_poll` (due at the sandbox courier ETA) and `receipt_followup` (sixty minutes).
+A Cloud Scheduler job calls `POST /internal/wakes/scan` every minute with a Google-signed OIDC
+token; `spine/scheduler_auth.py` verifies audience, issuer, and the dedicated service-account
+email before anything is dispatched. `spine/wake.py` claims each due wake in a Firestore
+transaction with a ninety-second lease, retries a failing handler up to five times, and dead-letters
+after that. `cold_clock/wake_actions.py` executes the action idempotently by wake id: the courier
+poll records the sandbox handoff, resolves the case, and cancels the now-pointless receipt reminder
+(marked, never deleted); the reminders only surface stalls and never contact anyone. Each execution
+is appended to the case's `background_executions` with the verified trigger identity, and the
+autonomy proof derives `closed_by_background_wake` and `cloud_scheduler_triggered_executions` from
+that record rather than from anything the caller asserts.
+
+The clock is injected (`spine/clock.py`). Production and demo share one persisted, forward-only
+simulated clock in Firestore so a four-minute recording can reach a thirty-four-minute ETA; the UI
+labels it as simulated, and advancing it never dispatches — the next scheduler scan does.
 
 ## Evidence and authority
 
@@ -43,13 +71,15 @@ The interface, API, README, and conformance endpoint state this boundary.
 - `Dockerfile`: non-root Python 3.12 runtime.
 - `deploy.sh`: Cloud Run source deployment to `us-central1`, unauthenticated judging access, and
   Firestore mode.
-- `/health`: identifies project, persistence, models, live fail-closed mode, synthetic data, and human-only
-  clinical authority.
-- `/api/proof`: executable safety and action assertions.
+- `infra/provision_scheduler.ps1`: the every-minute OIDC Cloud Scheduler job.
+- `/health`: identifies project, persistence, models, live fail-closed mode, background execution,
+  synthetic data, and human-only clinical authority.
+- `/api/proof`: executable safety and action assertions (8).
+- `/api/hardening/proof`: failure-path, wake, background-closure and quarantine assertions (12).
 - `/api/conformance`: contest requirement mapping and limitations.
 
-Cloud Trace dependencies are declared. Trace initialization and durable scheduled follow-up remain
-release work and must not be claimed until implemented and verified in the deployment.
+Cloud Trace is initialised at startup and every response carries `x-agent-trace-id`; the deployed
+`/health` reports `tracing.active: true`.
 
 ## UI
 
@@ -63,10 +93,9 @@ by the acceptance script.
 - autonomous medical advice or a safety/discard verdict;
 - production insurer, pharmacy, utility, sensor, or courier integration;
 - real patient data;
-- a completed live Gemini recording;
 - pharmacist field validation;
 - validated outcome improvement;
-- a completed live Gemini recording and external expert validation.
+- external expert validation.
 
 
 

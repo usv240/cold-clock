@@ -81,7 +81,7 @@
       <div class="steps-grid">
         <article class="step-card"><span class="step-number">01</span><div class="step-icon sensor-icon" aria-hidden="true"></div><h3>Observe precisely</h3><p>Record the package, current label, temperatures, duration, power event, and previous history.</p><span class="step-proof">Observed facts only</span></article>
         <article class="step-card"><span class="step-number">02</span><div class="step-icon review-icon" aria-hidden="true"></div><h3>Route for judgment</h3><p>Give a pharmacist a concise evidence packet. Unknown or conflicting evidence stops here.</p><span class="step-proof">Human authority</span></article>
-        <article class="step-card"><span class="step-number">03</span><div class="step-icon route-icon" aria-hidden="true"></div><h3>Complete the resolution</h3><p>After approval, coordinate sandbox inventory, accessible delivery, receipt, and closure.</p><span class="step-proof">Action with proof</span></article>
+        <article class="step-card"><span class="step-number">03</span><div class="step-icon route-icon" aria-hidden="true"></div><h3>Complete the resolution</h3><p>After approval, coordinate sandbox inventory and accessible delivery. A Cloud Scheduler wake polls the courier at the ETA and closes the case with nobody at a screen.</p><span class="step-proof">Action with proof</span></article>
       </div>
     </section>
 
@@ -103,7 +103,8 @@
         <div><p class="eyebrow">Pilot operations workspace</p><h2 id="demo-title">More than one outage. One accountable queue.</h2></div>
         <div class="demo-controls">
           <button id="new-case" class="button secondary compact" type="button">New pilot case</button><button id="reset-demo" class="button secondary compact" type="button">Load sample</button>
-          <button id="auto-demo" class="button primary compact" type="button">Complete synthetic tabletop</button>
+          <button id="auto-demo" class="button secondary compact" type="button">Complete synthetic tabletop</button>
+          <button id="unattended-demo" class="button primary compact" type="button">Run unattended</button>
         </div>
       </div>
 
@@ -180,7 +181,7 @@ LOT-42</textarea></label>
 
         <section class="autonomy-rail" id="autonomy-receipt" data-complete="false" aria-live="polite" aria-label="ColdClock autonomy receipt">
           <div class="autonomy-identity"><span class="autonomy-beacon" aria-hidden="true"></span><p><small>Autonomy receipt</small><b id="autonomy-title">Waiting for a monitored event</b></p></div>
-          <dl><div><dt>Operator prompts</dt><dd id="autonomy-trigger">0 continue clicks</dd></div><div><dt>Agent operations</dt><dd id="autonomy-actions">0 traced events</dd></div><div><dt>Human authority</dt><dd id="autonomy-human">0 decisions</dd></div><div><dt>Current hold</dt><dd id="autonomy-wait">Sensor event</dd></div></dl>
+          <dl><div><dt>Operator prompts</dt><dd id="autonomy-trigger">0 continue clicks</dd></div><div><dt>Agent operations</dt><dd id="autonomy-actions">0 traced events</dd></div><div><dt>Human authority</dt><dd id="autonomy-human">0 decisions</dd></div><div><dt>Background wakes</dt><dd id="autonomy-background">0 fired</dd></div><div><dt>Current hold</dt><dd id="autonomy-wait">Sensor event</dd></div></dl>
         </section>        <div class="console-grid">
           <aside class="journey-panel" aria-label="Workflow controls">
             <h3>Resolution path</h3>
@@ -196,6 +197,12 @@ LOT-42</textarea></label>
             </ol>
             <button id="next-action" class="button primary full" type="button">Trigger power outage</button>
             <p class="control-note" id="control-note">The package is already enrolled in this synthetic fixture.</p>
+            <div class="wake-panel" aria-labelledby="wake-title">
+              <div class="wake-heading"><h4 id="wake-title">Durable wakes</h4><small id="simulated-now">Cloud Scheduler scans every minute</small></div>
+              <ul class="wake-list" id="wake-list" aria-live="polite"><li class="wake-empty">No durable wakes yet.</li></ul>
+              <button id="advance-clock" class="button secondary compact full" type="button" disabled>Advance simulated clock 35 min</button>
+              <p class="control-note">The demo clock is simulated and forward-only. Advancing it does not run anything here; the next Cloud Scheduler scan fires whatever became due.</p>
+            </div>
           </aside>
 
           <section class="case-panel" aria-label="Case evidence">
@@ -219,6 +226,7 @@ LOT-42</textarea></label>
             <div class="tab-panel" id="tab-medicine" role="tabpanel" hidden>
               <div class="package-preview"><div class="package-cap"></div><div class="package-label"><small id="package-provenance">SYNTHETIC DEMONSTRATION</small><b id="package-name">INSULIN<br>GLARGINE-YFGN</b><span id="package-strength">100 units/mL</span><i id="package-form">10 mL multiple-dose vial</i><code id="package-lot">Lot DEMO-2048</code></div></div>
               <div class="verified-fields" id="verified-fields"></div>
+              <div class="injection-screen" id="injection-screen"><b>Injection screen</b><span>Pattern layer plus Gemma 4 quarantine instruction-shaped package text before routing.</span></div>
               <a class="source-link" id="label-source" href="#" target="_blank" rel="noreferrer">Open current structured label <span aria-hidden="true">↗</span></a>
             </div>
             <div class="tab-panel" id="tab-review" role="tabpanel" hidden>

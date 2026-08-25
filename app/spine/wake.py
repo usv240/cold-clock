@@ -166,6 +166,10 @@ class WakeScheduler:
         self._max_attempts = max_attempts
         self.dead_letters: list[Wake] = []
 
+    @property
+    def clock(self) -> Clock:
+        return self._clock
+
     def sleep_until(
         self,
         run_id: str,
@@ -307,6 +311,15 @@ class WakeScheduler:
                     replace(wake, status=WakeStatus.CANCELLED, cancelled_reason=reason)
                 )
                 cancelled += 1
+        return cancelled
+
+    def cancel_kind(self, run_id: str, kind: str, reason: str) -> list[str]:
+        """Cancel one kind of wake for a run, for example a review reminder once the review lands."""
+        cancelled: list[str] = []
+        for wake in self._store.for_run(run_id):
+            if wake.kind == kind and wake.status in (WakeStatus.PENDING, WakeStatus.CLAIMED):
+                self._store.put(replace(wake, status=WakeStatus.CANCELLED, cancelled_reason=reason))
+                cancelled.append(wake.wake_id)
         return cancelled
 
     def pending_for(self, run_id: str) -> list[Wake]:

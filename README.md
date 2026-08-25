@@ -1,6 +1,6 @@
 # ColdClock
 
-Release proof: [2026-08-22 release audit](RELEASE_AUDIT_2026-08-22.md) · [bonus ledger](BONUS_SCORE_LEDGER.md) · [impact evidence scorecard](IMPACT_EVIDENCE_SCORECARD.md) · [real-world validation protocol](EXTERNAL_VALIDATION_PROTOCOL.md) · [live model contract](https://cold-clock-109051079423.us-central1.run.app/api/model-evidence)
+Release proof: [validation evidence incl. live scheduler closure](VALIDATION_EVIDENCE.md) · [Devpost text](DEVPOST_DESCRIPTION.md) · [2026-08-22 release audit](RELEASE_AUDIT_2026-08-22.md) · [bonus ledger](BONUS_SCORE_LEDGER.md) · [impact evidence scorecard](IMPACT_EVIDENCE_SCORECARD.md) · [real-world validation protocol](EXTERNAL_VALIDATION_PROTOCOL.md) · [live model contract](https://cold-clock-109051079423.us-central1.run.app/api/model-evidence)
 
 > When refrigeration fails, the alarm is only step one.
 
@@ -10,8 +10,8 @@ routes a bounded review packet, and—only after a qualified human decision—co
 replacement through delivery and receipt.
 
 **Hackathon track:** The Taskmaster  
-**Google model:** Gemini 3.5 Flash through Vertex AI / Google Gen AI SDK  
-**Google Cloud:** Cloud Run deployment package plus Firestore-compatible persistence  
+**Google models:** Gemini 3.5 Flash (package reader), Gemini Embedding 001 (evidence routing), Gemma 4 (injection screen) — all live on Vertex AI through the Google Gen AI SDK  
+**Google Cloud:** Cloud Run, Firestore, Cloud Scheduler, Cloud Trace, Secret Manager  
 **Public-data policy:** The demo uses fictional people, medicine lot, pharmacy, coverage plan,
 courier, reviewer, and sensor events.
 
@@ -21,7 +21,14 @@ The header's **Live stack** control reads `/health` at runtime. It turns green o
 
 ## Autonomy contract and design identity
 
-POST /api/demo/full completes the synthetic outage-to-receipt story in one server request. In the input-driven path, a sensor excursion automatically verifies and routes the reviewer packet; the single qualified disposition automatically resumes reservation, dispatch, and durable receipt follow-up. ColdClock stops only for the clinical authority it cannot own and for real receipt evidence. The UI is intentionally an ambient clinical instrument: cool telemetry color, rounded monitoring surfaces, and a live autonomy rail.
+A sensor excursion automatically verifies and routes the reviewer packet; the single qualified disposition automatically resumes reservation and dispatch; and a **durable Cloud Scheduler wake polls the sandbox courier at the ETA and closes the case with nobody at a screen**. ColdClock stops only for the clinical authority it cannot own. The UI is intentionally an ambient clinical instrument: cool telemetry color, rounded monitoring surfaces, a live autonomy rail, and a durable-wakes panel that updates by itself as the background worker acts.
+
+Two demo entry points exist:
+
+- `POST /api/demo/full` — the whole story in one server request, receipt included (a synthetic tabletop).
+- `POST /api/demo/unattended` — every safe transition, then **stop at the courier ETA**. The receipt is deliberately not fabricated. Cloud Scheduler calls the OIDC-protected worker every minute; the `courier_status_poll` wake fires at the ETA, the sandbox courier reports the handoff, and the case resolves. `GET /api/cases/{case_id}/wakes` shows the wake go `pending → done`; the autonomy proof reports `closed_by_background_wake: true` and `cloud_scheduler_triggered_executions: 1`.
+
+The demo clock is simulated and forward-only (stated in the UI, never hidden). "Advance simulated clock" moves time without running anything; the next scheduler scan does the work.
 
 ## From reproducible proof to operational pilot
 
@@ -109,6 +116,10 @@ safe, or tell a patient to discard it.
 ## Safety contract
 
 - The model reads packages and assembles evidence. It never chooses the medication disposition.
+- Package text is untrusted. A deterministic pattern layer and a Gemma 4 second layer quarantine
+  instruction-shaped spans (visibly, with the span shown) before the text reaches routing or a
+  reviewer. Gemma's answer is a list of verbatim spans; its prose is never used. If Gemma is
+  unavailable the receipt says so and the pattern layer stands alone.
 - Fulfillment is impossible until a supported disposition is recorded by a named human reviewer.
 - Unsupported, missing, or conflicting evidence causes a stop rather than an inferred answer.
 - Every package value retained by the reader has an exact quote in the model's transcription.
@@ -129,8 +140,9 @@ Primary case writes use optimistic record versions inside Firestore transactions
 | Interface | Responsive, keyboard-operable light/dark operations workspace |
 | API | FastAPI with a typed, bounded state-transition contract |
 | Agent logic | Package evidence, excursion evidence, review packet, fulfillment, logistics, and audit roles |
-| Model | Gemini 3.5 Flash live package reader in the deployed workflow; deterministic replay is restricted to tests |
-| Persistence | Memory locally; Firestore adapter in Cloud deployment mode |
+| Models | Gemini 3.5 Flash live package reader; Gemini Embedding 001 evidence routing; Gemma 4 injection screen. Deterministic replay is restricted to tests |
+| Persistence | Memory locally; Firestore adapter with optimistic record versions in Cloud deployment mode |
+| Background execution | Cloud Scheduler → OIDC-verified `/internal/wakes/scan` every minute → transactional wake claim → idempotent action (courier poll closes the case; reminders surface stalls) |
 | Compute | Dockerized Cloud Run service |
 | Evidence | DailyMed structured label URL, observed sensor fixture, named human approval, receipt proof |
 
@@ -151,6 +163,9 @@ cold-clock/
   app/
     cold_clock/
       workflow.py                 safety-bounded state machine
+      followups.py                idempotent durable-wake registration per state
+      wake_actions.py             Cloud Scheduler worker actions (courier poll closes the case)
+      injection_screen.py         pattern + Gemma 4 quarantine of untrusted package text
       reader.py                   live Vertex + replay package reader
       store.py                    memory and Firestore adapters
     service/
@@ -158,9 +173,10 @@ cold-clock/
       routes.py                   public API, proof and conformance endpoints
     fixtures/                     adjacent synthetic recording and truth
     scripts/
-      demo_flow.py                executable 12-step acceptance path
+      demo_flow.py                executable 17-step acceptance path (incl. background closure)
       check_a11y.py               static accessibility gate
-      record_package.py           explicit live-model recording and grading command
+      record_package.py           explicit live Gemini recording and grading command
+      record_injection_screen.py  explicit live Gemma recording and grading command
     tests/                         domain, API, reader, claims, UI and safety tests
     web/                           customer-facing product experience
     Dockerfile
@@ -189,14 +205,16 @@ cd app
 python -m pytest -q
 python scripts/check_a11y.py
 python scripts/demo_flow.py --url http://127.0.0.1:8000
+# against the deployment, wait for the real Cloud Scheduler tick instead of advancing the clock:
+python scripts/demo_flow.py --url https://cold-clock-109051079423.us-central1.run.app --wait-for-scheduler 180
 ```
 
-Current local baseline on August 16, 2026:
+Current local baseline on August 25, 2026:
 
-- `111 passed`
+- `143 passed`
 - `10/10` static accessibility checks
-- `12/12` executable HTTP acceptance checks
-- `8/8` foundational safety proof and `8/8` adversarial hardening proof
+- `17/17` executable HTTP acceptance checks, including zero-click background closure
+- `8/8` foundational safety proof and `12/12` adversarial hardening proof
 
 Those counts must be rerun after any code or copy change.
 
@@ -216,6 +234,12 @@ python scripts/record_package.py --image web/package-fixture.png
 The script calls Gemini 3.5 Flash explicitly, validates every quote, grades extracted values against
 `fixtures/package.truth.json`, and overwrites the recording only after a successful response. The
 resulting accuracy may be published only after reviewing the generated report.
+
+The Gemma injection screen has the same discipline. `python scripts/record_injection_screen.py`
+makes live Gemma 4 calls on a clean label and two poisoned labels (instruction override plus a
+fabricated "safe to use" claim; role reassignment plus a tool call) and grades them. The committed
+`fixtures/injection.recording.json` scored `3/3` on August 25, 2026: the clean label passed both
+layers, and every injected span was quarantined while the medicine facts survived.
 
 ## Deploy to Google Cloud
 
@@ -264,9 +288,16 @@ authors, medication manufacturers, pharmacies, insurers, and couriers do not end
 
 ColdClock now includes transactional Firestore wake claims, a persistent simulated demo clock, bounded retry/dead-letter behavior, Cloud Trace correlation, and explicit recovery paths for missing sensor history, unavailable review, unavailable matching stock, and courier failure. The API exposes both executable proof suites. These controls strengthen execution evidence; they do not establish clinical effectiveness.
 
+## August 25 background-closure release
+
+The headline demo no longer fabricates the receipt inside the request. `POST /api/demo/unattended` stops at the courier ETA and the Cloud Scheduler worker closes the case; the UI polls the case and its durable wakes so the closure is visible without a refresh. Gemma 4 joined as a second-layer injection screen on untrusted package text. The hardening proof grew from 8 to 12 checks (unattended stop, zero-click closure, follow-up cancellation, quarantine) and the acceptance script from 12 to 17.
+
 ## Findings and learnings
 
 - The most valuable behavior is continuity across evidence, authority, inventory, accessibility and receipt, not a temperature prediction.
+- Finishing a workflow in one HTTP request is not autonomy; the case has to close while nobody is watching. Moving the receipt from a click to a scheduler-fired courier poll was the change that made the autonomy proof count real background executions.
+- A wake-fired timeline entry with an unlisted actor silently breaks a fail-closed autonomy proof. Naming the worker as an agent, and testing the proof after a wake fires, caught that.
+- A small model is a good second opinion on untrusted text when its output is constrained to verbatim spans that must exist in the source; that makes the answer checkable and keeps the model out of every decision.
 - Exact-quote extraction is useful only when rejected fields stay visible and incomplete history becomes a safe stop.
 - Durable action needs deterministic registration, transactional claiming and idempotent action records.
 - This validates one synthetic package workflow, not medication coverage or clinical benefit.
@@ -277,7 +308,17 @@ ColdClock's domain workflow, UI, fixtures, evaluation, failure laboratory, resea
 
 ## Automated background execution
 
-The deployed cold-clock-wake-scan Cloud Scheduler job calls the internal wake worker every minute with a Google-signed OIDC token from the dedicated agent-wake-scheduler service account. The application verifies audience, issuer, email and email verification before scanning. Unauthenticated calls return HTTP 401. The worker claims Firestore wakes transactionally, executes idempotent actions, bounds retries and retains dead letters. Reproduce or update the job with app/infra/provision_scheduler.ps1 after deployment.
+The deployed `cold-clock-wake-scan` Cloud Scheduler job calls the internal wake worker every minute with a Google-signed OIDC token from the dedicated `agent-wake-scheduler` service account. The application verifies audience, issuer, email and email verification before scanning. Unauthenticated calls return HTTP 401. The worker claims Firestore wakes transactionally, executes idempotent actions, bounds retries and retains dead letters. Reproduce or update the job with `app/infra/provision_scheduler.ps1` after deployment.
+
+Three wake kinds exist, all registered idempotently by `cold_clock/followups.py`:
+
+| Wake | Due | What the worker does |
+|---|---|---|
+| `courier_status_poll` | sandbox courier ETA | Polls the courier; on a confirmed handoff, records the receipt, resolves the case, and cancels the receipt reminder (marked, never deleted) |
+| `review_followup` | 30 min after routing | Surfaces a still-unresolved review in the backup queue; cancelled the moment a pharmacist decides |
+| `receipt_followup` | 60 min after dispatch | Surfaces a still-unconfirmed delivery; never dispatches a duplicate courier |
+
+Every execution is recorded on the case (`background_executions`) with the wake id, outcome, attempt, and the verified trigger identity (`google-oidc` from Cloud Scheduler, `simulated-advance` from the clock control). The autonomy proof counts them, and a timeline entry by the **Background wake agent** is classified automatic — an unknown actor would invalidate the proof instead.
 
 
 ## Public developer service

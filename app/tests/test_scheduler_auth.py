@@ -19,6 +19,17 @@ def test_valid_google_oidc_identity(monkeypatch):
     assert result=={"mode":"google-oidc","email":"scheduler@example.test"}
 
 
+def test_any_configured_audience_is_accepted_and_none_matching_is_rejected(monkeypatch):
+    monkeypatch.setenv("SCHEDULER_AUDIENCE","https://a.test, https://b.test/");monkeypatch.setenv("SCHEDULER_SERVICE_ACCOUNT","scheduler@example.test")
+    claims={"email":"scheduler@example.test","email_verified":True,"iss":"https://accounts.google.com"}
+    def verifier(token,aud):
+        if aud!="https://b.test":raise ValueError("Token has wrong audience")
+        return claims
+    assert verify_scheduler_token("Bearer token",verifier)["mode"]=="google-oidc"
+    def never(token,aud):raise ValueError("Token has wrong audience")
+    with pytest.raises(ValueError,match="audience rejected"):verify_scheduler_token("Bearer token",never)
+
+
 def test_wrong_email_is_rejected(monkeypatch):
     monkeypatch.setenv("SCHEDULER_AUDIENCE","https://service.test");monkeypatch.setenv("SCHEDULER_SERVICE_ACCOUNT","scheduler@example.test")
     with pytest.raises(ValueError,match="identity rejected"):verify_scheduler_token("Bearer token",lambda token,aud:{"email":"attacker@example.test","email_verified":True,"iss":"accounts.google.com"})

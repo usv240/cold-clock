@@ -26,9 +26,10 @@ GOOGLE_SERVICES=[
  {"name":"Gemini 3.5 Flash on Vertex AI","role":"Live fail-closed grounded package extraction"},
  {"name":"Google Gen AI SDK","role":"Required Google agent framework"},
  {"name":"Gemini Embedding 001","role":"Semantic evidence routing; never authority decisions"},
+ {"name":"Gemma 4 on Vertex AI","role":"Second-layer prompt-injection screen on untrusted package text"},
  {"name":"Cloud Run","role":"Public container service"},
  {"name":"Firestore","role":"Durable cases and transactional wake state"},
- {"name":"Cloud Scheduler","role":"OIDC-authenticated background wake scans"},
+ {"name":"Cloud Scheduler","role":"Every-minute OIDC-authenticated wake scans that close dispatched cases at the courier ETA"},
  {"name":"Cloud Trace","role":"End-to-end request observability"},
  {"name":"Secret Manager","role":"HMAC pepper for API-key and network-fingerprint protection"},
 ]
@@ -60,6 +61,6 @@ WEB=Path(__file__).resolve().parent.parent/"web"; app.mount("/static",StaticFile
 
 @app.get("/health")
 def health()->dict[str,Any]:
- return {"ok":True,"project":"cold-clock","google_cloud_project":PROJECT,"persistence":persistence,"synthetic_demo":True,"operating_mode":"protected-deidentified-pilot" if ALLOW_DEIDENTIFIED else "public-synthetic-pilot","pilot_api":"/api/pilot","public_data_policy":"authorized-deidentified" if ALLOW_DEIDENTIFIED else "synthetic-only","global_reset":ALLOW_GLOBAL_RESET,"clinical_decisions":"human-only","model":"gemini-3.5-flash","models":["gemini-3.5-flash","gemini-embedding-001"],"model_mode":"live-fail-closed" if ENABLE_LIVE_MODELS else "local-test-no-model","tracing":trace_status,"durable_wakes":"firestore-transactional" if USE_FIRESTORE else "memory-transactional","domain_state_writes":"transactional-optimistic-versioning","simulation_clock":True,"autonomy":"event-driven-safe-auto-continuation","developer_api":{"base":"/v1","key_issuance":"/api/developer/keys","daily_limit":50},"google_services":GOOGLE_SERVICES}
+ return {"ok":True,"project":"cold-clock","google_cloud_project":PROJECT,"persistence":persistence,"synthetic_demo":True,"operating_mode":"protected-deidentified-pilot" if ALLOW_DEIDENTIFIED else "public-synthetic-pilot","pilot_api":"/api/pilot","public_data_policy":"authorized-deidentified" if ALLOW_DEIDENTIFIED else "synthetic-only","global_reset":ALLOW_GLOBAL_RESET,"clinical_decisions":"human-only","model":"gemini-3.5-flash","models":["gemini-3.5-flash","gemini-embedding-001","gemma-4-26b-a4b-it-maas"],"model_mode":"live-fail-closed" if ENABLE_LIVE_MODELS else "local-test-no-model","tracing":trace_status,"durable_wakes":"firestore-transactional" if USE_FIRESTORE else "memory-transactional","background_execution":{"worker":"/internal/wakes/scan","trigger":"Cloud Scheduler every minute, Google-signed OIDC","closes_cases":"courier_status_poll wake at sandbox ETA","unattended_demo":"/api/demo/unattended"},"domain_state_writes":"transactional-optimistic-versioning","simulation_clock":True,"autonomy":"event-driven-safe-auto-continuation","developer_api":{"base":"/v1","key_issuance":"/api/developer/keys","daily_limit":50},"google_services":GOOGLE_SERVICES}
 @app.get("/",include_in_schema=False)
 def index()->FileResponse:return FileResponse(WEB/"index.html")

@@ -15,6 +15,8 @@ During a power outage, a household should not have to reconstruct medication sto
 | Lost-update prevention | Two-reader concurrent-write test | Stale writer rejected; newer state preserved | Automated test implemented |
 | Recovery from missing sensor/reviewer/stock/courier | Hardening proof endpoint | Every safe-stop check passes | Implemented |
 | Durable continuation | Scheduler and wake receipts | One idempotent wake; no duplicate action | Implemented |
+| Unattended closure | `background_executions` with `trigger = google-oidc` | Dispatched case resolves from a Cloud Scheduler tick with zero operator interactions | Implemented; verified against the deployment (see `VALIDATION_EVIDENCE.md`) |
+| Untrusted-text guardrail | `injection_screen` receipt and graded recording | Injected spans quarantined; medicine facts preserved; clean label untouched | Implemented; 3/3 live-graded |
 
 ## External tabletop protocol
 

@@ -1,5 +1,33 @@
 # ColdClock: Validation Evidence
 
+## Verified on August 25, 2026 — background-closure release
+
+| Gate | Result | Command or endpoint |
+|---|---:|---|
+| Python tests | 144 passed | `cd app; python -m pytest -q` |
+| Static accessibility checks | 10/10 | `python scripts/check_a11y.py` |
+| Executable HTTP demonstration, local | 17/17 | `python scripts/demo_flow.py --url http://127.0.0.1:8041` |
+| Executable HTTP demonstration, **live with real Cloud Scheduler tick** | 17/17 | `python scripts/demo_flow.py --url https://cold-clock-109051079423.us-central1.run.app --wait-for-scheduler 240` |
+| Foundational safety proof | 8/8 | `GET /api/proof` |
+| Adversarial hardening proof | 12/12 | `GET /api/hardening/proof` |
+| Live Gemma injection-screen recording | 3/3 | `python scripts/record_injection_screen.py` → `app/fixtures/injection.recording.json` |
+
+### Live unattended closure receipt (deployed revision `cold-clock-00038-zcf`)
+
+Case `cc-3af59be1eafa4ed6a5f8a0f0e13deb02`, started with one `POST /api/demo/unattended` and then left alone:
+
+- Request returned `delivery_dispatched` with a 1-minute sandbox ETA and no `received_at`.
+- Live model receipts in the same response: Gemini 3.5 Flash `live-vertex-ai`, 5/5 fields, 0 invented; Gemini Embedding 001 `live: true`, winner `label-storage-evidence`; Gemma 4 `live-vertex-ai`, clean, 503 ms.
+- **101 seconds later the case was `resolved` with nobody at the screen.** `background_executions[0]`: kind `courier_status_poll`, outcome `case_closed`, attempt 1, trigger `google-oidc`, identity `agent-wake-scheduler@agentic-fleet-2026.iam.gserviceaccount.com`.
+- Last timeline entry: `Background wake agent — Courier confirmed handoff`.
+- Wake rows: `courier_status_poll: done`; `receipt_followup: cancelled (case resolved by courier confirmation)`.
+- Autonomy proof: 10 trace events, 9 automatic, 1 human authority, 0 unclassified, `background_wake_executions: 1`, `cloud_scheduler_triggered_executions: 1`, `closed_by_background_wake: true`, `operator_continue_clicks: 0`, `proof_integrity: verified`.
+- Cloud Run request log: `POST /internal/wakes/scan` returns 200 every minute on the serving revision; an unauthenticated call returns 401.
+
+### Defect found and fixed during this release
+
+The first deploy of the day left the Cloud Scheduler worker returning 401 on every tick. `deploy.sh` re-derived `SCHEDULER_AUDIENCE` from the service's `status.url`, which Cloud Run now reports in its hashed form, while the scheduler job mints its OIDC token for the deterministic project-number URL. The worker now accepts every configured audience (comma-separated), the deploy script sets both forms plus the job's own audience, and it routes traffic to the latest revision so a deploy can no longer be silently masked by an earlier canary pin. Regression test: `tests/test_scheduler_auth.py`.
+
 ## Verified locally on August 22, 2026
 
 | Gate | Result | Command or endpoint |

@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+from cold_clock.followups import register_followups
 from cold_clock.store import CaseStore
 from spine.public_trace import public_action_trace
 from cold_clock.workflow import (
@@ -21,6 +21,7 @@ from cold_clock.workflow import (
     record_review,
     request_review,
     run_full_demo,
+    run_unattended_demo,
     trigger_outage,
 )
 
@@ -33,14 +34,6 @@ class ReviewRequest(BaseModel):
 
 def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool = False, model_runner=None) -> APIRouter:
     router = APIRouter(prefix="/api", tags=["cold-clock"])
-
-    def schedule(case: dict[str, Any], kind: str, minutes: int) -> None:
-        if scheduler is None:
-            return
-        wake = scheduler.sleep_for(case["case_id"], kind, timedelta(minutes=minutes))
-        rows = case.setdefault("scheduled_wakes", [])
-        if not any(row["wake_id"] == wake.wake_id for row in rows):
-            rows.append({"wake_id": wake.wake_id, "kind": wake.kind, "due_at": wake.due_at.isoformat()})
 
     def require(case_id: str) -> dict[str, Any]:
         case = store.get(case_id)
@@ -122,16 +115,45 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
     def get_case_autonomy_proof(case_id: str) -> dict[str, Any]:
         return public_view(require(case_id))["autonomy_proof"]
 
+    @router.get("/cases/{case_id}/wakes")
+    def get_case_wakes(case_id: str) -> dict[str, Any]:
+        """Durable wake rows for a case: what the Cloud Scheduler worker will do, did, or cancelled."""
+        require(case_id)
+        if scheduler is None:
+            return {"case_id": case_id, "wakes": [], "scan_cadence": "none"}
+        rows = scheduler._store.for_run(case_id)
+        return {
+            "case_id": case_id,
+            "simulated_now": scheduler.clock.now().isoformat(),
+            "scan_cadence": "Cloud Scheduler calls /internal/wakes/scan every minute with a Google-signed OIDC token",
+            "wakes": [
+                {
+                    "wake_id": row.wake_id,
+                    "kind": row.kind,
+                    "status": row.status.value,
+                    "attempts": row.attempts,
+                    "due_at": row.due_at.isoformat(),
+                    "cancelled_reason": row.cancelled_reason,
+                    "last_error": row.last_error,
+                }
+                for row in rows
+            ],
+        }
+
     @router.post("/cases/{case_id}/autopilot")
     def autopilot(case_id: str) -> dict[str, Any]:
         """Resume all currently safe work and stop at the next external or authority event."""
-        return mutate(case_id, advance_safe_automation)
+        def resume(case: dict[str, Any]) -> None:
+            advance_safe_automation(case)
+            register_followups(case, scheduler)
+
+        return mutate(case_id, resume)
     @router.post("/cases/{case_id}/outage")
     def outage(case_id: str) -> dict[str, Any]:
         def handle_event(case: dict[str, Any]) -> None:
             trigger_outage(case)
             advance_safe_automation(case)
-            schedule(case, "review_followup", 30)
+            register_followups(case, scheduler)
 
         return mutate(case_id, handle_event)
 
@@ -144,8 +166,7 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
         def apply_review_and_resume(case: dict[str, Any]) -> None:
             record_review(case, request.disposition, request.reviewer_name, request.rationale)
             advance_safe_automation(case)
-            if case["status"] == "delivery_dispatched":
-                schedule(case, "receipt_followup", 60)
+            register_followups(case, scheduler)
 
         return mutate(case_id, apply_review_and_resume)
 
@@ -173,15 +194,36 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
         store.put(case)
         return case
 
+    @router.post("/demo/unattended")
+    def unattended_demo() -> dict[str, Any]:
+        """Run every safe transition and stop at the courier ETA.
+
+        The receipt is deliberately not fabricated here. A durable ``courier_status_poll`` wake is
+        registered; the Cloud Scheduler worker polls the sandbox courier at the ETA and closes the
+        case with nobody at the screen. Poll ``GET /api/cases/{case_id}`` to watch it happen.
+        """
+        case = create_case()
+        if model_runner is not None:
+            try:
+                model_runner.apply(case)
+            except Exception as exc:
+                raise HTTPException(status_code=503, detail="live model evidence unavailable; no replay substituted") from exc
+        run_unattended_demo(case)
+        register_followups(case, scheduler)
+        store.put(case)
+        return public_view(case)
+
     @router.get("/model-evidence")
     def model_evidence() -> dict[str, Any]:
         return {
-            "execution": "POST /api/demo/full returns live, fail-closed model receipts",
+            "execution": "POST /api/demo/full and POST /api/demo/unattended return live, fail-closed model receipts",
             "models": [
                 {"name": "gemini-3.5-flash", "purpose": "quote-grounded synthetic artifact extraction", "docs": "https://cloud.google.com/vertex-ai/generative-ai/docs/models/gemini/3-5-flash"},
                 {"name": "gemini-embedding-001", "purpose": "semantic evidence routing without authority decisions", "docs": "https://docs.cloud.google.com/vertex-ai/generative-ai/docs/embeddings/get-text-embeddings"},
+                {"name": "gemma-4-26b-a4b-it-maas", "purpose": "second-layer prompt-injection screen on untrusted package text; receipt in injection_screen", "docs": "https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/gemma"},
             ],
             "replay_policy": "recorded outputs are test-only; deployed full workflows do not silently substitute them",
+            "degradation_policy": "extraction and routing fail closed; the Gemma screen reports live=false and the deterministic pattern layer stands alone",
         }
 
     @router.post("/reset")
@@ -247,6 +289,11 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
                     "requirement": "takes action",
                     "implementation": "sandbox inventory reservation and courier dispatch after approval",
                     "proof": "timeline and executable demo flow",
+                },
+                {
+                    "requirement": "runs asynchronously in the background",
+                    "implementation": "Cloud Scheduler calls the OIDC-protected wake worker every minute; a durable courier_status_poll wake closes the case at the ETA",
+                    "proof": "POST /api/demo/unattended then GET /api/cases/{case_id}/wakes and the autonomy proof's cloud_scheduler_triggered_executions",
                 },
                 {
                     "requirement": "Gemini 3.5 or newer",

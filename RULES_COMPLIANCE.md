@@ -3,27 +3,37 @@
 | Rules.md requirement | Evidence | Status |
 |---|---|---|
 | One category | The Taskmaster | Pass |
-| Gemini 3.5+ | Deployed `/api/demo/full` live fail-closed Gemini 3.5 Flash receipt, plus adjacent truth/accuracy files | Pass |
-| Google agent framework | Google Gen AI SDK (`google-genai`) | Pass |
-| Google Cloud service | Cloud Run, Firestore, Cloud Trace | Pass |
-| Autonomous workflow beyond chat | Event → evidence → human gate → sandbox fulfillment → delivery → receipt, with durable follow-up wakes | Pass |
-| Working public access | Public product, operational workspace, OpenAPI and proof endpoints | Pass |
+| Gemini 3.5+ via Gemini API or Vertex AI | Deployed `/api/demo/full` and `/api/demo/unattended` return live fail-closed Gemini 3.5 Flash receipts (`extraction.mode = live-vertex-ai`), plus adjacent truth/accuracy files | Pass |
+| Google agent framework | Google Gen AI SDK (`google-genai`) for every model call | Pass |
+| Google Cloud service | Cloud Run, Firestore, Cloud Scheduler, Cloud Trace, Secret Manager — inventory at `/health` | Pass |
+| Runs asynchronously in the background | Cloud Scheduler calls the OIDC-verified worker every minute; the `courier_status_poll` wake closes a dispatched case at the ETA with no operator; proof at `GET /api/cases/{id}/wakes` and `autonomy_proof.cloud_scheduler_triggered_executions` | Pass |
+| Autonomous workflow beyond chat | Event → evidence → human gate → sandbox fulfillment → dispatch → scheduler-fired courier confirmation → closed case | Pass |
+| Working public access | Public product, operations workspace, OpenAPI and proof endpoints; no login | Pass |
 | Public repository | https://github.com/usv240/cold-clock | Pass |
-| Reproducible setup | README commands, Dockerfile, deploy script and Firestore indexes | Pass |
-| Architecture diagram | `docs/architecture.svg` | Pass |
+| Reproducible setup | README commands, Dockerfile, deploy script, scheduler provisioning script, Firestore indexes | Pass |
+| Architecture diagram | `docs/architecture.svg` (Gemini, Embedding, Gemma, Cloud Run, Firestore, Scheduler, Trace, human gate) | Pass |
 | Data-source disclosure | README research ledger and per-source claim boundaries | Pass |
 | Findings and learnings | README section and validation ledger | Pass |
-| New-work disclosure | README identifies the reused production-spine primitives and independent work | Pass |
-| Under-four-minute public video | Must be published by entrant with Cloud execution visible | Entrant action |
-| Additional Google AI model | Gemini Embedding 001 performs operational semantic routing; claim only with a live `semantic_routing` receipt | Implemented; live evidence recorded |
+| New-work disclosure | README identifies the reused production-spine primitives and independent work; first commit 2026-08-16 | Pass |
+| Under-four-minute public video | Must be published by entrant with Cloud execution visible; shot list in `VIDEO_RELEASE_CHECKLIST.md` | Entrant action |
+| Additional Google AI models (+0.2 each) | Gemini Embedding 001 (semantic routing) and Gemma 4 (injection screen) both run live in the deployed workflow with receipts; recorded and graded evidence in `app/fixtures` | Implemented; live evidence recorded |
 | Optional public content/social post | Drafts are in `docs/`; eligible platform publication remains entrant action | Entrant action |
 
 ColdClock uses only fictional people and synthetic operational connectors. It makes no clinical outcome claim.
+
+## Judging-criteria evidence map
+
+| Criterion | Where a judge can verify it in under a minute |
+|---|---|
+| Innovation & operational utility (40%) | Click **Run unattended**: the packet routes, the synthetic pharmacist decision is recorded, reservation and dispatch happen, and within about two minutes the Cloud Scheduler wake closes the case while nothing is clicked. Autonomy rail shows `0 continue clicks`. |
+| Architectural discipline (30%) | `TECHNICAL_DESIGN.md`; optimistic-version Firestore writes (HTTP 409 on stale); transactional wake claims with leases, bounded retry and dead letters; OIDC-verified worker; Secret Manager pepper; `/api/hardening/proof` 12/12. |
+| Demo & production readiness (30%) | `/health` inventory, `/api/proof`, `/api/hardening/proof`, `/api/cases/{id}/wakes`, Cloud Run revision and Cloud Scheduler job visible in console, `demo_flow.py --wait-for-scheduler`. |
 
 ## Additional production evidence
 
 | Requirement | Implementation | Status |
 |---|---|---|
-| Self-service integration | Keyless judge UI plus protected `/v1`, no account required, 50 requests per key and network per UTC day | Pass |
+| Self-service integration | Keyless judge UI plus protected `/v1`, no account required, 50 requests per key and network per UTC day; `/v1/unattended-runs` for integrators | Pass |
 | Secure public endpoint | HMAC-only keys, fingerprint-only IP handling, Secret Manager pepper, atomic Firestore quota transactions | Pass |
-| Visible autonomy | Cumulative trace-derived receipt, direct proof endpoint, zero continue-click count, honest synthetic-event disclosure | Pass |
+| Prompt-injection guardrail | Pattern layer plus Gemma 4 quarantine instruction-shaped package text before routing; spans shown, never followed | Pass |
+| Visible autonomy | Cumulative trace-derived receipt, background-execution counts, direct proof endpoint, zero continue-click count, honest synthetic-event disclosure | Pass |

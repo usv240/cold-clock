@@ -20,7 +20,7 @@ Each key and originating network fingerprint may make 50 authenticated requests 
 curl -X POST "$BASE_URL/v1/tabletop-runs" -H "X-API-Key: $API_KEY"
 ```
 
-For input-driven use, create a case with `POST /v1/cases`, send an idempotent sensor event, record the qualified review decision, and later send the receipt event. ColdClock automatically executes all permitted transitions between those legitimate external boundaries. See `/docs` for request schemas and `GET /v1/cases/{case_id}/autonomy-proof` for derived execution proof.
+For input-driven use, create a case with `POST /v1/cases`, send an idempotent sensor event, and record the qualified review decision. ColdClock automatically executes all permitted transitions between those legitimate external boundaries, and after dispatch a durable `courier_status_poll` wake — fired by Cloud Scheduler at the courier ETA — closes the case on its own. `POST /v1/cases/{case_id}/receipt-events` remains available if your household confirms first; the wake then stands down. `POST /v1/unattended-runs` starts a synthetic case that stops at the ETA so you can watch the background closure. See `/docs` for request schemas, `GET /api/cases/{case_id}/wakes` for wake rows, and `GET /v1/cases/{case_id}/autonomy-proof` for derived execution proof.
 
 The public deployment accepts synthetic data only. Authorized de-identified data is supported only when `ALLOW_DEIDENTIFIED_PILOT=true` in a protected deployment. Do not send PHI to the public service. ColdClock does not make medication-use decisions.
 
@@ -29,5 +29,6 @@ The public deployment accepts synthetic data only. Authorized de-identified data
 - API-key and IP-fingerprint digests use a pepper injected from Google Secret Manager.
 - Firestore transactions atomically enforce key issuance and both quota scopes.
 - Resource IDs are unguessable; the API exposes no cross-customer list endpoint.
-- Cloud Run, Firestore, Cloud Scheduler, Cloud Trace, Gemini 3.5 Flash, and Gemini Embedding 001 power the deployed workflow.
+- Cloud Run, Firestore, Cloud Scheduler, Cloud Trace, Gemini 3.5 Flash, Gemini Embedding 001, and Gemma 4 power the deployed workflow.
+- Package text is treated as untrusted: a pattern layer plus Gemma 4 quarantine instruction-shaped spans before routing; the receipt is in `injection_screen`.
 

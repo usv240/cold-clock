@@ -11,20 +11,31 @@
                   "access":  "Vertex AI via Google Gen AI SDK",
                   "live_evidence":  "app/fixtures/package.recording.json",
                   "truth":  "app/fixtures/package.truth.json",
-                  "mode":  "live-fail-closed in deployed full workflow; replay only in tests",
-                  "additional_model":  "gemini-embedding-001",
-                  "live_receipt":  "semantic_routing in POST /api/demo/full"
+                  "mode":  "live-fail-closed in deployed workflows; replay only in tests",
+                  "additional_models":  [
+                      {"name": "gemini-embedding-001", "role": "semantic evidence routing", "live_receipt": "semantic_routing in POST /api/demo/full and /api/demo/unattended"},
+                      {"name": "gemma-4-26b-a4b-it-maas", "role": "second-layer prompt-injection screen on package text", "live_receipt": "injection_screen in POST /api/demo/full and /api/demo/unattended", "graded_recording": "app/fixtures/injection.recording.json"}
+                  ]
               },
     "google_cloud":  [
                          "Cloud Run",
                          "Firestore",
-                         "Cloud Trace"
+                         "Cloud Scheduler",
+                         "Cloud Trace",
+                         "Secret Manager"
                      ],
+    "background_execution":  {
+                                 "worker":  "POST /internal/wakes/scan (OIDC-verified)",
+                                 "trigger":  "Cloud Scheduler job cold-clock-wake-scan, every minute",
+                                 "unattended_demo":  "POST /api/demo/unattended stops at the courier ETA; the scheduler wake closes the case",
+                                 "proof":  "GET /api/cases/{case_id}/wakes and autonomy_proof.closed_by_background_wake"
+                             },
     "architecture":  "docs/architecture.svg",
     "spin_up":  "README.md",
     "data":  "synthetic package, sensor, people and sandbox connectors; public cited guidance",
     "reused_code":  "disclosed production-spine clock, wake, observability, quarantine and verifier primitives",
     "rules_check":  "RULES_COMPLIANCE.md",
     "proof_url":  "https://cold-clock-109051079423.us-central1.run.app/api/proof",
+    "hardening_proof_url":  "https://cold-clock-109051079423.us-central1.run.app/api/hardening/proof",
     "public_action_trace":  "per-record /trace endpoint with explicit redaction policy"
 }

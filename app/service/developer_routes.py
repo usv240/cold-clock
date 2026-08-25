@@ -1,12 +1,12 @@
 """Stable authenticated API for ColdClock integrations."""
 from __future__ import annotations
-from datetime import timedelta
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 
+from cold_clock.followups import register_followups
 from cold_clock.pilot import create_pilot_case, ingest_sensor_event
 from cold_clock.store import CaseStore
-from cold_clock.workflow import advance_safe_automation, confirm_delivery, public_view, record_review, run_full_demo
+from cold_clock.workflow import advance_safe_automation, confirm_delivery, public_view, record_review, run_full_demo, run_unattended_demo
 from service.pilot_routes import PilotCaseRequest, SensorEventRequest
 from service.routes import ReviewRequest
 from spine.developer_access import DeveloperAccessManager, api_key_guard
@@ -45,9 +45,7 @@ def build_developer_router(store: CaseStore, access: DeveloperAccessManager, sch
         try:
             ingest_sensor_event(case, payload.model_dump())
             advance_safe_automation(case)
-            if scheduler is not None and case["status"] == "awaiting_professional_review":
-                wake = scheduler.sleep_for(case_id, "review_followup", timedelta(minutes=30))
-                case.setdefault("scheduled_wakes", []).append({"wake_id": wake.wake_id, "kind": wake.kind, "due_at": wake.due_at.isoformat()})
+            register_followups(case, scheduler)
         except ValueError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
         return save(case)
@@ -58,9 +56,7 @@ def build_developer_router(store: CaseStore, access: DeveloperAccessManager, sch
         try:
             record_review(case, payload.disposition, payload.reviewer_name, payload.rationale)
             advance_safe_automation(case)
-            if scheduler is not None and case["status"] == "delivery_dispatched":
-                wake = scheduler.sleep_for(case_id, "receipt_followup", timedelta(minutes=60))
-                case.setdefault("scheduled_wakes", []).append({"wake_id": wake.wake_id, "kind": wake.kind, "due_at": wake.due_at.isoformat()})
+            register_followups(case, scheduler)
         except ValueError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
         return save(case)
@@ -94,5 +90,19 @@ def build_developer_router(store: CaseStore, access: DeveloperAccessManager, sch
         result = run_full_demo(case)
         store.put(case)
         return result
+
+    @router.post("/unattended-runs", status_code=201)
+    def unattended() -> dict[str, Any]:
+        """Run every safe transition, then leave closure to the Cloud Scheduler wake worker."""
+        from cold_clock.workflow import create_case
+        case = create_case()
+        if model_runner is not None:
+            try:
+                model_runner.apply(case)
+            except Exception as exc:
+                raise HTTPException(status_code=503, detail="live Gemini evidence unavailable; no replay substituted") from exc
+        run_unattended_demo(case)
+        register_followups(case, scheduler)
+        return save(case)
 
     return router
