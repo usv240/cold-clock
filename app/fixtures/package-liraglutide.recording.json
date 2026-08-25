@@ -1,0 +1,45 @@
+{
+  "model": "gemini-3.5-flash",
+  "mode": "recorded-live-vertex-ai",
+  "synthetic": true,
+  "image": "package-fixture-liraglutide.png",
+  "transcription": "SYNTHETIC DEMONSTRATION PACKAGE - NOT FOR HUMAN USE\n\nLIRAGLUTIDE-DEMO INJECTION\n\n18 mg/3 mL (6 mg/mL)\n3 mL prefilled pen\n\nRx only Lot DEMO-5117\nOpened 2026-08-14\n\nFictional package; no real patient, prescription, lot, or product.\nStore refrigerated 2-8 C (36-46 F). Do not freeze.",
+  "fields": [
+    {
+      "key": "name",
+      "value": "LIRAGLUTIDE-DEMO INJECTION",
+      "quote": "LIRAGLUTIDE-DEMO INJECTION",
+      "confidence": 1.0,
+      "provenance": "gemini-3.5-flash"
+    },
+    {
+      "key": "strength",
+      "value": "18 mg/3 mL (6 mg/mL)",
+      "quote": "18 mg/3 mL (6 mg/mL)",
+      "confidence": 1.0,
+      "provenance": "gemini-3.5-flash"
+    },
+    {
+      "key": "form",
+      "value": "3 mL prefilled pen",
+      "quote": "3 mL prefilled pen",
+      "confidence": 1.0,
+      "provenance": "gemini-3.5-flash"
+    },
+    {
+      "key": "lot",
+      "value": "DEMO-5117",
+      "quote": "Lot DEMO-5117",
+      "confidence": 1.0,
+      "provenance": "gemini-3.5-flash"
+    },
+    {
+      "key": "opened_on",
+      "value": "2026-08-14",
+      "quote": "Opened 2026-08-14",
+      "confidence": 1.0,
+      "provenance": "gemini-3.5-flash"
+    }
+  ],
+  "dropped": []
+}

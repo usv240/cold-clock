@@ -241,10 +241,11 @@ python scripts/demo_flow.py --url https://cold-clock-109051079423.us-central1.ru
 
 Current local baseline on August 25, 2026:
 
-- `158 passed`
+- `172 passed`
 - `10/10` static accessibility checks
 - `21/21` executable HTTP acceptance checks, including zero-click background closure, signed receipts and outage fan-out
-- `8/8` foundational safety proof and `17/17` adversarial hardening proof
+- `8/8` foundational safety proof and `20/20` adversarial hardening proof
+- `python scripts/browser_check.py --url <run.app> --wait 240` drives the product in a real Chromium: unattended run, real reviewer dialog, hands off, page closes itself from the scheduler wake, zero page errors
 
 Those counts must be rerun after any code or copy change.
 
@@ -264,6 +265,18 @@ python scripts/record_package.py --image web/package-fixture.png
 The script calls Gemini 3.5 Flash explicitly, validates every quote, grades extracted values against
 `fixtures/package.truth.json`, and overwrites the recording only after a successful response. The
 resulting accuracy may be published only after reviewing the generated report.
+
+Three synthetic package fixtures are graded, not one. `python scripts/make_fixtures.py` renders two
+more fictional products (different layouts, strengths, forms, lots); `python scripts/record_package.py --all`
+grades all three live. On August 25, 2026 Gemini 3.5 Flash matched **14/14 fields across the three
+fixtures with 0 invented values**; the deployed workflow rotates fixtures by case id so repeated
+demos exercise every product.
+
+| Fixture | Fields | Matched | Invented |
+|---|---:|---:|---:|
+| `package-fixture.png` (insulin glargine-yfgn, vial) | 4 | 4 | 0 |
+| `package-fixture-liraglutide.png` (prefilled pen) | 5 | 5 | 0 |
+| `package-fixture-adalimumab.png` (single-dose syringe) | 5 | 5 | 0 |
 
 The Gemma injection screen has the same discipline. `python scripts/record_injection_screen.py`
 makes live Gemma 4 calls on a clean label and two poisoned labels (instruction override plus a
@@ -311,7 +324,8 @@ Deployment enables Firestore through `USE_FIRESTORE=true`. Before recording the 
 
 ## Known limitations and next validation
 
-- One synthetic medicine fixture does not establish general medication coverage.
+- Three synthetic medicine fixtures do not establish general medication coverage; real packaging is far messier than rendered labels.
+- The public queue lists the 60 most recently opened cases; older synthetic cases stay in Firestore but are not shown.
 - Live structured-label retrieval still needs caching, version checks, and failure-mode testing.
 - A pharmacist must review the packet, terminology, dispositions, and safe-stop behavior.
 - Real pharmacy, coverage, and delivery integrations require contracts and authorization.
@@ -358,7 +372,7 @@ Three wake kinds exist, all registered idempotently by `cold_clock/followups.py`
 
 | Wake | Due | What the worker does |
 |---|---|---|
-| `courier_status_poll` | sandbox courier ETA | Polls the courier; on a confirmed handoff, records the receipt, resolves the case, and cancels the receipt reminder (marked, never deleted) |
+| `courier_status_poll` | sandbox courier ETA | Asks the sandbox courier connector for the job state (a stateful record created at dispatch, not a timer). Confirmed handoff → receipt recorded, case resolved, receipt reminder cancelled (marked, never deleted). `in_transit` → re-poll a minute later, at most three times. Never confirmed → a visible "delivery unconfirmed" hold for a person; no receipt is invented. The failure lab can inject the delay: `POST /api/hardening/cases/{id}/courier-delay` |
 | `outage_watch` | 15 min after a grid outage, up to 3 rechecks | Judges the case from its own readings: excursion → review routed; in range → keep watching; silent → safe stop |
 | `review_followup` | 30 min after routing | Surfaces a still-unresolved review in the backup queue; cancelled the moment a pharmacist decides |
 | `receipt_followup` | 60 min after dispatch | Surfaces a still-unconfirmed delivery; never dispatches a duplicate courier |

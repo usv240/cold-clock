@@ -1,0 +1,45 @@
+{
+  "model": "gemini-3.5-flash",
+  "mode": "recorded-live-vertex-ai",
+  "synthetic": true,
+  "image": "package-fixture-adalimumab.png",
+  "transcription": "SYNTHETIC DEMONSTRATION PACKAGE - NOT FOR HUMAN USE\n\nADALIMUMAB-DEMO INJECTION\n\n40 mg/0.4 mL\n\nsingle-dose prefilled syringe\n\nRx only Lot DEMO-7730\n\nOpened 2026-08-18\n\nFictional package; no real patient, prescription, lot, or product.\nStore refrigerated 2-8 C (36-46 F). Do not freeze.",
+  "fields": [
+    {
+      "key": "name",
+      "value": "ADALIMUMAB-DEMO INJECTION",
+      "quote": "ADALIMUMAB-DEMO INJECTION",
+      "confidence": 0.99,
+      "provenance": "gemini-3.5-flash"
+    },
+    {
+      "key": "strength",
+      "value": "40 mg/0.4 mL",
+      "quote": "40 mg/0.4 mL",
+      "confidence": 0.99,
+      "provenance": "gemini-3.5-flash"
+    },
+    {
+      "key": "form",
+      "value": "single-dose prefilled syringe",
+      "quote": "single-dose prefilled syringe",
+      "confidence": 0.99,
+      "provenance": "gemini-3.5-flash"
+    },
+    {
+      "key": "lot",
+      "value": "DEMO-7730",
+      "quote": "Lot DEMO-7730",
+      "confidence": 0.99,
+      "provenance": "gemini-3.5-flash"
+    },
+    {
+      "key": "opened_on",
+      "value": "2026-08-18",
+      "quote": "Opened 2026-08-18",
+      "confidence": 0.99,
+      "provenance": "gemini-3.5-flash"
+    }
+  ],
+  "dropped": []
+}

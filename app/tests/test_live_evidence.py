@@ -32,3 +32,6 @@ def test_live_models_change_the_operational_record():
     assert case["timeline"][-2]["actor"] == "Live evidence agent"
     assert case["timeline"][-1]["actor"] == "Guardrail agent"
     assert case["injection_screen"]["mode"] == "pattern-only"
+    assert case["package_fixture"].startswith("package-fixture") and case["model_execution"]["artifact"] == case["package_fixture"]
+    names = {runner.pick_fixture({"case_id": f"cc-{i:02x}"}).name for i in range(12)}
+    assert names == {"package-fixture.png", "package-fixture-liraglutide.png", "package-fixture-adalimumab.png"}

@@ -1,0 +1,13 @@
+{
+  "image": "package-fixture-liraglutide.png",
+  "matched": 5,
+  "total": 5,
+  "invented": 0,
+  "checks": {
+    "name": true,
+    "strength": true,
+    "form": true,
+    "lot": true,
+    "opened_on": true
+  }
+}

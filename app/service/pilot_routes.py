@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel, Field, HttpUrl
 
 from cold_clock.followups import register_followups
+from service.throttle import CASE_CREATES
 from cold_clock.pilot import create_pilot_case, ingest_sensor_event
 from cold_clock.store import CaseStore
 from cold_clock.workflow import advance_safe_automation, public_view
@@ -32,6 +33,7 @@ class PilotCaseRequest(BaseModel):
     case_reference: str = Field(min_length=3, max_length=120)
     contact_preference: Literal["text", "voice", "email", "portal"] = "text"
     mobility_note: str = Field(default="", max_length=240)
+    service_area: str = Field(default="grid-7", min_length=2, max_length=40, description="Utility service area used for outage fan-out.")
     medication: MedicationInput
     package_transcription: str = Field(min_length=10, max_length=4000)
     label_source_title: str = Field(min_length=3, max_length=180)
@@ -75,7 +77,8 @@ def build_pilot_router(store: CaseStore, scheduler=None, *, allow_deidentified: 
         return {"cases": [_summary(case) for case in cases], "count": len(cases)}
 
     @router.post("/cases")
-    def open_pilot_case(request: PilotCaseRequest) -> dict[str, Any]:
+    def open_pilot_case(request: PilotCaseRequest, http_request: Request, response: Response) -> dict[str, Any]:
+        CASE_CREATES.guard(http_request, response)
         if request.data_class == "deidentified-authorized" and not allow_deidentified:
             raise HTTPException(
                 status_code=403,

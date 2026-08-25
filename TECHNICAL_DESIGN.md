@@ -94,6 +94,16 @@ Pharmacy inventory, coverage, courier, reviewer, household, utility, and sensor 
 fixtures. Their state changes are real application writes but not external production integrations.
 The interface, API, README, and conformance endpoint state this boundary.
 
+The sandbox courier is deliberately stateful so the background poll is a check, not a timer:
+dispatch writes a `courier_job` record (`in_transit`, poll count, injectable delay, history);
+every `courier_status_poll` asks that record and appends what it reported. A delay makes the job
+answer `in_transit`, which re-arms the poll with a deterministic per-attempt wake id at most three
+times; a job that never confirms leaves the case open with a visible hold and the sixty-minute
+receipt reminder still standing. Only a reported handoff produces a receipt.
+
+Listing is bounded and ordered (`opened_at` descending, sixty rows) and outage fan-out queries by
+`service_area`, so the public store can grow without slowing the queue or the fan-out.
+
 ## Deployment
 
 - `Dockerfile`: non-root Python 3.12 runtime.

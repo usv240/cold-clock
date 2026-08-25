@@ -59,6 +59,8 @@ def create_pilot_case(intake: dict[str, Any]) -> dict[str, Any]:
             "clock_mode": "realtime",
             "data_class": intake["data_class"],
             "created_at": _iso(created),
+            "opened_at": _iso(created),
+            "service_area": str(intake.get("service_area") or "grid-7").strip(),
             "household": {
                 "display_name": str(intake["case_reference"]).strip(),
                 "contact_preference": intake["contact_preference"],

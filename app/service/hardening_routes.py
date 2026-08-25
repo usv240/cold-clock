@@ -25,6 +25,7 @@ from service.events_routes import fan_out_utility_outage
 from cold_clock.store import CaseStore, MemoryCaseStore
 from cold_clock.wake_actions import ColdClockWakeExecutor
 from cold_clock.workflow import (
+    _append,
     create_case,
     dispatch_delivery,
     prepare_fulfillment,
@@ -99,6 +100,19 @@ def build_hardening_router(store: CaseStore, scheduler: WakeScheduler, clock) ->
     @router.post("/cases/{case_id}/resolve-stock")
     def resolve_stock(case_id: str):
         return mutate(case_id, resolve_matching_stock)
+
+    @router.post("/cases/{case_id}/courier-delay")
+    def courier_delay(case_id: str, request: AdvanceRequest):
+        """Make the sandbox courier report in_transit for N polls (request.minutes reused as poll count, 1-5)."""
+        def apply(case):
+            polls = max(1, min(5, int(request.minutes)))
+            if case["status"] == "delivery_dispatched":
+                case["delivery"].setdefault("courier_job", {"status": "in_transit", "polls": 0, "delay_polls": 0, "history": []})["delay_polls"] = polls
+            else:
+                case["courier_delay_polls"] = polls
+            _append(case, "Logistics agent", "Sandbox courier delay injected", f"The sandbox courier will report in transit for {polls} poll(s); the background poll must not invent a receipt.", status="attention", evidence_ids=["sandbox-courier-delay"])
+
+        return mutate(case_id, apply)
 
     @router.post("/cases/{case_id}/courier-unavailable")
     def courier_unavailable(case_id: str):
@@ -205,6 +219,20 @@ def build_hardening_router(store: CaseStore, scheduler: WakeScheduler, clock) ->
         fan_clock.advance(timedelta(minutes=16)); fan_scheduler.dispatch_due(ColdClockWakeExecutor(fan_cases, fan_clock, fan_scheduler).execute)
         quiet_after = fan_cases.get(quiet["case_id"])
         check("silent sensor during outage becomes a safe stop, not a guess", quiet_after["status"] == "evidence_incomplete" and quiet_after["safe_stop"]["system_disposition"] is None)
+        # Courier delay: the poll is answered by the courier connector, never by the clock.
+        slow_cases = MemoryCaseStore(); slow_clock = SimulatedClock(MemoryClockStateStore()); slow_scheduler = WakeScheduler(MemoryWakeStore(), slow_clock)
+        slow = create_case(); slow["courier_delay_polls"] = 1; run_unattended_demo(slow, courier_eta_minutes=1); register_followups(slow, slow_scheduler); slow_cases.put(slow)
+        slow_exec = ColdClockWakeExecutor(slow_cases, slow_clock, slow_scheduler)
+        slow_clock.advance(timedelta(minutes=2)); first_poll = slow_scheduler.dispatch_due(slow_exec.execute); mid = slow_cases.get(slow["case_id"])
+        check("courier in transit defers closure instead of faking a receipt", len(first_poll) == 1 and mid["status"] == "delivery_dispatched" and mid["background_executions"][-1]["outcome"] == "in_transit_repoll" and mid["delivery"].get("received_at") is None)
+        slow_clock.advance(timedelta(minutes=2)); slow_scheduler.dispatch_due(slow_exec.execute); done = slow_cases.get(slow["case_id"])
+        check("re-poll closes the case once the courier confirms", done["status"] == "resolved" and done["delivery"]["courier_job"]["polls"] == 2)
+        stuck_cases = MemoryCaseStore(); stuck_clock = SimulatedClock(MemoryClockStateStore()); stuck_scheduler = WakeScheduler(MemoryWakeStore(), stuck_clock)
+        stuck = create_case(); stuck["courier_delay_polls"] = 5; run_unattended_demo(stuck, courier_eta_minutes=1); register_followups(stuck, stuck_scheduler); stuck_cases.put(stuck)
+        stuck_exec = ColdClockWakeExecutor(stuck_cases, stuck_clock, stuck_scheduler)
+        for _ in range(6): stuck_clock.advance(timedelta(minutes=2)); stuck_scheduler.dispatch_due(stuck_exec.execute)
+        held = stuck_cases.get(stuck["case_id"])
+        check("courier that never confirms becomes a human hold, bounded", held["status"] == "delivery_dispatched" and held["delivery"]["hold"]["system_receipt"] is None and held["background_executions"][-1]["outcome"] == "delivery_unconfirmed_hold")
         return {"passed": sum(row["pass"] for row in checks), "total": len(checks), "checks": checks}
 
     return router

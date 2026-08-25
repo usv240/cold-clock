@@ -1,5 +1,24 @@
 # ColdClock: Validation Evidence
 
+## Verified on August 25, 2026 — judge-review hardening (courier connector, three fixtures, bounded queue)
+
+| Gate | Result | Command or endpoint |
+|---|---:|---|
+| Python tests | 172 passed | `cd app; python -m pytest -q` |
+| Static accessibility checks | 10/10 | `python scripts/check_a11y.py` |
+| Executable HTTP demonstration, **live with real Cloud Scheduler tick** | 21/21 | `python scripts/demo_flow.py --url <run.app> --wait-for-scheduler 300` |
+| **Real-browser judge path, live** | 7/7 | `python scripts/browser_check.py --url <run.app> --wait 240` — unattended run stops at the human gate, reviewer dialog submitted, page closed itself after 84 s, worker status line present, zero page errors |
+| Foundational safety proof | 8/8 | `GET /api/proof` |
+| Adversarial hardening proof | 20/20 | `GET /api/hardening/proof` (adds courier delay defers closure, re-poll closes, never-confirming courier becomes a bounded human hold) |
+| Live Gemini reader accuracy | 14/14 fields, 0 invented, across 3 fixtures | `python scripts/record_package.py --all` → `app/fixtures/package*.accuracy.json` |
+
+What a skeptical judge could have said, and what changed:
+
+- *"The courier poll always says delivered — that's a timer."* The sandbox courier is now a stateful connector (`delivery.courier_job`): dispatch creates the job, every poll is answered from it and appended to its history, an injected delay (`POST /api/hardening/cases/{id}/courier-delay`) makes it report `in_transit` so the wake re-arms at most three times, and a courier that never confirms leaves a visible hold with the receipt reminder still standing. Only a reported handoff produces a receipt.
+- *"One fixture image proves nothing."* Three rendered fictional products with different layouts are graded live (14/14, 0 invented) and the deployment rotates them by case id; the live queue shows adalimumab and insulin cases side by side.
+- *"Your queue is junk and every load streams Firestore."* Listing is now `opened_at` descending, sixty rows; fan-out queries by `service_area`. Old synthetic test cases without `opened_at` are no longer shown.
+- *"Anyone can spam case creation."* Case creation is capped at 120 per network per hour and model-backed demo runs at 30, with `X-Demo-*` headers; the keyed `/v1` API keeps its own quota.
+
 ## Verified on August 25, 2026 — agentic release (ADK, Pub/Sub fan-out, signed receipts)
 
 | Gate | Result | Command or endpoint |

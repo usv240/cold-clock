@@ -1,6 +1,8 @@
 {
+  "image": "package-fixture.png",
   "matched": 4,
   "total": 4,
+  "invented": 0,
   "checks": {
     "name": true,
     "strength": true,

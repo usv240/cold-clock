@@ -37,8 +37,9 @@ ColdClock is an event-driven agent that carries a medication excursion from the 
 
 ## Accomplishments
 
-- 158 automated tests; 21/21 executable acceptance checks against the live deployment, including a case closed by a genuine Cloud Scheduler tick and a grid outage fanned out across enrolled cases; 8/8 safety proof and 17/17 hardening proof (sensor gap, reviewer failure, stock miss, courier failure, idempotent wakes, unattended closure, quarantine, packet-verifier rejection, outage fan-out and safe stop).
-- Live, graded model evidence: Gemini 5/5 fields with 0 invented; Gemma 3/3 on clean and poisoned labels.
+- 172 automated tests; 21/21 executable acceptance checks against the live deployment, including a case closed by a genuine Cloud Scheduler tick and a grid outage fanned out across enrolled cases; a real-browser check that submits the reviewer dialog and waits for the page to close itself; 8/8 safety proof and 20/20 hardening proof (sensor gap, reviewer failure, stock miss, courier failure and delay, idempotent wakes, unattended closure, quarantine, packet-verifier rejection, outage fan-out and safe stop).
+- Live, graded model evidence: Gemini 14/14 fields across three synthetic package fixtures with 0 invented values; Gemma 3/3 on clean and poisoned labels.
+- The sandbox courier is a stateful connector: an injected delay makes the background poll re-arm instead of assuming a receipt, and a courier that never confirms leaves a visible hold for a person.
 - A keyless judge UI plus a self-service `/v1` developer API with per-key and per-network quotas.
 
 ## What we learned

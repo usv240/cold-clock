@@ -17,9 +17,17 @@ class LiveEvidenceRunner:
         self.router = router or VertexSemanticRouter(project)
         self.screen_reviewer = screen_reviewer or GemmaSpanReviewer(project)
         self.fixture = web_root / "package-fixture.png"
+        self.fixtures = sorted(web_root.glob("package-fixture*.png")) or [self.fixture]
+
+    def pick_fixture(self, case: dict[str, Any]) -> Path:
+        """Rotate fixtures deterministically by case id so repeated runs exercise every product."""
+        index = int(case["case_id"][-2:], 16) % len(self.fixtures)
+        return self.fixtures[index]
 
     def apply(self, case: dict[str, Any]) -> dict[str, Any]:
-        artifact = self.fixture.read_bytes()
+        fixture = self.pick_fixture(case)
+        artifact = fixture.read_bytes()
+        case["package_fixture"] = fixture.name
         started = perf_counter()
         result = self.reader.read(artifact, "image/png")
         if len(result.fields) < 3:
@@ -49,6 +57,7 @@ class LiveEvidenceRunner:
         case["model_execution"] = {
             "live": True,
             "model": "gemini-3.5-flash",
+            "artifact": fixture.name,
             "artifact_sha256": sha256(artifact).hexdigest(),
             "verified_fields": len(result.fields),
             "dropped_fields": len(result.dropped),

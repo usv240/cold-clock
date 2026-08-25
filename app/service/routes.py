@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from cold_clock.followups import register_followups
 from cold_clock.store import CaseStore
 from spine.public_trace import public_action_trace
+from service.throttle import CASE_CREATES, NetworkRateLimiter
 from spine.receipt_signing import sign_receipt, verify_receipt
 from cold_clock.workflow import (
     ALLOWED_DISPOSITIONS,
@@ -44,27 +45,7 @@ class UnattendedDemoRequest(BaseModel):
     )
 
 
-class DemoRateLimiter:
-    """Generous per-network cap on the model-calling demo endpoints so a public URL cannot run up cost."""
-
-    def __init__(self, limit: int = 30, window_seconds: int = 3600):
-        from collections import defaultdict, deque
-
-        self.limit = limit
-        self.window = window_seconds
-        self._hits = defaultdict(deque)
-
-    def check(self, network: str) -> tuple[bool, int]:
-        from time import monotonic
-
-        now = monotonic()
-        bucket = self._hits[network]
-        while bucket and now - bucket[0] > self.window:
-            bucket.popleft()
-        if len(bucket) >= self.limit:
-            return False, 0
-        bucket.append(now)
-        return True, self.limit - len(bucket)
+DemoRateLimiter = NetworkRateLimiter
 
 
 class OutageDemoRequest(BaseModel):
@@ -74,16 +55,8 @@ class OutageDemoRequest(BaseModel):
 
 def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool = False, model_runner=None, receipt_pepper: str = "local-development-only-pepper", demo_limit: int = 30) -> APIRouter:
     router = APIRouter(prefix="/api", tags=["cold-clock"])
-    limiter = DemoRateLimiter(limit=demo_limit)
-
-    def throttle(request: Request, response: Response) -> None:
-        from spine.developer_access import client_network
-
-        allowed, remaining = limiter.check(client_network(request))
-        response.headers["X-Demo-Limit"] = str(limiter.limit)
-        response.headers["X-Demo-Remaining"] = str(remaining)
-        if not allowed:
-            raise HTTPException(status_code=429, detail=f"demo limit of {limiter.limit} model-backed runs per network per hour reached; the /v1 API with a developer key remains available")
+    limiter = NetworkRateLimiter(limit=demo_limit, label="model-backed demo runs")
+    throttle = limiter.guard
 
     def require(case_id: str) -> dict[str, Any]:
         case = store.get(case_id)
@@ -148,7 +121,8 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
         }
 
     @router.post("/cases")
-    def open_case() -> dict[str, Any]:
+    def open_case(request: Request, response: Response) -> dict[str, Any]:
+        CASE_CREATES.guard(request, response)
         case = create_case()
         store.put(case)
         return public_view(case)

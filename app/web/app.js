@@ -137,7 +137,11 @@ async function pollActiveCase() {
   if (document.hidden || !currentCase || autoRunning) return;
   try {
     const fresh = await api(`/api/cases/${encodeURIComponent(currentCase.case_id)}`);
-    if (fresh.record_version === currentCase.record_version) return;
+    if (fresh.record_version === currentCase.record_version) {
+      // Wake rows and the scheduler status line change without touching the case record.
+      await renderWakes(currentCase.case_id);
+      return;
+    }
     const before = currentCase.autonomy?.background_wakes_fired || 0;
     render(fresh);
     await refreshCases(fresh.case_id);

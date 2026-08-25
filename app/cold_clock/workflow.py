@@ -14,6 +14,8 @@ from spine.autonomy_proof import build_autonomy_proof
 
 BASE_TIME = datetime(2026, 8, 16, 14, 0, tzinfo=timezone.utc)
 DEFAULT_COURIER_ETA_MINUTES = 34
+DEFAULT_SERVICE_AREA = "grid-7"
+MAX_COURIER_REPOLLS = 3
 ALLOWED_DISPOSITIONS = {
     "continue_labeled",
     "shorten_window",
@@ -92,6 +94,8 @@ def create_case() -> dict[str, Any]:
         "synthetic": True,
         "status": "monitoring",
         "created_at": _iso(BASE_TIME),
+        "opened_at": _iso(datetime.now(timezone.utc)),
+        "service_area": DEFAULT_SERVICE_AREA,
         "household": {
             "display_name": "Morgan — synthetic household",
             "contact_preference": "text",
@@ -299,6 +303,9 @@ def dispatch_delivery(case: dict[str, Any]) -> dict[str, Any]:
         "dispatched_at": _iso(_case_moment(case, 181)),
         "accessible_handoff": True,
         "background_status_poll": "courier_status_poll wake due at the sandbox ETA",
+        # The sandbox courier is a stateful connector, not a timer: each poll is answered from this
+        # job record, and a delay (see the failure lab) makes it report in_transit instead.
+        "courier_job": {"status": "in_transit", "polls": 0, "delay_polls": int(case.get("courier_delay_polls") or 0), "history": []},
     }
     case["status"] = "delivery_dispatched"
     _append(

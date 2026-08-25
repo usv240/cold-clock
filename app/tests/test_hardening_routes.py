@@ -32,7 +32,7 @@ def test_failure_lab_proof_is_all_green():
     result = client.get("/api/hardening/proof")
     assert result.status_code == 200
     body = result.json()
-    assert body["passed"] == body["total"] == 17
+    assert body["passed"] == body["total"] == 20
 
 
 def test_trace_headers_are_present():

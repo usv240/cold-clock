@@ -47,7 +47,7 @@ def fan_out_utility_outage(store: CaseStore, scheduler, outage: dict[str, Any], 
     area = str(outage.get("service_area") or "")
     affected: list[str] = []
     skipped = 0
-    for case in store.list_cases():
+    for case in store.list_cases_in_area(area):
         if service_area_of(case) != area:
             continue
         if not apply_utility_outage(case, outage, channel=channel):
