@@ -24,12 +24,13 @@ that finishes the case on its own, and proof of completed action.
 |---|---|---|
 | 0:00–0:20 | The alert-versus-resolution problem and the human-authority boundary | Landing page, `.run.app` address bar visible |
 | 0:20–0:45 | Click **Run unattended**. Live Gemini reads the synthetic package (5 exact-quoted fields); Gemma screens the text; Embedding routes it | Medicine evidence tab: verified fields, injection screen "clean", timeline entries |
-| 0:45–1:10 | The outage is recorded; the packet routes itself; the synthetic pharmacist decision is recorded; reservation and dispatch happen automatically | Journey rail advancing, `AI disposition: none` |
+| 0:45–1:10 | The outage is recorded; the **ADK agent assembles the packet through three scoped tools and the verifier accepts it**; the synthetic pharmacist decision is recorded; reservation and dispatch happen automatically | Review tab: "ADK agent packet accepted · 3 scoped tool calls · 6 values verified", `AI disposition: none` |
 | 1:10–1:25 | Stop. Point at the **Durable wakes** panel: `courier_status_poll · pending · due …`. Say: "Nobody clicks from here." | Wake panel, autonomy rail `0 continue clicks` |
 | 1:25–2:25 | Switch to Google Cloud Console: Cloud Run service and revision, Cloud Scheduler job `cold-clock-wake-scan` (every minute, OIDC), Firestore `cold_clock_wakes` document, a Cloud Run log line for `/internal/wakes/scan` | Console tabs, then Firestore document flipping `pending → done` |
 | 2:25–2:45 | Switch back: the case is **resolved**, timeline shows "Background wake agent · Courier confirmed handoff", autonomy rail says "Closed by a Cloud Scheduler wake — no operator", background wakes `1 fired · closed case` | Product UI (it updated by itself) |
-| 2:45–3:10 | Deliberate failure: poisoned package text quarantined; pre-approval fulfillment rejected with 409; sensor gap safe stop | `/api/hardening/proof` 12/12 |
-| 3:10–3:35 | Open `/api/cases/{id}/autonomy-proof`: `closed_by_background_wake: true`, `cloud_scheduler_triggered_executions: 1`, `operator_continue_clicks: 0`, `proof_integrity: verified`; open the Cloud Trace entry | JSON and Trace |
+| 2:45–3:05 | Scale: run `python scripts/publish_event.py utility` in a terminal — one Pub/Sub message; the UI shows three enrolled households each armed with an outage watch | Terminal + wake panel; Pub/Sub subscription in console |
+| 3:05–3:20 | Deliberate failure: poisoned package text quarantined; an invented packet value rejected by the verifier; sensor gap safe stop | `/api/hardening/proof` 17/17 |
+| 3:20–3:35 | Open the signed `/autonomy-proof`: `closed_by_background_wake: true`, `cloud_scheduler_triggered_executions: 1`, `operator_continue_clicks: 0`, `proof_integrity: verified`, `signature`; open the Cloud Trace entry | JSON and Trace |
 | 3:35–3:50 | Limitations and the promise: synthetic connectors, pharmacist authority, no outcome claim; repo and diagram | README architecture |
 
 Pre-flight: run `python scripts/demo_flow.py --url <run.app> --wait-for-scheduler 180` once before recording so the live scheduler path is proven green that day; keep the Console tabs open in advance.

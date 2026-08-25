@@ -17,13 +17,21 @@
                       {"name": "gemma-4-26b-a4b-it-maas", "role": "second-layer prompt-injection screen on package text", "live_receipt": "injection_screen in POST /api/demo/full and /api/demo/unattended", "graded_recording": "app/fixtures/injection.recording.json"}
                   ]
               },
+    "agent_frameworks":  ["Google ADK (review-packet agent with scoped tools and verifier)", "Google Gen AI SDK"],
     "google_cloud":  [
                          "Cloud Run",
                          "Firestore",
                          "Cloud Scheduler",
+                         "Pub/Sub",
                          "Cloud Trace",
                          "Secret Manager"
                      ],
+    "event_ingress":  {
+                          "topics":  ["cold-clock-sensor-events", "cold-clock-utility-events"],
+                          "push":  "OIDC-verified /internal/events/sensor and /internal/events/utility",
+                          "fanout_demo":  "POST /api/demo/outage-fanout"
+                      },
+    "signed_receipts":  "GET /api/cases/{id}/autonomy-proof is HMAC-signed; POST /api/receipts/verify",
     "background_execution":  {
                                  "worker":  "POST /internal/wakes/scan (OIDC-verified)",
                                  "trigger":  "Cloud Scheduler job cold-clock-wake-scan, every minute",

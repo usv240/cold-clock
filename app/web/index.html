@@ -104,6 +104,7 @@
         <div class="demo-controls">
           <button id="new-case" class="button secondary compact" type="button">New pilot case</button><button id="reset-demo" class="button secondary compact" type="button">Load sample</button>
           <button id="auto-demo" class="button secondary compact" type="button">Complete synthetic tabletop</button>
+          <button id="outage-fanout" class="button secondary compact" type="button">Simulate grid outage</button>
           <button id="unattended-demo" class="button primary compact" type="button">Run unattended</button>
         </div>
       </div>
@@ -231,13 +232,14 @@ LOT-42</textarea></label>
             </div>
             <div class="tab-panel" id="tab-review" role="tabpanel" hidden>
               <div id="review-card" class="empty-review"><span class="review-lock" aria-hidden="true"></span><h3>No review requested yet</h3><p>Trigger the synthetic outage and assemble the evidence packet.</p></div>
+              <div class="injection-screen" id="packet-agent"><b>Review-packet agent</b><span>On the deployed service a Google ADK agent assembles this packet through three scoped read-only tools; a verifier checks every value against tool output before routing.</span></div>
             </div>
           </section>
 
           <aside class="activity-panel" aria-label="Agent activity">
             <div class="activity-heading"><div><p class="eyebrow">Immutable timeline</p><h3>Who did what</h3></div><span class="live-label">Live</span></div>
             <div class="timeline" id="timeline" aria-live="polite"></div>
-            <div class="audit-footer"><span>Public action receipt only — no prompts, personal data, secrets, or stack traces.</span><a id="public-trace-link" href="/api/proof" target="_blank" rel="noreferrer">Open safe trace</a><a id="autonomy-proof-link" href="/api/proof" target="_blank" rel="noreferrer">Open autonomy proof</a></div>
+            <div class="audit-footer"><span>Public action receipt only — no prompts, personal data, secrets, or stack traces. The autonomy proof is HMAC-signed; verify a copy at <code>POST /api/receipts/verify</code>.</span><a id="public-trace-link" href="/api/proof" target="_blank" rel="noreferrer">Open safe trace</a><a id="autonomy-proof-link" href="/api/proof" target="_blank" rel="noreferrer">Open signed autonomy proof</a></div>
           </aside>
         </div>
       </div>

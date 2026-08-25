@@ -1,5 +1,28 @@
 # ColdClock: Validation Evidence
 
+## Verified on August 25, 2026 — agentic release (ADK, Pub/Sub fan-out, signed receipts)
+
+| Gate | Result | Command or endpoint |
+|---|---:|---|
+| Python tests | 159 passed | `cd app; python -m pytest -q` |
+| Static accessibility checks | 10/10 | `python scripts/check_a11y.py` |
+| Executable HTTP demonstration, **live with real Cloud Scheduler tick** | 21/21 | `python scripts/demo_flow.py --url https://cold-clock-109051079423.us-central1.run.app --wait-for-scheduler 240` |
+| Foundational safety proof | 8/8 | `GET /api/proof` |
+| Adversarial hardening proof | 17/17 | `GET /api/hardening/proof` |
+| Container dependency resolution | clean | `google-adk==1.3.0` resolved and executed alongside the pinned Firestore/api-core set in a fresh venv |
+
+### Live ADK review-packet agent (final revision `cold-clock-00046-lj2`; first verified on `cold-clock-00040-hck`)
+
+Case `cc-74520e5a757d4a3f9cba4fd44a959e25`, `POST /api/demo/unattended`: `packet_agent` = `{framework: google-adk, model: gemini-3.5-flash, live: true, accepted: true, tool_calls: [get_verified_package_fields, get_excursion_observation, get_label_storage_excerpt], verified_fields: 6, rejected_fields: []}`. The agent's question was used verbatim: "Which reviewed disposition should govern this synthetic case?". Warm latency of the ADK step: 5.3–5.6 s; whole unattended request 14–24 s warm, ~30 s cold. A `ThinkingConfig(thinking_level=...)` tweak was rejected by the container's google-genai build (ValidationError) and silently downgraded packets to the deterministic path until the `packet_agent` receipt exposed it; reverted, re-verified 21/21.
+
+### Live Pub/Sub fan-out
+
+Two fresh monitoring cases (`cc-379671ed…`, `cc-a461e488…`) in the default `grid-7` area. `python scripts/publish_event.py utility --service-area grid-7` published message `21084840278305256` with `outage_id: out-990daf21`. Twelve seconds later both cases carried `utility_outage.channel = pubsub` and one pending `outage_watch` wake each; the Cloud Run log shows `POST /internal/events/utility` → 200 from the push subscription's OIDC identity. A control fan-out through `POST /api/demo/outage-fanout` behaved identically with `channel = api`.
+
+### Signed receipts
+
+`GET /api/cases/{id}/autonomy-proof` returned `signature` `4cb02b1579e29512…`; `POST /api/receipts/verify` returned `valid: true` for the genuine copy and `valid: false` after `operator_continue_clicks` was edited to 7.
+
 ## Verified on August 25, 2026 — background-closure release
 
 | Gate | Result | Command or endpoint |

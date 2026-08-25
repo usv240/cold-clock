@@ -23,7 +23,7 @@ let autoRunning = false;
 let caseSummaries = [];
 let pollTimer = null;
 const POLL_INTERVAL_MS = 5000;
-const WAITING_STATES = new Set(["awaiting_professional_review", "delivery_dispatched", "excursion_detected", "replacement_approved", "fulfillment_prepared"]);
+const WAITING_STATES = new Set(["monitoring", "awaiting_professional_review", "delivery_dispatched", "excursion_detected", "replacement_approved", "fulfillment_prepared"]);
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -76,7 +76,21 @@ function wakeCopy(kind) {
     courier_status_poll: "Poll sandbox courier at ETA",
     review_followup: "Review reminder",
     receipt_followup: "Receipt reminder",
+    outage_watch: "Outage watch: judge from readings",
   }[kind] || kind.replaceAll("_", " ");
+}
+
+async function simulateOutage() {
+  const button = $("#outage-fanout");
+  button.disabled = true;
+  $("#console").setAttribute("aria-busy", "true");
+  try {
+    const result = await api("/api/demo/outage-fanout", { method: "POST", body: JSON.stringify({ service_area: "grid-7", enroll: 3 }) });
+    await refreshCases(result.affected_cases[0]);
+    await loadCase(result.affected_cases[0]);
+    toast(`Grid outage ${result.outage_id}: ${result.affected_cases.length} enrolled cases armed with outage watches. Each will be judged from its own readings by the background worker.`);
+  } catch (error) { toast(error.message); }
+  finally { button.disabled = false; $("#console").setAttribute("aria-busy", "false"); }
 }
 
 async function renderWakes(caseId) {
@@ -130,6 +144,10 @@ function closeDialog(id) {
 function statusCopy(status) {
   return {
     monitoring: "Monitoring normally",
+    evidence_incomplete: "Safe stop: evidence incomplete",
+    review_escalated: "Review escalated to backup",
+    stock_escalated: "Stock escalation",
+    delivery_choice_required: "Delivery choice required",
     excursion_detected: "Excursion needs review",
     awaiting_professional_review: "Waiting for pharmacist",
     replacement_approved: "Replacement approved",
@@ -209,6 +227,25 @@ function renderAutonomy(data = {}, proof = {}) {
   $("#autonomy-wait").textContent = data.complete ? (data.closed_by_background_wake ? "Closed by courier confirmation" : "Closed with receipt proof") : wait;
 }
 
+function renderPacketAgent(receipt) {
+  const node = $("#packet-agent");
+  if (!node) return;
+  if (!receipt) {
+    node.className = "injection-screen";
+    node.innerHTML = `<b>Review-packet agent</b><span>On the deployed service a Google ADK agent assembles this packet through three scoped read-only tools; a verifier checks every value against tool output before routing.</span>`;
+    return;
+  }
+  if (!receipt.live) {
+    node.className = "injection-screen";
+    node.innerHTML = `<b>Deterministic packet</b><span>${escapeHtml(receipt.reason || receipt.mode)}</span>`;
+    return;
+  }
+  node.className = `injection-screen ${receipt.accepted ? "clean" : "flagged"}`;
+  node.innerHTML = receipt.accepted
+    ? `<b>ADK agent packet accepted</b><span>${escapeHtml(receipt.model)} · ${(receipt.tool_calls || []).length} scoped tool calls · ${(receipt.verified_fields || []).length} values verified against tool output · ${receipt.latency_ms} ms</span>`
+    : `<b>ADK agent packet rejected — deterministic packet used</b><span>${escapeHtml((receipt.rejected_fields || []).join(", ") || receipt.reason)} · the agent cannot invent or editorialise</span>`;
+}
+
 function renderInjectionScreen(screen) {
   const node = $("#injection-screen");
   if (!node) return;
@@ -250,6 +287,7 @@ function render(caseData) {
   $("#package-lot").textContent = `Lot ${caseData.medication.lot}`;
   $("#label-source").href = caseData.label_evidence.url;
   renderInjectionScreen(caseData.injection_screen);
+  renderPacketAgent(caseData.packet_agent);
   const action = actionMap[status];
   const button = $("#next-action");
   button.textContent = action?.label || "Workflow complete";
@@ -416,6 +454,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("#reset-demo").addEventListener("click", resetCase);
   $("#auto-demo").addEventListener("click", runAuto);
   $("#unattended-demo").addEventListener("click", runUnattended);
+  $("#outage-fanout").addEventListener("click", simulateOutage);
   $("#advance-clock").addEventListener("click", advanceClock);
   $("#new-case").addEventListener("click", () => openDialog("intake-dialog"));
   $("#record-sensor").addEventListener("click", () => openDialog("sensor-dialog"));

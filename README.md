@@ -10,8 +10,9 @@ routes a bounded review packet, and—only after a qualified human decision—co
 replacement through delivery and receipt.
 
 **Hackathon track:** The Taskmaster  
-**Google models:** Gemini 3.5 Flash (package reader), Gemini Embedding 001 (evidence routing), Gemma 4 (injection screen) — all live on Vertex AI through the Google Gen AI SDK  
-**Google Cloud:** Cloud Run, Firestore, Cloud Scheduler, Cloud Trace, Secret Manager  
+**Google models:** Gemini 3.5 Flash (package reader and ADK packet agent), Gemini Embedding 001 (evidence routing), Gemma 4 (injection screen) — all live on Vertex AI  
+**Google agent frameworks:** Google ADK (review-packet agent with scoped tools) and Google Gen AI SDK  
+**Google Cloud:** Cloud Run, Firestore, Cloud Scheduler, Pub/Sub, Cloud Trace, Secret Manager  
 **Public-data policy:** The demo uses fictional people, medicine lot, pharmacy, coverage plan,
 courier, reviewer, and sensor events.
 
@@ -29,6 +30,18 @@ Two demo entry points exist:
 - `POST /api/demo/unattended` — every safe transition, then **stop at the courier ETA**. The receipt is deliberately not fabricated. Cloud Scheduler calls the OIDC-protected worker every minute; the `courier_status_poll` wake fires at the ETA, the sandbox courier reports the handoff, and the case resolves. `GET /api/cases/{case_id}/wakes` shows the wake go `pending → done`; the autonomy proof reports `closed_by_background_wake: true` and `cloud_scheduler_triggered_executions: 1`.
 
 The demo clock is simulated and forward-only (stated in the UI, never hidden). "Advance simulated clock" moves time without running anything; the next scheduler scan does the work.
+
+### One outage, every household
+
+Real outages are not one case at a time. `POST /api/demo/outage-fanout` (or a real message on the `cold-clock-utility-events` Pub/Sub topic) applies one grid event to **every** monitoring case in the service area and arms an `outage_watch` wake per case. Fifteen minutes later the background worker judges each case from its own readings: out-of-range readings become a recorded excursion routed to review; readings still in range keep a bounded watch; a sensor that stays silent becomes a safe stop for incomplete evidence. No operator opens any case, and no case ever gets a medication decision from the system.
+
+### The review packet is assembled by an agent — and checked
+
+On the deployed service the pharmacist packet is assembled by a **Google ADK** `LlmAgent` (Gemini 3.5 Flash) that can only see the case through three scoped, read-only tools: verified package fields, the excursion observation, and the label storage excerpt. A verifier then compares every packet value to what the tools returned and rejects a question that asserts safety. An invented value, an editorialised question, or a skipped tool rejects the whole packet and the deterministic packet is routed instead, with the rejection recorded in `packet_agent`. The workflow never depends on the model being right — only on it being checkable.
+
+### Receipts you can verify
+
+`GET /api/cases/{id}/autonomy-proof` is HMAC-signed with the Secret Manager pepper. `POST /api/receipts/verify` tells anyone holding a copy whether it is authentic; change one field and it fails.
 
 ## From reproducible proof to operational pilot
 
@@ -139,7 +152,8 @@ Primary case writes use optimistic record versions inside Firestore transactions
 |---|---|
 | Interface | Responsive, keyboard-operable light/dark operations workspace |
 | API | FastAPI with a typed, bounded state-transition contract |
-| Agent logic | Package evidence, excursion evidence, review packet, fulfillment, logistics, and audit roles |
+| Event ingress | Pub/Sub push subscriptions (`cold-clock-sensor-events`, `cold-clock-utility-events`) with Google-signed OIDC into `/internal/events/*`; the same verifier as the scheduler worker |
+| Agent logic | Package evidence, guardrail, excursion evidence, ADK review-packet agent with scoped tools and verifier, fulfillment, logistics, background wake, and audit roles |
 | Models | Gemini 3.5 Flash live package reader; Gemini Embedding 001 evidence routing; Gemma 4 injection screen. Deterministic replay is restricted to tests |
 | Persistence | Memory locally; Firestore adapter with optimistic record versions in Cloud deployment mode |
 | Background execution | Cloud Scheduler → OIDC-verified `/internal/wakes/scan` every minute → transactional wake claim → idempotent action (courier poll closes the case; reminders surface stalls) |
@@ -164,19 +178,27 @@ cold-clock/
     cold_clock/
       workflow.py                 safety-bounded state machine
       followups.py                idempotent durable-wake registration per state
-      wake_actions.py             Cloud Scheduler worker actions (courier poll closes the case)
+      wake_actions.py             Cloud Scheduler worker actions (courier poll, outage watch, reminders)
+      outage.py                   utility-outage fan-out and per-case evidence judgment
+      packet_agent.py             Google ADK review-packet agent, scoped tools, verifier
       injection_screen.py         pattern + Gemma 4 quarantine of untrusted package text
       reader.py                   live Vertex + replay package reader
       store.py                    memory and Firestore adapters
     service/
       main.py                     Cloud Run/FastAPI entry point
-      routes.py                   public API, proof and conformance endpoints
+      routes.py                   public API, proof, signed receipts and conformance endpoints
+      events_routes.py            Pub/Sub push ingress for sensor and utility events
+      scheduler_routes.py         OIDC-verified Cloud Scheduler wake worker
     fixtures/                     adjacent synthetic recording and truth
     scripts/
       demo_flow.py                executable 17-step acceptance path (incl. background closure)
       check_a11y.py               static accessibility gate
       record_package.py           explicit live Gemini recording and grading command
       record_injection_screen.py  explicit live Gemma recording and grading command
+      publish_event.py            publish a synthetic sensor or utility event to Pub/Sub
+    infra/
+      provision_scheduler.ps1     every-minute OIDC Cloud Scheduler job
+      provision_pubsub.ps1        topics and OIDC push subscriptions
     tests/                         domain, API, reader, claims, UI and safety tests
     web/                           customer-facing product experience
     Dockerfile
@@ -211,10 +233,10 @@ python scripts/demo_flow.py --url https://cold-clock-109051079423.us-central1.ru
 
 Current local baseline on August 25, 2026:
 
-- `143 passed`
+- `158 passed`
 - `10/10` static accessibility checks
-- `17/17` executable HTTP acceptance checks, including zero-click background closure
-- `8/8` foundational safety proof and `12/12` adversarial hardening proof
+- `21/21` executable HTTP acceptance checks, including zero-click background closure, signed receipts and outage fan-out
+- `8/8` foundational safety proof and `17/17` adversarial hardening proof
 
 Those counts must be rerun after any code or copy change.
 
@@ -247,6 +269,14 @@ layers, and every injected span was quarantined while the medicine facts survive
 cd app
 export GOOGLE_CLOUD_PROJECT="your-project"
 ./deploy.sh
+```
+
+Then provision the background triggers once:
+
+```powershell
+.\infra\provision_scheduler.ps1   # every-minute OIDC wake scans
+.\infra\provision_pubsub.ps1      # sensor and utility topics with OIDC push subscriptions
+python scripts\publish_event.py utility --service-area grid-7   # a real Pub/Sub message, end to end
 ```
 
 Deployment enables Firestore through `USE_FIRESTORE=true`. Before recording the submission video:
@@ -288,6 +318,10 @@ authors, medication manufacturers, pharmacies, insurers, and couriers do not end
 
 ColdClock now includes transactional Firestore wake claims, a persistent simulated demo clock, bounded retry/dead-letter behavior, Cloud Trace correlation, and explicit recovery paths for missing sensor history, unavailable review, unavailable matching stock, and courier failure. The API exposes both executable proof suites. These controls strengthen execution evidence; they do not establish clinical effectiveness.
 
+## August 25 agentic release (second pass)
+
+Google ADK now assembles the review packet through scoped tools with a post-model verifier; Pub/Sub push ingress carries sensor and utility events with the same OIDC verification as the scheduler worker; one grid outage fans out to every enrolled case and each is judged by its own background wake; autonomy receipts are HMAC-signed and verifiable. Hardening proof 12 → 17, acceptance 17 → 22, tests 143 → 158.
+
 ## August 25 background-closure release
 
 The headline demo no longer fabricates the receipt inside the request. `POST /api/demo/unattended` stops at the courier ETA and the Cloud Scheduler worker closes the case; the UI polls the case and its durable wakes so the closure is visible without a refresh. Gemma 4 joined as a second-layer injection screen on untrusted package text. The hardening proof grew from 8 to 12 checks (unattended stop, zero-click closure, follow-up cancellation, quarantine) and the acceptance script from 12 to 17.
@@ -315,6 +349,7 @@ Three wake kinds exist, all registered idempotently by `cold_clock/followups.py`
 | Wake | Due | What the worker does |
 |---|---|---|
 | `courier_status_poll` | sandbox courier ETA | Polls the courier; on a confirmed handoff, records the receipt, resolves the case, and cancels the receipt reminder (marked, never deleted) |
+| `outage_watch` | 15 min after a grid outage, up to 3 rechecks | Judges the case from its own readings: excursion → review routed; in range → keep watching; silent → safe stop |
 | `review_followup` | 30 min after routing | Surfaces a still-unresolved review in the backup queue; cancelled the moment a pharmacist decides |
 | `receipt_followup` | 60 min after dispatch | Surfaces a still-unconfirmed delivery; never dispatches a duplicate courier |
 

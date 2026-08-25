@@ -14,16 +14,17 @@ When a refrigerator or the power fails, a home with insulin or another temperatu
 ColdClock is an event-driven agent that carries a medication excursion from the first out-of-range reading to a closed case:
 
 1. **Observes precisely.** Gemini 3.5 Flash reads the synthetic package with exact-quote grounding (every retained field must appear verbatim in the model's own transcription). Package text is treated as untrusted: a deterministic pattern layer plus Gemma 4 quarantine any instruction-shaped spans before the text goes anywhere. Gemini Embedding 001 routes the evidence toward label evidence, professional review, or fulfillment.
-2. **Routes for judgment.** One sensor excursion automatically assembles a bounded review packet (medicine, verified fields, observed minutes, maximum temperature, DailyMed storage excerpt) and routes it to a named pharmacist. The agent never chooses a disposition; the state machine makes fulfillment impossible until a human does.
+2. **Routes for judgment.** One sensor excursion — or one utility-outage message on Pub/Sub, fanned out to every enrolled household in the grid area — triggers a background watch that judges each case from its own readings. A Google ADK agent then assembles the review packet through three scoped read-only tools; a verifier checks every value against tool output and rejects any invented number or safety claim before the packet reaches a named pharmacist. The agent never chooses a disposition; the state machine makes fulfillment impossible until a human does.
 3. **Finishes without supervision.** One human decision automatically reserves matching sandbox inventory and books an accessible courier slot. Then a durable `courier_status_poll` wake is registered in Firestore. Cloud Scheduler calls the OIDC-protected worker every minute; at the ETA the worker polls the sandbox courier, records the handoff, resolves the case, and cancels the now-pointless reminder. Nobody clicks. The UI updates by itself.
-4. **Proves it.** Every case carries a public action trace and an autonomy receipt derived from the persisted timeline: `operator_continue_clicks: 0`, `closed_by_background_wake: true`, `cloud_scheduler_triggered_executions: 1`, `proof_integrity: verified`. Unknown actors fail the proof closed instead of inflating it.
+4. **Proves it.** Every case carries a public action trace and an autonomy receipt derived from the persisted timeline: `operator_continue_clicks: 0`, `closed_by_background_wake: true`, `cloud_scheduler_triggered_executions: 1`, `proof_integrity: verified`. Unknown actors fail the proof closed instead of inflating it, and the receipt is HMAC-signed so a copy can be verified against the service.
 
 ## How we built it
 
 - **Cloud Run** hosts one FastAPI service; roles (intake, monitor, live evidence, guardrail, excursion, review packet, fulfillment, logistics, background wake) are modules with a typed, bounded state contract (out-of-order actions return HTTP 409).
 - **Firestore** holds cases with optimistic record versions (a stale concurrent write is rejected, not merged) and wake rows claimed in transactions with a 90-second lease, five bounded attempts, and a dead-letter path.
-- **Cloud Scheduler** drives the background worker every minute with a Google-signed OIDC token; the app verifies audience, issuer, and the dedicated service-account email and returns 401 otherwise.
-- **Vertex AI via the Google Gen AI SDK** for all three models: Gemini 3.5 Flash (extraction), Gemini Embedding 001 (routing), Gemma 4 (injection screen). Extraction and routing fail closed — recorded fixtures are test-only and are never substituted in the deployment.
+- **Cloud Scheduler** drives the background worker every minute with a Google-signed OIDC token; the app verifies audience, issuer, and the dedicated service-account email and returns 401 otherwise. **Pub/Sub** push subscriptions deliver sensor and utility events to the same verifier.
+- **Google ADK** runs the review-packet agent: an `LlmAgent` with three scoped read-only tools and a post-model verifier, so the model's reasoning is used only where it can be checked.
+- **Vertex AI via the Google Gen AI SDK** for all three models: Gemini 3.5 Flash (extraction and the ADK agent), Gemini Embedding 001 (routing), Gemma 4 (injection screen). Extraction and routing fail closed — recorded fixtures are test-only and are never substituted in the deployment.
 - **Secret Manager** injects the HMAC pepper for developer API keys and network fingerprints; **Cloud Trace** correlates every request.
 - A persisted, forward-only **simulated clock** lets a four-minute demo reach a 34-minute courier ETA using the exact code path production uses; the UI states that the clock is simulated.
 
@@ -36,7 +37,7 @@ ColdClock is an event-driven agent that carries a medication excursion from the 
 
 ## Accomplishments
 
-- 144 automated tests; 17/17 executable acceptance checks against the live deployment, including a case closed by a genuine Cloud Scheduler tick; 8/8 safety proof and 12/12 hardening proof (sensor gap, reviewer failure, stock miss, courier failure, idempotent wakes, unattended closure, quarantine).
+- 158 automated tests; 21/21 executable acceptance checks against the live deployment, including a case closed by a genuine Cloud Scheduler tick and a grid outage fanned out across enrolled cases; 8/8 safety proof and 17/17 hardening proof (sensor gap, reviewer failure, stock miss, courier failure, idempotent wakes, unattended closure, quarantine, packet-verifier rejection, outage fan-out and safe stop).
 - Live, graded model evidence: Gemini 5/5 fields with 0 invented; Gemma 3/3 on clean and poisoned labels.
 - A keyless judge UI plus a self-service `/v1` developer API with per-key and per-network quotas.
 
@@ -46,11 +47,11 @@ The most valuable behaviour is continuity — evidence, authority, inventory, ac
 
 ## What's next
 
-Pub/Sub ingress for real sensor gateways, a private identity-controlled deployment for authorized de-identified pilots, pharmacist review of the packet and disposition taxonomy, and more medication fixtures recorded and graded live.
+Real sensor-gateway and utility partners on the existing Pub/Sub topics, a private identity-controlled deployment for authorized de-identified pilots, pharmacist review of the packet and disposition taxonomy, and more medication fixtures recorded and graded live.
 
 ## Technologies
 
-Gemini 3.5 Flash · Gemini Embedding 001 · Gemma 4 (Vertex AI MaaS) · Google Gen AI SDK · Cloud Run · Firestore · Cloud Scheduler · Cloud Trace · Secret Manager · FastAPI · Python 3.12
+Gemini 3.5 Flash · Gemini Embedding 001 · Gemma 4 (Vertex AI MaaS) · Google ADK · Google Gen AI SDK · Cloud Run · Firestore · Cloud Scheduler · Pub/Sub · Cloud Trace · Secret Manager · FastAPI · Python 3.12
 
 ## Data sources
 

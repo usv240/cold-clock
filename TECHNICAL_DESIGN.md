@@ -30,6 +30,34 @@ instruction-shaped spans; each returned span must occur in the text or it is ign
 accepted span is replaced with a visible `[quarantined]` marker before the text is embedded. If the
 Gemma call fails the receipt reports `live: false` and the pattern layer stands alone.
 
+## Review-packet agent (Google ADK)
+
+`cold_clock/packet_agent.py` builds an ADK `LlmAgent` on Gemini 3.5 Flash per review request. Its
+only view of the case is three read-only closures registered as tools: verified package fields,
+the excursion observation, and the label excerpt. Tool calls are recorded in order. The agent's
+JSON is verified field by field against the deterministic packet (numeric tolerance 1e-9, exact
+strings); a question shorter than ten characters, without the word "disposition", or containing a
+safety or discard claim is rejected. Any rejection, a skipped tool, a timeout, or an exception
+routes the deterministic packet instead and records why in `packet_agent`. The agent therefore adds
+a checkable reasoning step without ever becoming a point of failure or authority.
+
+## Event ingress and fan-out (Pub/Sub)
+
+`service/events_routes.py` receives Pub/Sub push deliveries for two topics through the same OIDC
+verifier as the scheduler worker. Sensor events reuse the idempotent pilot ingestion path. A utility
+event is fanned out by `cold_clock/outage.py` to every monitoring case in its service area: each
+case records the outage as external evidence and gets an `outage_watch` wake (deterministic id per
+attempt). When the wake fires, the worker judges the case from readings since the outage — an
+excursion is recorded and routed, in-range readings keep a bounded watch (three rechecks), and a
+silent sensor becomes the existing incomplete-evidence safe stop. Malformed or unknown messages are
+acknowledged with a recorded reason rather than retried forever.
+
+## Signed receipts
+
+`spine/receipt_signing.py` signs the derived autonomy proof with HMAC-SHA256 over canonical JSON,
+keyed by the Secret Manager pepper. `POST /api/receipts/verify` recomputes the signature so a copied
+receipt can be checked without trusting whoever holds it.
+
 ## Background execution
 
 Every path that advances a case calls `cold_clock/followups.py`, which registers durable wakes

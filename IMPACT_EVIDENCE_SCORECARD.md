@@ -17,6 +17,9 @@ During a power outage, a household should not have to reconstruct medication sto
 | Durable continuation | Scheduler and wake receipts | One idempotent wake; no duplicate action | Implemented |
 | Unattended closure | `background_executions` with `trigger = google-oidc` | Dispatched case resolves from a Cloud Scheduler tick with zero operator interactions | Implemented; verified against the deployment (see `VALIDATION_EVIDENCE.md`) |
 | Untrusted-text guardrail | `injection_screen` receipt and graded recording | Injected spans quarantined; medicine facts preserved; clean label untouched | Implemented; 3/3 live-graded |
+| Checkable agent reasoning | `packet_agent` receipt | ADK agent calls all three scoped tools; every packet value matches tool output; invented values rejected | Implemented; verifier tested |
+| Outage scale | `utility_outage` and `outage_watch` records across cases | One event reaches every monitoring case in the area; each judged from its own readings; silent sensor safe-stops | Implemented; proof and tests |
+| Tamper-evident receipts | `signature` on the autonomy proof | Altered receipt fails `POST /api/receipts/verify` | Implemented |
 
 ## External tabletop protocol
 

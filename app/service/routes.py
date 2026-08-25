@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from cold_clock.followups import register_followups
 from cold_clock.store import CaseStore
 from spine.public_trace import public_action_trace
+from spine.receipt_signing import sign_receipt, verify_receipt
 from cold_clock.workflow import (
     ALLOWED_DISPOSITIONS,
     advance_safe_automation,
@@ -32,7 +33,16 @@ class ReviewRequest(BaseModel):
     rationale: str = Field(min_length=8, max_length=800)
 
 
-def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool = False, model_runner=None) -> APIRouter:
+class ReceiptVerification(BaseModel):
+    proof: dict[str, Any]
+
+
+class OutageDemoRequest(BaseModel):
+    service_area: str = Field(default="grid-7", min_length=2, max_length=40)
+    enroll: int = Field(default=3, ge=0, le=6, description="Synthetic monitoring cases to enroll in the area before the outage.")
+
+
+def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool = False, model_runner=None, receipt_pepper: str = "local-development-only-pepper") -> APIRouter:
     router = APIRouter(prefix="/api", tags=["cold-clock"])
 
     def require(case_id: str) -> dict[str, Any]:
@@ -113,7 +123,37 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
 
     @router.get("/cases/{case_id}/autonomy-proof")
     def get_case_autonomy_proof(case_id: str) -> dict[str, Any]:
-        return public_view(require(case_id))["autonomy_proof"]
+        """The derived autonomy receipt, HMAC-signed so a copy can be checked for tampering."""
+        return sign_receipt(public_view(require(case_id))["autonomy_proof"], receipt_pepper)
+
+    @router.post("/receipts/verify")
+    def verify_signed_receipt(request: ReceiptVerification) -> dict[str, Any]:
+        valid = verify_receipt(request.proof, receipt_pepper)
+        return {"valid": valid, "record_id": request.proof.get("record_id"), "detail": "signature matches the service key" if valid else "signature missing or the receipt was altered"}
+
+    @router.post("/demo/outage-fanout")
+    def outage_fanout_demo(request: OutageDemoRequest) -> dict[str, Any]:
+        """One synthetic grid outage, every enrolled case in the area, no operator per case.
+
+        Enrolls a few monitoring cases in the service area, then applies one utility event to all
+        of them. Each affected case gets an ``outage_watch`` wake; the Cloud Scheduler worker later
+        judges each case from its own readings (excursion, keep watching, or safe stop).
+        """
+        from datetime import datetime, timezone
+        from uuid import uuid4
+
+        from service.events_routes import fan_out_utility_outage
+
+        enrolled: list[str] = []
+        for _ in range(request.enroll):
+            case = create_case()
+            case["service_area"] = request.service_area
+            case["household"]["display_name"] = f"Grid household {uuid4().hex[:4].upper()} — synthetic"
+            store.put(case)
+            enrolled.append(case["case_id"])
+        outage = {"outage_id": f"out-{uuid4().hex[:8]}", "service_area": request.service_area, "started_at": datetime.now(timezone.utc).isoformat(), "power": "off"}
+        result = fan_out_utility_outage(store, scheduler, outage, channel="api")
+        return {**result, "enrolled": enrolled, "watch_minutes": 15, "next": "each affected case now holds an outage_watch wake; GET /api/cases/{case_id}/wakes"}
 
     @router.get("/cases/{case_id}/wakes")
     def get_case_wakes(case_id: str) -> dict[str, Any]:
@@ -299,6 +339,16 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
                     "requirement": "Gemini 3.5 or newer",
                     "implementation": "Live fail-closed Gemini 3.5 Flash package reader plus Gemini Embedding 001 evidence routing",
                     "proof": "POST /api/demo/full model_execution and semantic_routing receipts; fixtures are test-only",
+                },
+                {
+                    "requirement": "Google agent framework",
+                    "implementation": "Google ADK LlmAgent assembles the review packet through three scoped read-only tools; a verifier checks every value against tool output; Google Gen AI SDK for every other model call",
+                    "proof": "packet_agent receipt on each case (tool_calls, verified_fields, accepted)",
+                },
+                {
+                    "requirement": "monitors events at scale",
+                    "implementation": "Pub/Sub push ingress; one utility outage fans out to every enrolled case in the area and each case is judged by its own outage_watch wake",
+                    "proof": "POST /api/demo/outage-fanout, /internal/events/utility, and per-case wakes",
                 },
                 {
                     "requirement": "Google Cloud infrastructure",

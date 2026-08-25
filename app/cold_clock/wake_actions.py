@@ -67,6 +67,16 @@ class ColdClockWakeExecutor:
             outcome = "still_waiting" if case.get("delivery", {}).get("status") == "dispatched" else "no_longer_needed"
             if outcome == "still_waiting":
                 _append(case, ACTOR, "Receipt follow-up due", "The sandbox delivery remains unconfirmed; no duplicate courier was dispatched.", status="attention", evidence_ids=[wake.wake_id], at=now)
+        elif wake.kind == "outage_watch":
+            from cold_clock.followups import register_followups
+            from cold_clock.outage import evaluate_outage_watch, register_outage_watch
+
+            attempt = int((wake.payload or {}).get("attempt", 0))
+            outcome = evaluate_outage_watch(case, now, wake.wake_id, attempt)
+            if outcome == "recheck":
+                register_outage_watch(case, self.scheduler, attempt + 1)
+            elif outcome == "excursion_recorded":
+                register_followups(case, self.scheduler)
         else:
             raise ValueError(f"unsupported ColdClock wake kind {wake.kind}")
         action = {

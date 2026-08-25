@@ -66,6 +66,7 @@ def test_ui_exposes_unattended_run_wake_panel_and_live_polling():
     script = (web / "app.js").read_text(encoding="utf-8")
     css = (web / "autonomy.css").read_text(encoding="utf-8")
     assert 'id="unattended-demo"' in html and 'id="wake-list"' in html and 'id="advance-clock"' in html
+    assert 'id="outage-fanout"' in html and 'id="packet-agent"' in html and 'api("/api/demo/outage-fanout"' in script
     assert 'id="autonomy-background"' in html and 'id="injection-screen"' in html
     assert 'api("/api/demo/unattended"' in script and "setInterval(pollActiveCase" in script
     assert "dispatch: false" in script, "the clock control must leave dispatch to Cloud Scheduler"

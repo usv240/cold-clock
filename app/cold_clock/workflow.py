@@ -186,31 +186,42 @@ def trigger_outage(case: dict[str, Any]) -> dict[str, Any]:
     return case
 
 
+PACKET_AGENT: Any | None = None
+
+
 def request_review(case: dict[str, Any]) -> dict[str, Any]:
     if case["status"] != "excursion_detected":
         raise ValueError("review requires a recorded excursion")
+    from cold_clock.packet_agent import assemble_packet
+
+    packet, receipt = assemble_packet(case, PACKET_AGENT)
     case["review"] = {
         "status": "pending_human",
         "requested_at": _iso(_case_moment(case, 169)),
-        "packet": {
-            "medicine": case["medication"]["display_name"],
-            "package_fields_verified": case["extraction"]["accuracy"]["matched"],
-            "observed_minutes": case["excursion"]["observed_minutes"],
-            "maximum_fahrenheit": case["excursion"]["maximum_fahrenheit"],
-            "opened_on": case["medication"]["opened_on"],
-            "source_url": case["label_evidence"]["url"],
-            "question": "What reviewed disposition should govern this synthetic case?",
-        },
+        "packet": packet,
         "decision": None,
     }
+    case["packet_agent"] = receipt
     case["status"] = "awaiting_professional_review"
+    if receipt.get("live") and receipt.get("accepted"):
+        detail = (
+            f"The ADK review-packet agent called {len(receipt['tool_calls'])} scoped read-only tools; the verifier "
+            f"confirmed all {len(receipt['verified_fields'])} packet values against tool output before routing."
+        )
+    elif receipt.get("live"):
+        detail = (
+            f"The ADK review-packet agent's output was rejected ({', '.join(receipt.get('rejected_fields') or ['missing tool call'])}); "
+            "the deterministic packet was routed instead."
+        )
+    else:
+        detail = "A bounded packet was routed to the synthetic pharmacist workspace."
     _append(
         case,
         "Review packet agent",
         "Human review requested",
-        "A bounded packet was routed to the synthetic pharmacist workspace.",
+        detail,
         status="waiting",
-        evidence_ids=[LABEL_EVIDENCE["source_id"], "sensor-readings"],
+        evidence_ids=[LABEL_EVIDENCE["source_id"], "sensor-readings", *(["packet-agent-receipt"] if receipt.get("live") else [])],
     )
     return case
 
@@ -414,9 +425,9 @@ def public_view(case: dict[str, Any]) -> dict[str, Any]:
     view["autonomy_proof"] = build_autonomy_proof(
         case,
         id_field="case_id",
-        automatic_actors=("agent", "gateway", "pilot intake", "live evidence"),
+        automatic_actors=("agent", "gateway", "pilot intake", "live evidence", "evidence gate", "review coordinator"),
         authority_actors=("pharmd", "reviewer", "human reviewer"),
-        external_actors=("household", "sensor", "outage"),
+        external_actors=("household", "sensor gateway", "utility outage"),
     )
     return view
 
