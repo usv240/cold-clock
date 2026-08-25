@@ -19,6 +19,12 @@ Case `cc-74520e5a757d4a3f9cba4fd44a959e25`, `POST /api/demo/unattended`: `packet
 
 Two fresh monitoring cases (`cc-379671ed…`, `cc-a461e488…`) in the default `grid-7` area. `python scripts/publish_event.py utility --service-area grid-7` published message `21084840278305256` with `outage_id: out-990daf21`. Twelve seconds later both cases carried `utility_outage.channel = pubsub` and one pending `outage_watch` wake each; the Cloud Run log shows `POST /internal/events/utility` → 200 from the push subscription's OIDC identity. A control fan-out through `POST /api/demo/outage-fanout` behaved identically with `channel = api`.
 
+### Browser-driven judge path (Playwright against the deployment, revision after `cold-clock-00046-lj2`)
+
+Scripted exactly as a judge would act, in a real Chromium: click **Run unattended** (53 s on a cold instance; the ADK card read "3 scoped tool calls · 6 values verified", the Gemma card "clean · live-vertex-ai"); the run stopped at the human gate; the reviewer dialog was filled and submitted (the only decision); the wake panel showed `Poll sandbox courier at ETA · pending`, the review reminder `cancelled · qualified disposition recorded`, and "Cloud Scheduler scanned 33s ago (verified Google OIDC)". With no further input, **89 seconds later the page itself changed** to "Closed by a Cloud Scheduler wake — no operator", background wakes "1 fired · closed case", timeline "Background wake agent — Courier confirmed handoff", status line "scanned 3s ago · 1 wakes fired". No page errors. Desktop and phone layouts, dark and light themes, were rendered and inspected.
+
+Two UI defects were found only by driving it and fixed the same day: an init-time `$('[data-close]').forEach` TypeError that had been silently disabling tab switching, dialog close buttons and live polling; and the human-gate button staying disabled after an unattended run. Regression tests cover both.
+
 ### Signed receipts
 
 `GET /api/cases/{id}/autonomy-proof` returned `signature` `4cb02b1579e29512…`; `POST /api/receipts/verify` returned `valid: true` for the genuine copy and `valid: false` after `operator_continue_clicks` was edited to 7.

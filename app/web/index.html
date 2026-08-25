@@ -201,6 +201,7 @@ LOT-42</textarea></label>
             <div class="wake-panel" aria-labelledby="wake-title">
               <div class="wake-heading"><h4 id="wake-title">Durable wakes</h4><small id="simulated-now">Cloud Scheduler scans every minute</small></div>
               <ul class="wake-list" id="wake-list" aria-live="polite"><li class="wake-empty">No durable wakes yet.</li></ul>
+              <p class="worker-status" id="worker-status" data-state="unknown" aria-live="polite">Checking Cloud Scheduler…</p>
               <button id="advance-clock" class="button secondary compact full" type="button" disabled>Advance simulated clock 35 min</button>
               <p class="control-note">The demo clock is simulated and forward-only. Advancing it does not run anything here; the next Cloud Scheduler scan fires whatever became due.</p>
             </div>

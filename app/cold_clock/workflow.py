@@ -448,17 +448,24 @@ def run_full_demo(case: dict[str, Any] | None = None) -> dict[str, Any]:
     return public_view(case)
 
 
-def run_unattended_demo(case: dict[str, Any] | None = None, *, courier_eta_minutes: int = 1) -> dict[str, Any]:
+def run_unattended_demo(case: dict[str, Any] | None = None, *, courier_eta_minutes: int = 1, stop_at_review: bool = False) -> dict[str, Any]:
     """Run every safe transition and then stop at the courier ETA.
 
     Unlike ``run_full_demo`` this never fabricates the receipt inside the request. The case is
     left in ``delivery_dispatched`` with a short sandbox ETA so the Cloud Scheduler wake worker,
     not the caller, is what polls the courier and closes the case.
+
+    With ``stop_at_review`` the request stops at the human gate instead of recording the labelled
+    synthetic pharmacist decision, so a real person enters the disposition and everything after
+    that click — reservation, dispatch, and the scheduler-fired closure — is automatic.
     """
     case = case or create_case()
     case["delivery_eta_minutes"] = int(courier_eta_minutes)
     trigger_outage(case)
     advance_safe_automation(case)
+    if stop_at_review:
+        case["demo_completion_mode"] = "awaiting_real_review_then_background"
+        return case
     record_review(
         case,
         "replace",

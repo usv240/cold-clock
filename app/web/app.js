@@ -111,6 +111,26 @@ async function renderWakes(caseId) {
   } catch (error) {
     list.innerHTML = `<li class="wake-empty">${escapeHtml(error.message)}</li>`;
   }
+  renderWorkerStatus();
+}
+
+async function renderWorkerStatus() {
+  const node = $("#worker-status");
+  if (!node) return;
+  try {
+    const status = await api("/api/background/status");
+    if (status.last_scan_at == null) {
+      node.textContent = "Cloud Scheduler: no scan recorded since this instance started.";
+      node.dataset.state = "unknown";
+      return;
+    }
+    const mode = status.last_identity?.mode === "google-oidc" ? "verified Google OIDC" : status.last_identity?.mode || "unknown";
+    node.textContent = `Cloud Scheduler scanned ${status.seconds_since_last_scan}s ago (${mode}) · ${status.scans} scans · ${status.dispatched_total} wakes fired${status.pushes ? ` · ${status.pushes} Pub/Sub pushes` : ""}`;
+    node.dataset.state = status.seconds_since_last_scan <= 120 ? "live" : "stale";
+  } catch (error) {
+    node.textContent = "Cloud Scheduler status unavailable.";
+    node.dataset.state = "unknown";
+  }
 }
 
 async function pollActiveCase() {
@@ -351,6 +371,7 @@ async function runAuto() {
     autoRunning = false;
     $("#auto-demo").disabled = false;
     $("#console").setAttribute("aria-busy", "false");
+    if (currentCase) render(currentCase);
   }
 }
 
@@ -360,16 +381,17 @@ async function runUnattended() {
   $("#unattended-demo").disabled = true;
   $("#console").setAttribute("aria-busy", "true");
   try {
-    const started = await api("/api/demo/unattended", { method: "POST" });
+    const started = await api("/api/demo/unattended", { method: "POST", body: JSON.stringify({ stop_at_review: true }) });
     render(started);
     await refreshCases(started.case_id);
-    toast("Safe work done. The Cloud Scheduler wake will close this case at the courier ETA — no clicks needed.");
+    toast("Live models read the package and the agent routed the packet. Record the pharmacist decision — everything after that click is automatic, including the scheduler-fired closure.");
   } catch (error) {
     toast(error.message);
   } finally {
     autoRunning = false;
     $("#unattended-demo").disabled = false;
     $("#console").setAttribute("aria-busy", "false");
+    if (currentCase) render(currentCase);
   }
 }
 
@@ -462,7 +484,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("#intake-form").addEventListener("submit", submitIntake);
   $("#sensor-form").addEventListener("submit", submitSensor);
   $("#review-form").addEventListener("submit", submitReview);
-  $('[data-close]').forEach((button) => button.addEventListener("click", () => closeDialog(button.dataset.close)));
+  $$("[data-close]").forEach((button) => button.addEventListener("click", () => closeDialog(button.dataset.close)));
   setupTabs();
   try {
     await refreshCases();

@@ -14,6 +14,7 @@ from service.developer_routes import build_developer_router
 from service.events_routes import build_events_router
 from service.hardening_routes import build_hardening_router
 from service.runtime import build_runtime
+from service import worker_status
 from service.scheduler_routes import build_scheduler_router
 from spine.http_trace import install_http_tracing
 from spine.developer_access import DeveloperAccessManager, FirestoreAccessStore, MemoryAccessStore, build_access_router
@@ -55,6 +56,14 @@ if ENABLE_LIVE_MODELS:
  import cold_clock.workflow as _workflow
  from cold_clock.packet_agent import AdkPacketAgent
  _workflow.PACKET_AGENT=AdkPacketAgent(PROJECT)
+ def _warm_agent_stack():
+  # ADK pulls in the Vertex SDK on first use (~20 s cold); do it once at boot instead of on a judge's first click.
+  try:
+   import google.adk.agents,google.adk.runners  # noqa: F401
+   from google import genai  # noqa: F401
+  except Exception:  # noqa: BLE001 - warmup is best effort; the receipt reports any real failure
+   pass
+ import threading;threading.Thread(target=_warm_agent_stack,name="warm-agent-stack",daemon=True).start()
 RECEIPT_PEPPER=os.environ.get("API_KEY_PEPPER","local-development-only-pepper")
 
 @app.exception_handler(ConcurrentWriteError)
@@ -69,6 +78,6 @@ WEB=Path(__file__).resolve().parent.parent/"web"; app.mount("/static",StaticFile
 
 @app.get("/health")
 def health()->dict[str,Any]:
- return {"ok":True,"project":"cold-clock","google_cloud_project":PROJECT,"persistence":persistence,"synthetic_demo":True,"operating_mode":"protected-deidentified-pilot" if ALLOW_DEIDENTIFIED else "public-synthetic-pilot","pilot_api":"/api/pilot","public_data_policy":"authorized-deidentified" if ALLOW_DEIDENTIFIED else "synthetic-only","global_reset":ALLOW_GLOBAL_RESET,"clinical_decisions":"human-only","model":"gemini-3.5-flash","models":["gemini-3.5-flash","gemini-embedding-001","gemma-4-26b-a4b-it-maas"],"model_mode":"live-fail-closed" if ENABLE_LIVE_MODELS else "local-test-no-model","tracing":trace_status,"durable_wakes":"firestore-transactional" if USE_FIRESTORE else "memory-transactional","frameworks":["Google Gen AI SDK","Google ADK"],"packet_agent":"adk-scoped-tools-verified" if ENABLE_LIVE_MODELS else "deterministic-local","event_ingress":{"sensor":"/internal/events/sensor","utility":"/internal/events/utility","transport":"Pub/Sub push with Google-signed OIDC"},"background_execution":{"worker":"/internal/wakes/scan","trigger":"Cloud Scheduler every minute, Google-signed OIDC","closes_cases":"courier_status_poll wake at sandbox ETA","outage_fanout":"outage_watch wakes per affected case","unattended_demo":"/api/demo/unattended"},"signed_receipts":"HMAC-SHA256, verify at POST /api/receipts/verify","domain_state_writes":"transactional-optimistic-versioning","simulation_clock":True,"autonomy":"event-driven-safe-auto-continuation","developer_api":{"base":"/v1","key_issuance":"/api/developer/keys","daily_limit":50},"google_services":GOOGLE_SERVICES}
+ return {"ok":True,"project":"cold-clock","google_cloud_project":PROJECT,"persistence":persistence,"synthetic_demo":True,"operating_mode":"protected-deidentified-pilot" if ALLOW_DEIDENTIFIED else "public-synthetic-pilot","pilot_api":"/api/pilot","public_data_policy":"authorized-deidentified" if ALLOW_DEIDENTIFIED else "synthetic-only","global_reset":ALLOW_GLOBAL_RESET,"clinical_decisions":"human-only","model":"gemini-3.5-flash","models":["gemini-3.5-flash","gemini-embedding-001","gemma-4-26b-a4b-it-maas"],"model_mode":"live-fail-closed" if ENABLE_LIVE_MODELS else "local-test-no-model","tracing":trace_status,"durable_wakes":"firestore-transactional" if USE_FIRESTORE else "memory-transactional","frameworks":["Google Gen AI SDK","Google ADK"],"packet_agent":"adk-scoped-tools-verified" if ENABLE_LIVE_MODELS else "deterministic-local","event_ingress":{"sensor":"/internal/events/sensor","utility":"/internal/events/utility","transport":"Pub/Sub push with Google-signed OIDC"},"background_execution":{"worker":"/internal/wakes/scan","trigger":"Cloud Scheduler every minute, Google-signed OIDC","closes_cases":"courier_status_poll wake at sandbox ETA","outage_fanout":"outage_watch wakes per affected case","unattended_demo":"/api/demo/unattended"},"signed_receipts":"HMAC-SHA256, verify at POST /api/receipts/verify","background_worker":worker_status.snapshot(),"domain_state_writes":"transactional-optimistic-versioning","simulation_clock":True,"autonomy":"event-driven-safe-auto-continuation","developer_api":{"base":"/v1","key_issuance":"/api/developer/keys","daily_limit":50},"google_services":GOOGLE_SERVICES}
 @app.get("/",include_in_schema=False)
 def index()->FileResponse:return FileResponse(WEB/"index.html")

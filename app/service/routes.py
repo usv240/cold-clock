@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
 from cold_clock.followups import register_followups
@@ -37,13 +37,53 @@ class ReceiptVerification(BaseModel):
     proof: dict[str, Any]
 
 
+class UnattendedDemoRequest(BaseModel):
+    stop_at_review: bool = Field(
+        default=False,
+        description="True stops at the human gate so a real reviewer enters the disposition; the synthetic reviewer is not used.",
+    )
+
+
+class DemoRateLimiter:
+    """Generous per-network cap on the model-calling demo endpoints so a public URL cannot run up cost."""
+
+    def __init__(self, limit: int = 30, window_seconds: int = 3600):
+        from collections import defaultdict, deque
+
+        self.limit = limit
+        self.window = window_seconds
+        self._hits = defaultdict(deque)
+
+    def check(self, network: str) -> tuple[bool, int]:
+        from time import monotonic
+
+        now = monotonic()
+        bucket = self._hits[network]
+        while bucket and now - bucket[0] > self.window:
+            bucket.popleft()
+        if len(bucket) >= self.limit:
+            return False, 0
+        bucket.append(now)
+        return True, self.limit - len(bucket)
+
+
 class OutageDemoRequest(BaseModel):
     service_area: str = Field(default="grid-7", min_length=2, max_length=40)
     enroll: int = Field(default=3, ge=0, le=6, description="Synthetic monitoring cases to enroll in the area before the outage.")
 
 
-def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool = False, model_runner=None, receipt_pepper: str = "local-development-only-pepper") -> APIRouter:
+def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool = False, model_runner=None, receipt_pepper: str = "local-development-only-pepper", demo_limit: int = 30) -> APIRouter:
     router = APIRouter(prefix="/api", tags=["cold-clock"])
+    limiter = DemoRateLimiter(limit=demo_limit)
+
+    def throttle(request: Request, response: Response) -> None:
+        from spine.developer_access import client_network
+
+        allowed, remaining = limiter.check(client_network(request))
+        response.headers["X-Demo-Limit"] = str(limiter.limit)
+        response.headers["X-Demo-Remaining"] = str(remaining)
+        if not allowed:
+            raise HTTPException(status_code=429, detail=f"demo limit of {limiter.limit} model-backed runs per network per hour reached; the /v1 API with a developer key remains available")
 
     def require(case_id: str) -> dict[str, Any]:
         case = store.get(case_id)
@@ -132,7 +172,8 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
         return {"valid": valid, "record_id": request.proof.get("record_id"), "detail": "signature matches the service key" if valid else "signature missing or the receipt was altered"}
 
     @router.post("/demo/outage-fanout")
-    def outage_fanout_demo(request: OutageDemoRequest) -> dict[str, Any]:
+    def outage_fanout_demo(request: OutageDemoRequest, http_request: Request, response: Response) -> dict[str, Any]:
+        throttle(http_request, response)
         """One synthetic grid outage, every enrolled case in the area, no operator per case.
 
         Enrolls a few monitoring cases in the service area, then applies one utility event to all
@@ -222,8 +263,16 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
     def delivery(case_id: str) -> dict[str, Any]:
         return mutate(case_id, confirm_delivery)
 
+    @router.get("/background/status")
+    def background_status() -> dict[str, Any]:
+        """What the background workers have done since this instance started: last Cloud Scheduler scan, identity, pushes."""
+        from service import worker_status
+
+        return worker_status.snapshot()
+
     @router.post("/demo/full")
-    def full_demo() -> dict[str, Any]:
+    def full_demo(request: Request, response: Response) -> dict[str, Any]:
+        throttle(request, response)
         case = create_case()
         if model_runner is not None:
             try:
@@ -235,20 +284,23 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
         return case
 
     @router.post("/demo/unattended")
-    def unattended_demo() -> dict[str, Any]:
+    def unattended_demo(request: Request, response: Response, options: UnattendedDemoRequest | None = None) -> dict[str, Any]:
         """Run every safe transition and stop at the courier ETA.
 
         The receipt is deliberately not fabricated here. A durable ``courier_status_poll`` wake is
         registered; the Cloud Scheduler worker polls the sandbox courier at the ETA and closes the
         case with nobody at the screen. Poll ``GET /api/cases/{case_id}`` to watch it happen.
+        With ``stop_at_review: true`` the run halts at the human gate for a real disposition.
         """
+        throttle(request, response)
+        options = options or UnattendedDemoRequest()
         case = create_case()
         if model_runner is not None:
             try:
                 model_runner.apply(case)
             except Exception as exc:
                 raise HTTPException(status_code=503, detail="live model evidence unavailable; no replay substituted") from exc
-        run_unattended_demo(case)
+        run_unattended_demo(case, stop_at_review=options.stop_at_review)
         register_followups(case, scheduler)
         store.put(case)
         return public_view(case)

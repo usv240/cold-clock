@@ -4,6 +4,14 @@ Release proof: [validation evidence incl. live scheduler closure](VALIDATION_EVI
 
 > When refrigeration fails, the alarm is only step one.
 
+## Sixty-second judge path
+
+1. Open https://cold-clock-109051079423.us-central1.run.app and click **Run unattended**. Live Gemini reads the synthetic package, Gemma screens it, the embedding model routes it, and the Google ADK agent assembles the pharmacist packet through scoped tools (~15 s).
+2. Click **Record human disposition** and enter a name, a disposition, and a rationale — the only decision the system will not make.
+3. Take your hands off. Reservation and dispatch are automatic; the **Durable wakes** panel shows `courier_status_poll · pending`; within about two minutes Cloud Scheduler fires it and the case reads **Closed by a Cloud Scheduler wake — no operator**. The panel also shows when the scheduler last called, with its verified identity.
+4. Click **Simulate grid outage**: one event, three enrolled households, each armed with its own background watch.
+5. Open the signed autonomy proof from the timeline footer; `POST /api/receipts/verify` proves it is untampered. `/api/proof` (8/8) and `/api/hardening/proof` (17/17) are executable.
+
 ColdClock is an event-driven agent that carries a temperature-sensitive medication case from a
 power or refrigerator failure to **pharmacist-reviewed resolution**. It assembles observed evidence,
 routes a bounded review packet, and—only after a qualified human decision—coordinates a synthetic
@@ -18,7 +26,7 @@ courier, reviewer, and sensor events.
 
 ## Live stack proof
 
-The header's **Live stack** control reads `/health` at runtime. It turns green only on a healthy non-local deployment; hover, click, or keyboard focus reveals the services actually used: Gemini 3.5 Flash on Vertex AI, Google Gen AI SDK, Cloud Run, Firestore, Cloud Scheduler, and Cloud Trace. The panel links to the same machine-readable evidence.
+The header's **Live stack** control reads `/health` at runtime. It turns green only on a healthy non-local deployment; hover, click, or keyboard focus reveals the services actually used: Gemini 3.5 Flash, Gemini Embedding 001 and Gemma 4 on Vertex AI, Google ADK, Google Gen AI SDK, Cloud Run, Firestore, Cloud Scheduler, Pub/Sub, Cloud Trace, and Secret Manager. `/health` also carries `background_worker` — the last Cloud Scheduler scan time and verified identity — and `GET /api/background/status` exposes the same without console access.
 
 ## Autonomy contract and design identity
 
@@ -278,6 +286,8 @@ Then provision the background triggers once:
 .\infra\provision_pubsub.ps1      # sensor and utility topics with OIDC push subscriptions
 python scripts\publish_event.py utility --service-area grid-7   # a real Pub/Sub message, end to end
 ```
+
+`deploy.sh` keeps one instance warm (`--min-instances 1`, override with `COLD_CLOCK_MIN_INSTANCES=0` to run at zero idle cost) and the service pre-imports the ADK stack at boot, so a judge's first click is ~15 s rather than ~50 s. The public demo endpoints are capped at 30 model-backed runs per network per hour (`X-Demo-Remaining` header); the keyed `/v1` API has its own quota.
 
 Deployment enables Firestore through `USE_FIRESTORE=true`. Before recording the submission video:
 

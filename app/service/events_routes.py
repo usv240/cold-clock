@@ -24,6 +24,7 @@ from cold_clock.outage import apply_utility_outage, register_outage_watch, servi
 from cold_clock.pilot import ingest_sensor_event
 from cold_clock.store import CaseStore
 from cold_clock.workflow import advance_safe_automation
+from service import worker_status
 from spine.scheduler_auth import verify_scheduler_token
 
 
@@ -94,6 +95,7 @@ def build_events_router(store: CaseStore, scheduler) -> APIRouter:
             return {"ok": False, "accepted": True, "reason": str(exc), "message_id": push.message.messageId}
         case.setdefault("event_channels", []).append({"channel": "pubsub", "kind": "sensor_event", "id": str(payload["event_id"])})
         store.put(case)
+        worker_status.record_push("sensor_event")
         return {
             "ok": True,
             "identity": identity,
@@ -116,6 +118,7 @@ def build_events_router(store: CaseStore, scheduler) -> APIRouter:
             result = fan_out_utility_outage(store, scheduler, payload, channel="pubsub")
         except ValueError as exc:
             return {"ok": False, "accepted": True, "reason": str(exc), "message_id": push.message.messageId}
+        worker_status.record_push("utility_outage")
         return {"ok": True, "identity": identity, "message_id": push.message.messageId, **result}
 
     return router
