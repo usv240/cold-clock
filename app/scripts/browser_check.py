@@ -40,7 +40,7 @@ def main() -> int:
         page.click("#unattended-demo"); page.wait_for_function(busy_off, timeout=180000)
         check("unattended run stops at the human gate", "pharmacist" in page.text_content("#status-title").lower())
         check("human-gate button is enabled", page.evaluate("!document.querySelector('#next-action').disabled"))
-        page.click("[data-tab=review]"); page.locator("#console").screenshot(path=str(out / "review.png"))
+        page.locator("#console").screenshot(path=str(out / "review.png"))  # the board shows the review packet without tabs
         packet = page.text_content("#packet-agent") or ""
         check("packet card shows a receipt", "packet" in packet.lower())
         page.click("#next-action"); page.wait_for_selector("#review-dialog[open]")
