@@ -1,86 +1,108 @@
-# ColdClock — 4-minute demo script (one take)
+# ColdClock demo script (one take, under 4 minutes)
 
-Target runtime **3:35–3:50**. Only the first four minutes are judged. Spoken lines are in quotes; keep them, drop nothing else. Talk slowly; the app does the work.
+Plain words. Short lines. The app does the work; you point and speak.
+Target 3:30. Only the first four minutes are judged.
 
-## Before you press record (10 minutes)
+## Setup (10 minutes before recording)
 
-1. Run `python scripts/browser_check.py --url https://cold-clock-109051079423.us-central1.run.app --wait 240` — it must print `7/7`. This also warms the instance.
-2. Browser tabs, left to right, all logged in and already loaded:
-   - **Tab 1** the app: `https://cold-clock-109051079423.us-central1.run.app` (light theme is the default; scrolled to the operations workspace, window wide enough that the autonomy rail is one line).
-   - **Tab 2** Cloud Run → service `cold-clock` → **Revisions** (shows the serving revision and 100 % traffic).
-   - **Tab 3** Cloud Scheduler → job `cold-clock-wake-scan` (every minute, last run status).
-   - **Tab 4** Firestore → collection `cold_clock_wakes` (any document open).
-   - **Tab 5** Cloud Run → service `cold-clock` → **Logs**, filtered to `/internal/wakes/scan`.
-3. Close every other tab. No third-party sites, logos or brand pages on screen at any point (the Rules forbid it). Do not open DailyMed/FDA pages.
-4. Record screen + mic in one continuous take. No cuts. If a step misfires, say what you see and continue — judges score honesty over polish.
+1. Run: `python scripts/browser_check.py --url https://cold-clock-109051079423.us-central1.run.app --wait 240`
+   It must print `7/7`. This also warms the service.
+2. Open five tabs, in this order, all loaded:
+   1. The app (light theme, scrolled to the workspace, wide window).
+   2. Cloud Run, service `cold-clock`, Revisions tab.
+   3. Cloud Scheduler, job `cold-clock-wake-scan`.
+   4. Firestore, collection `cold_clock_wakes`.
+   5. Cloud Run, service `cold-clock`, Logs, filtered to `/internal/wakes/scan`.
+3. Close everything else. No other websites or logos on screen.
+4. One continuous recording, screen plus voice. If something misfires, say what you see and keep going.
 
 ## The take
 
-### 0:00–0:25 — the friction (Tab 1, top of the app)
+### 0:00 to 0:20. The problem. (Tab 1)
 
-"When the power goes out, a home fridge holding insulin sends an alarm — and then nothing happens. Someone still has to figure out exactly which medicine and lot, how long it was out of range, find the current storage guidance, reach a pharmacist, arrange a replacement, and prove it arrived. Monitoring products stop at the alert. ColdClock starts there, and finishes the job while nobody is watching. Everything you'll see is synthetic and runs on Google Cloud. One thing it will never do is decide whether the medicine is safe — a pharmacist does."
+"When the power goes out, a fridge with insulin in it sends an alarm. And then nothing happens.
+Someone still has to work out which medicine it was, how long it was warm, call a pharmacist, get a replacement, and make sure it arrives.
+Today that is five phone calls on the worst day of your week.
+ColdClock does that work by itself. It only stops for one thing: a pharmacist's decision."
 
-### 0:25–0:50 — one click (Tab 1, click **Run unattended**)
+### 0:20 to 0:45. One click. (Tab 1, press Run unattended)
 
-While it runs (~15 s), say:
+While it runs, say:
 
-"One click. Gemini 3.5 Flash on Vertex AI is reading the package with exact-quote grounding — every field it keeps must appear word-for-word in its own transcription. Gemma 4 screens the label text for injected instructions. Gemini Embedding routes the evidence. And a Google ADK agent assembles the pharmacist's packet through three read-only tools, with a verifier checking every value against what the tools returned."
+"One click. Gemini on Vertex AI reads the medicine package. It may only keep facts it can quote word for word.
+Gemma checks the label for hidden instructions.
+And an agent built with Google's ADK writes the pharmacist's summary using three read-only tools. A checker confirms every number came from the tools."
 
-When it stops: point at the status **Waiting for pharmacist**. Click the **Medicine evidence** tab — point at the verified fields and the green injection-screen line. Click **Review packet** — point at **AI DISPOSITION: NONE · HUMAN DECISION REQUIRED** and the **ADK agent packet accepted · 3 scoped tool calls · 6 values verified** card.
+When it stops, click the **Review packet** tab. Point at **AI DISPOSITION: NONE** and at **ADK agent packet accepted, 6 values verified**.
 
-"It stopped here on purpose. This is the only decision the system refuses to make."
+"It stopped on purpose. The system will not decide if the medicine is safe. A person does."
 
-### 0:50–1:15 — the one human decision (Tab 1)
+### 0:45 to 1:05. The one human decision. (Tab 1)
 
-Click **Record human disposition**. Type a name and credential, choose **Replace**, type one sentence of rationale, submit.
+Click **Record human disposition**. Type your name, pick **Replace**, type one sentence, submit.
 
-"I'm the pharmacist for this demo. That was the only decision a person makes."
+"I am the pharmacist today. That is the only decision a person makes."
 
-Watch the journey rail: **Replacement reserved** and **Accessible delivery** tick by themselves. Point at the **Durable wakes** panel: *Poll sandbox courier at ETA · pending*, and the line *Cloud Scheduler scanned Ns ago (verified Google OIDC)*. Point at the autonomy rail: **0 continue clicks**.
+Watch the steps tick by themselves. Point at **Durable wakes**: *Poll sandbox courier, pending*. Point at **0 continue clicks**.
 
-"From here, nobody clicks. A durable wake is registered in Firestore. Cloud Scheduler calls the worker every minute with a signed identity token; at the ETA the worker polls the courier, records the handoff and closes the case. Let me show you that running on Google Cloud while it happens."
+"From here nobody clicks. A timer is stored in Firestore. Cloud Scheduler wakes the agent every minute. When the courier confirms, the agent closes the case.
+Let me show you that happening on Google Cloud while it happens."
 
 Take your hands off the mouse for one visible second.
 
-### 1:15–2:40 — proof on Google Cloud (Tabs 2 → 5, ~20 s each)
+### 1:05 to 2:20. Proof on Google Cloud. (Tabs 2 to 5, about 18 seconds each)
 
-- **Tab 2 (Cloud Run revisions):** "This is the service — one Cloud Run container, the revision that's serving, 100 % of traffic."
-- **Tab 3 (Cloud Scheduler):** "The job that makes the agent autonomous — every minute, with an OIDC token from a dedicated service account. The app verifies audience, issuer and identity; an unauthenticated call gets a 401."
-- **Tab 4 (Firestore `cold_clock_wakes`):** refresh; find the newest `courier_status_poll` document. "Here is the wake itself in Firestore — claimed in a transaction with a lease, bounded retries, dead letters. Watch the status." (Refresh once more if it's still `pending`; it will read `done` within about a minute.)
-- **Tab 5 (Cloud Run logs):** "And the scheduler's calls landing on the worker, 200 every minute."
+- Tab 2, Cloud Run: "This is the service. One container. This revision takes all the traffic."
+- Tab 3, Cloud Scheduler: "This job runs every minute with a signed Google identity. Without that identity the agent answers 401."
+- Tab 4, Firestore: refresh, open the newest `courier_status_poll` document. "This is the wake itself. Status pending. Watch it." Refresh once more. "Done."
+- Tab 5, Logs: "And the scheduler's calls landing, 200 every minute."
 
-### 2:40–3:05 — it finished by itself (Tab 1)
+### 2:20 to 2:45. It finished by itself. (Tab 1)
 
-Switch back. The page will already have updated.
+Switch back. The page has already changed.
 
-"No refresh, no click. The case is **resolved**. The autonomy rail reads *Closed by a Cloud Scheduler wake — no operator*, background wakes *1 fired · closed case*. The timeline's last entry is the background agent: *Courier confirmed handoff*. The receipt reminder cancelled itself — marked, never deleted."
+"No refresh. No click. The case is resolved.
+The rail says: closed by a Cloud Scheduler wake, no operator. Background wakes: one fired.
+The last line in the timeline is the background agent: courier confirmed handoff."
 
-Click **Open signed autonomy proof** (timeline footer). Point at `closed_by_background_wake: true`, `cloud_scheduler_triggered_executions: 1`, `operator_continue_clicks: 0`, `proof_integrity: verified`, and `signature`.
+Click **Open signed autonomy proof**. Point at `closed_by_background_wake: true`, `operator_continue_clicks: 0`, and `signature`.
 
-"This receipt is derived from persisted state and HMAC-signed — edit one field and the verify endpoint rejects it."
+"This receipt is built from stored records and signed. Change one number and it fails."
 
-### 3:05–3:25 — scale and failure, in one breath (Tab 1)
+### 2:45 to 3:05. One outage, every household. (Tab 1, press Simulate grid outage)
 
-Click **Simulate grid outage**.
+"A real outage is not one house. One message from the utility reaches every home we watch.
+Each home gets its own watch. Warm fridge: sent to a pharmacist. Fine fridge: keep watching. Silent sensor: stop safely and ask a person."
 
-"Real outages aren't one household. One utility event fans out to every enrolled case in the grid area — each gets its own background watch and is judged from its own readings: excursion routed to review, in range kept watching, silent sensor becomes a safe stop. And every failure we could think of is an executable proof: missing evidence, an unavailable reviewer, a courier that never confirms, injected label text, a model that invents a number — all stop safely. Twenty out of twenty, live."
+### 3:05 to 3:20. When things break. (Tab 1, open /api/hardening/proof)
 
-(Optional if time: open `/api/hardening/proof` in Tab 1 and show `"passed": 20, "total": 20`.)
+"Missing readings. A pharmacist who never answers. A courier that never confirms. A label that tries to give orders. A model that invents a number.
+Every one of them stops safely. Twenty checks, twenty passed, live."
 
-### 3:25–3:45 — close (Tab 1, scroll to top or show README architecture)
+### 3:20 to 3:35. Close. (Tab 1, top of page)
 
-"ColdClock is an event-to-resolution agent: Gemini, Gemma and an ADK agent for evidence; Firestore for state; Cloud Scheduler and Pub/Sub for background execution; a human for the one decision that must stay human; and a signed receipt for everything else. All people, packages and connectors are synthetic, the demo clock is simulated and says so, and no clinical claim is made. The repo, diagram, and reproducible proofs are linked below. Thank you."
+"ColdClock: Gemini, Gemma, and an ADK agent for the evidence. Firestore for memory. Cloud Scheduler and Pub/Sub so it works while nobody is watching. A pharmacist for the one decision that must stay human. And a signed receipt for everything else.
+Everything here is synthetic, the demo clock is simulated and says so, and we claim no clinical result.
+Code, diagram, and proofs are linked below. Thank you."
 
 Stop recording.
 
 ## After recording
 
-- Title the video "ColdClock — All Things Agentic Hackathon". Description: hosted URL, repo URL, and the sentence "I created this piece of content for the purposes of entering the All Things Agentic Hackathon." (that sentence also qualifies the video for the content bonus).
-- Publish **public** (not unlisted) on YouTube or Vimeo, English audio; add auto-captions.
-- Paste the link into the Devpost form and into `submission-manifest.json` → `video_url`.
+- Publish public on YouTube or Vimeo (not unlisted), English audio, captions on.
+- Description: hosted URL, repo URL, and this sentence: "I created this piece of content for the purposes of entering the All Things Agentic Hackathon."
+- Paste the link into the Devpost form and `submission-manifest.json` (`video_url`).
 
-## If something goes wrong mid-take
+## If something goes wrong
 
-- **Run unattended takes longer than 30 s:** keep talking through the model list; it's a cold start, it will land.
-- **Case hasn't closed when you return at 2:40:** say "the scheduler ticks once a minute" and show the Firestore wake document again; go to the outage beat and come back — it will be closed. Do not click *Confirm household receipt*.
-- **Any 503 "live model evidence unavailable":** say "the workflow fails closed rather than replaying a recording — that's by design," click **Run unattended** again.
+- Run unattended is slow: keep talking; it lands within 30 seconds.
+- Case not closed when you return: say "the scheduler ticks once a minute", show Firestore again, do the outage beat, come back. Never click Confirm household receipt.
+- A 503 "live model evidence unavailable": say "it fails closed instead of faking a result", press Run unattended again.
+
+## Why this matches the judging rules
+
+- Problem and value in the first 20 seconds.
+- Live, unedited execution with visible state changes: the UI, a Firestore document, and logs.
+- Proof it runs on Google Cloud, shown in the middle where the app is waiting anyway.
+- Architecture explained by pointing at real services, not slides.
+- Honesty on camera: synthetic data, simulated clock, human decision.
