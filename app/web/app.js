@@ -189,9 +189,10 @@ function renderChart(readings) {
   const x = (index) => left + (index / Math.max(1, readings.length - 1)) * (width - left - right);
   const y = (value) => top + ((maxT - value) / (maxT - minT)) * (height - top - bottom);
   const path = readings.map((row, index) => `${index ? "L" : "M"}${x(index).toFixed(1)} ${y(row.fahrenheit).toFixed(1)}`).join(" ");
+  const band = `<rect x="${left}" y="${y(46)}" width="${width - left - right}" height="${y(36) - y(46)}" fill="var(--brand-soft)" opacity=".75"/><line x1="${left}" y1="${y(46)}" x2="${width - right}" y2="${y(46)}" stroke="var(--brand)" stroke-dasharray="4 4"/><line x1="${left}" y1="${y(36)}" x2="${width - right}" y2="${y(36)}" stroke="var(--brand)" stroke-dasharray="4 4"/><text x="${width - right - 4}" y="${y(46) - 4}" text-anchor="end" fill="var(--brand)" font-size="9" font-family="DM Mono">Refrigerated range 36 to 46°F</text>`;
   const grid = [40, 60, 80, 100].map((value) => `<line x1="${left}" y1="${y(value)}" x2="${width - right}" y2="${y(value)}" stroke="var(--line)" stroke-width="1"/><text x="0" y="${y(value) + 4}" fill="var(--text-faint)" font-size="10" font-family="DM Mono">${value}°F</text>`).join("");
   const dots = readings.map((row, index) => `<circle cx="${x(index)}" cy="${y(row.fahrenheit)}" r="5" fill="var(--bg-elevated)" stroke="${row.fahrenheit > 86 ? "var(--danger)" : "var(--brand)"}" stroke-width="3"><title>${row.fahrenheit}°F at ${new Date(row.at).toLocaleTimeString([], {hour: "numeric", minute: "2-digit"})}</title></circle>`).join("");
-  svg.innerHTML = `${grid}<path d="${path}" fill="none" stroke="var(--brand)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>${dots}<text x="${width - right}" y="${height - 6}" text-anchor="end" fill="var(--text-faint)" font-size="9" font-family="DM Mono">Observed synthetic readings</text>`;
+  svg.innerHTML = `${band}${grid}<path d="${path}" fill="none" stroke="var(--brand)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>${dots}<text x="${width - right}" y="${height - 6}" text-anchor="end" fill="var(--text-faint)" font-size="9" font-family="DM Mono">Observed synthetic readings</text>`;
 }
 
 function renderTimeline(rows) {
