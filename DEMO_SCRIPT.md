@@ -32,7 +32,7 @@ While it runs, say:
 "One click. ColdClock reads the medicine package, checks the storage evidence, and builds everything a pharmacist needs to review the case.
 Gemini reads the package. Gemma screens the label for hidden instructions. And a Google ADK agent builds the review packet from read-only evidence. Every value is checked against its source."
 
-When it stops, click the **Review packet** tab. Point at **AI DISPOSITION: NONE** and at **ADK agent packet accepted, 6 values verified**.
+When it stops, everything is on one screen. Point at the **Review packet** card: **AI DISPOSITION: NONE**, and beneath it **ADK agent packet accepted, 6 values verified**. Point at the **Medicine evidence** card: the verified fields and the green injection-screen line.
 
 "It stopped on purpose. The system will not decide if the medicine is safe. A person does."
 
