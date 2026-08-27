@@ -22,16 +22,15 @@ Target 3:30. Only the first four minutes are judged.
 
 "When the power goes out, a fridge with insulin in it sends an alarm. And then nothing happens.
 Someone still has to work out which medicine it was, how long it was warm, call a pharmacist, get a replacement, and make sure it arrives.
-Today that is five phone calls on the worst day of your week.
-ColdClock does that work by itself. It only stops for one thing: a pharmacist's decision."
+Today, the alarm is only the beginning. Someone still has to coordinate everything that comes next.
+ColdClock does that work by itself. It stops for one thing: the decision that belongs to a pharmacist."
 
 ### 0:20 to 0:45. One click. (Tab 1, press Run unattended)
 
 While it runs, say:
 
-"One click. Gemini on Vertex AI reads the medicine package. It may only keep facts it can quote word for word.
-Gemma checks the label for hidden instructions.
-And an agent built with Google's ADK writes the pharmacist's summary using three read-only tools. A checker confirms every number came from the tools."
+"One click. ColdClock reads the medicine package, checks the storage evidence, and builds everything a pharmacist needs to review the case.
+Gemini reads the package. Gemma screens the label for hidden instructions. And a Google ADK agent builds the review packet from read-only evidence. Every value is checked against its source."
 
 When it stops, click the **Review packet** tab. Point at **AI DISPOSITION: NONE** and at **ADK agent packet accepted, 6 values verified**.
 
@@ -45,17 +44,19 @@ Click **Record human disposition**. Type your name, pick **Replace**, type one s
 
 Watch the steps tick by themselves. Point at **Durable wakes**: *Poll sandbox courier, pending*. Point at **0 continue clicks**.
 
-"From here nobody clicks. A timer is stored in Firestore. Cloud Scheduler wakes the agent every minute. When the courier confirms, the agent closes the case.
-Let me show you that happening on Google Cloud while it happens."
+"That was the last human action. From here, nobody clicks."
 
-Take your hands off the mouse for one visible second.
+Take your hands off the mouse for one visible second. Then:
+
+"The next action is stored in Firestore. Cloud Scheduler wakes the agent every minute. When the courier confirms the handoff, the agent closes the case by itself.
+Let me show you that on Google Cloud while it happens."
 
 ### 1:05 to 2:20. Proof on Google Cloud. (Tabs 2 to 5, about 18 seconds each)
 
-- Tab 2, Cloud Run: "This is the service. One container. This revision takes all the traffic."
-- Tab 3, Cloud Scheduler: "This job runs every minute with a signed Google identity. Without that identity the agent answers 401."
-- Tab 4, Firestore: refresh, open the newest `courier_status_poll` document. "This is the wake itself. Status pending. Watch it." Refresh once more. "Done."
-- Tab 5, Logs: "And the scheduler's calls landing, 200 every minute."
+- Tab 2, Cloud Run: "ColdClock itself is running here on Cloud Run. This revision takes all the traffic."
+- Tab 3, Cloud Scheduler: "And this is what makes the workflow truly asynchronous: Cloud Scheduler wakes it every minute using a signed Google identity. Without that identity the agent answers 401."
+- Tab 4, Firestore: refresh, open the newest `courier_status_poll` document. "Here is the pending action stored in Firestore. Nobody needs to keep the browser open." Refresh once more. "There. The background worker completed it."
+- Tab 5, Logs: "And here is that scheduler call reaching the running service successfully, 200 every minute."
 
 ### 2:20 to 2:45. It finished by itself. (Tab 1)
 
@@ -82,6 +83,7 @@ Every one of them stops safely. Twenty checks, twenty passed, live."
 ### 3:20 to 3:35. Close. (Tab 1, top of page)
 
 "ColdClock: Gemini, Gemma, and an ADK agent for the evidence. Firestore for memory. Cloud Scheduler and Pub/Sub so it works while nobody is watching. A pharmacist for the one decision that must stay human. And a signed receipt for everything else.
+The idea is simple: an alarm should not just tell you something went wrong. The agent should safely coordinate what happens next.
 Everything here is synthetic, the demo clock is simulated and says so, and we claim no clinical result.
 Code, diagram, and proofs are linked below. Thank you."
 
