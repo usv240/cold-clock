@@ -248,7 +248,7 @@ h1 span { color: var(--text-faint); }
 .limits-grid .eyebrow { color: #78efd5; }
 .limits-grid ul { margin: 0; padding: 0; list-style: none; }
 .limits-grid li { padding: 17px 0 17px 34px; border-bottom: 1px solid rgba(255,255,255,.13); position: relative; color: #bdd0c8; }
-.limits-grid li::before { content: "—"; position: absolute; left: 0; color: #78efd5; }
+.limits-grid li::before { content: "-"; position: absolute; left: 0; color: #78efd5; }
 .site-footer { padding: 34px 0; background: #07110e; color: #e9f5f0; }
 .footer-grid { display: grid; grid-template-columns: auto 1fr auto; gap: 42px; align-items: center; }
 .footer-grid p { margin: 0; color: #8da59b; font-size: 9px; max-width: 700px; }

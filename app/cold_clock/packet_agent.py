@@ -7,7 +7,7 @@ pharmacist will read. Its output is then verified field by field against what th
 Any invented or altered value rejects the whole packet and the deterministic packet is used
 instead, with the rejection recorded. The model never sees a disposition vocabulary and the
 verifier refuses a question that asserts safety. The workflow therefore never depends on the
-model being right — only on it being checkable.
+model being right: only on it being checkable.
 """
 
 from __future__ import annotations

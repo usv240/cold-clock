@@ -242,7 +242,7 @@ function renderAutonomy(data = {}, proof = {}) {
   const wait = String(data.current_wait || "none").replaceAll("_", " ");
   $("#autonomy-receipt").dataset.complete = String(Boolean(data.complete));
   $("#autonomy-title").textContent = data.closed_by_background_wake
-    ? "Closed by a Cloud Scheduler wake — no operator"
+    ? "Closed by a Cloud Scheduler wake: no operator"
     : data.complete ? "Bounded autonomous run complete" : automatic ? "Safe work is advancing automatically" : "Monitoring until the next real event";
   $("#autonomy-trigger").textContent = (proof.operator_continue_clicks || 0) + " continue clicks";
   $("#autonomy-actions").textContent = automatic + " traced agent event" + (automatic === 1 ? "" : "s");
@@ -267,7 +267,7 @@ function renderPacketAgent(receipt) {
   node.className = `injection-screen ${receipt.accepted ? "clean" : "flagged"}`;
   node.innerHTML = receipt.accepted
     ? `<b>ADK agent packet accepted</b><span>${escapeHtml(receipt.model)} · ${(receipt.tool_calls || []).length} scoped tool calls · ${(receipt.verified_fields || []).length} values verified against tool output · ${receipt.latency_ms} ms</span>`
-    : `<b>ADK agent packet rejected — deterministic packet used</b><span>${escapeHtml((receipt.rejected_fields || []).join(", ") || receipt.reason)} · the agent cannot invent or editorialise</span>`;
+    : `<b>ADK agent packet rejected; deterministic packet used</b><span>${escapeHtml((receipt.rejected_fields || []).join(", ") || receipt.reason)} · the agent cannot invent or editorialise</span>`;
 }
 
 function renderInjectionScreen(screen) {
@@ -279,7 +279,7 @@ function renderInjectionScreen(screen) {
     return;
   }
   node.className = `injection-screen ${screen.clean ? "clean" : "flagged"}`;
-  node.innerHTML = `<b>${screen.clean ? "Package text screened — clean" : `${screen.quarantined_spans} instruction-shaped span${screen.quarantined_spans === 1 ? "" : "s"} quarantined`}</b><span>${escapeHtml(screen.model)} · ${escapeHtml(screen.mode)}${screen.live ? "" : " · pattern layer only"} · ${screen.latency_ms} ms · never a medication decision</span>`;
+  node.innerHTML = `<b>${screen.clean ? "Package text screened: clean" : `${screen.quarantined_spans} instruction-shaped span${screen.quarantined_spans === 1 ? "" : "s"} quarantined`}</b><span>${escapeHtml(screen.model)} · ${escapeHtml(screen.mode)}${screen.live ? "" : " · pattern layer only"} · ${screen.latency_ms} ms · never a medication decision</span>`;
 }
 function render(caseData) {
   currentCase = caseData;
@@ -349,7 +349,7 @@ async function advance(autoApproval = false) {
   try {
     const options = { method: "POST" };
     if (action.endpoint === "review") {
-      options.body = JSON.stringify({ disposition: "replace", reviewer_name: "Avery Chen, PharmD — synthetic", rationale: "Replacement approved for the automated synthetic demonstration only." });
+      options.body = JSON.stringify({ disposition: "replace", reviewer_name: "Avery Chen, PharmD (synthetic)", rationale: "Replacement approved for the automated synthetic demonstration only." });
     }
     const updated = await api(`/api/cases/${currentCase.case_id}/${action.endpoint}`, options);
     render(updated);
@@ -388,7 +388,7 @@ async function runUnattended() {
     const started = await api("/api/demo/unattended", { method: "POST", body: JSON.stringify({ stop_at_review: true }) });
     render(started);
     await refreshCases(started.case_id);
-    toast("Live models read the package and the agent routed the packet. Record the pharmacist decision — everything after that click is automatic, including the scheduler-fired closure.");
+    toast("Live models read the package and the agent routed the packet. Record the pharmacist decision; everything after that click is automatic, including the scheduler-fired closure.");
   } catch (error) {
     toast(error.message);
   } finally {
@@ -474,7 +474,7 @@ async function submitReview(event) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  setTheme(localStorage.getItem("coldclock-theme") || "dark");
+  setTheme(localStorage.getItem("coldclock-theme") || "light");
   $("#theme-toggle").addEventListener("click", () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
   $("#next-action").addEventListener("click", () => advance(false));
   $("#reset-demo").addEventListener("click", resetCase);

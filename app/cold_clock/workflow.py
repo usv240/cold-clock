@@ -30,7 +30,7 @@ PACKAGE_TRANSCRIPTION = """INSULIN GLARGINE-YFGN INJECTION
 Rx only
 Lot DEMO-2048
 Opened 2026-08-12
-Synthetic demonstration package — not for human use"""
+Synthetic demonstration package: not for human use"""
 
 LABEL_EVIDENCE = {
     "source_id": "dailymed-insulin-glargine-yfgn",
@@ -97,7 +97,7 @@ def create_case() -> dict[str, Any]:
         "opened_at": _iso(datetime.now(timezone.utc)),
         "service_area": DEFAULT_SERVICE_AREA,
         "household": {
-            "display_name": "Morgan — synthetic household",
+            "display_name": "Morgan (synthetic household)",
             "contact_preference": "text",
             "mobility_note": "No private vehicle during the demonstration outage.",
         },
@@ -272,7 +272,7 @@ def prepare_fulfillment(case: dict[str, Any]) -> dict[str, Any]:
     case["fulfillment"] = {
         "status": "prepared",
         "sandbox": True,
-        "pharmacy": "Northstar Community Pharmacy — synthetic",
+        "pharmacy": "Northstar Community Pharmacy (synthetic)",
         "inventory": "1 matching vial reserved in sandbox inventory",
         "coverage_path": "Emergency replacement request prepared for synthetic plan",
         "request_id": f"rx-{case['case_id'][3:]}",
@@ -297,7 +297,7 @@ def dispatch_delivery(case: dict[str, Any]) -> dict[str, Any]:
     case["delivery"] = {
         "status": "dispatched",
         "sandbox": True,
-        "courier": "AccessRoute Courier — synthetic",
+        "courier": "AccessRoute Courier (synthetic)",
         "delivery_id": f"dlv-{case['case_id'][3:]}",
         "eta_minutes": eta_minutes,
         "dispatched_at": _iso(_case_moment(case, 181)),
@@ -446,7 +446,7 @@ def run_full_demo(case: dict[str, Any] | None = None) -> dict[str, Any]:
     record_review(
         case,
         "replace",
-        "Avery Chen, PharmD — synthetic",
+        "Avery Chen, PharmD (synthetic)",
         "The documented demonstration excursion requires replacement in this tabletop case.",
     )
     advance_safe_automation(case)
@@ -464,7 +464,7 @@ def run_unattended_demo(case: dict[str, Any] | None = None, *, courier_eta_minut
 
     With ``stop_at_review`` the request stops at the human gate instead of recording the labelled
     synthetic pharmacist decision, so a real person enters the disposition and everything after
-    that click — reservation, dispatch, and the scheduler-fired closure — is automatic.
+    that click: reservation, dispatch, and the scheduler-fired closure: is automatic.
     """
     case = case or create_case()
     case["delivery_eta_minutes"] = int(courier_eta_minutes)
@@ -476,7 +476,7 @@ def run_unattended_demo(case: dict[str, Any] | None = None, *, courier_eta_minut
     record_review(
         case,
         "replace",
-        "Avery Chen, PharmD — synthetic",
+        "Avery Chen, PharmD (synthetic)",
         "The documented demonstration excursion requires replacement in this unattended case.",
     )
     advance_safe_automation(case)

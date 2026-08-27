@@ -6,7 +6,7 @@ Target runtime **3:35–3:50**. Only the first four minutes are judged. Spoken l
 
 1. Run `python scripts/browser_check.py --url https://cold-clock-109051079423.us-central1.run.app --wait 240` — it must print `7/7`. This also warms the instance.
 2. Browser tabs, left to right, all logged in and already loaded:
-   - **Tab 1** the app: `https://cold-clock-109051079423.us-central1.run.app` (dark theme, scrolled to the operations workspace, window wide enough that the autonomy rail is one line).
+   - **Tab 1** the app: `https://cold-clock-109051079423.us-central1.run.app` (light theme is the default; scrolled to the operations workspace, window wide enough that the autonomy rail is one line).
    - **Tab 2** Cloud Run → service `cold-clock` → **Revisions** (shows the serving revision and 100 % traffic).
    - **Tab 3** Cloud Scheduler → job `cold-clock-wake-scan` (every minute, last run status).
    - **Tab 4** Firestore → collection `cold_clock_wakes` (any document open).

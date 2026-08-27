@@ -79,7 +79,7 @@ class ColdClockWakeExecutor:
                 else:
                     outcome = "delivery_unconfirmed_hold"
                     case["delivery"]["hold"] = {"reason": "courier never confirmed the handoff", "system_receipt": None, "next_authority": "household or pharmacy staff"}
-                    _append(case, ACTOR, "Delivery unconfirmed — human follow-up", f"After {courier['poll']} polls the sandbox courier still had not confirmed the handoff. The case stays open for a person; no receipt was invented.", status="blocked", evidence_ids=[wake.wake_id, "sandbox-delivery"], at=now)
+                    _append(case, ACTOR, "Delivery unconfirmed: human follow-up", f"After {courier['poll']} polls the sandbox courier still had not confirmed the handoff. The case stays open for a person; no receipt was invented.", status="blocked", evidence_ids=[wake.wake_id, "sandbox-delivery"], at=now)
             else:
                 outcome = "no_longer_needed"
         elif wake.kind == "review_followup":

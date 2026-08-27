@@ -75,7 +75,7 @@ def report_stock_unavailable(case: dict[str, Any]) -> dict[str, Any]:
     case["fulfillment"] = {
         "status": "stock_unavailable",
         "sandbox": True,
-        "searched_pharmacy": "Northstar Community Pharmacy — synthetic",
+        "searched_pharmacy": "Northstar Community Pharmacy (synthetic)",
         "system_substitution": None,
     }
     case["status"] = "stock_escalated"

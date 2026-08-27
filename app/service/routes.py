@@ -82,19 +82,19 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
             ),
             "sources": [
                 {
-                    "title": "FDA — Safe Drug Use After a Natural Disaster",
+                    "title": "FDA: Safe Drug Use After a Natural Disaster",
                     "url": "https://www.fda.gov/drugs/emergency-preparedness-drugs/safe-drug-use-after-natural-disaster",
                     "use": "Problem framing and requirement for professional or manufacturer guidance.",
                     "class": "U.S. public guidance",
                 },
                 {
-                    "title": "CDC — Managing Insulin in an Emergency",
+                    "title": "CDC: Managing Insulin in an Emergency",
                     "url": "https://www.cdc.gov/diabetes/articles/managing-insulin-in-emergency.html",
                     "use": "Emergency storage precautions and clinical-escalation language.",
                     "class": "U.S. public guidance",
                 },
                 {
-                    "title": "Cochrane — Thermal stability and storage of human insulin",
+                    "title": "Cochrane: Thermal stability and storage of human insulin",
                     "url": "https://pubmed.ncbi.nlm.nih.gov/37930742/",
                     "use": "Evidence that stability varies and universal rules are inappropriate.",
                     "class": "systematic review",
@@ -106,13 +106,13 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
                     "class": "pilot study",
                 },
                 {
-                    "title": "NHS SPS — Managing temperature excursions",
+                    "title": "NHS SPS: Managing temperature excursions",
                     "url": "https://sps.nhs.uk/articles/managing-temperature-excursions/",
                     "use": "Professional workflow inspiration; not represented as U.S. authority.",
                     "class": "non-U.S. professional guidance",
                 },
                 {
-                    "title": "DailyMed — Insulin Glargine-yfgn",
+                    "title": "DailyMed: Insulin Glargine-yfgn",
                     "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?audience=consumer&setid=72cfe377-52f6-0348-fc71-5d4ac1992ffb",
                     "use": "Current structured label evidence for the synthetic fixture.",
                     "class": "U.S. structured label",
@@ -147,13 +147,13 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
 
     @router.post("/demo/outage-fanout")
     def outage_fanout_demo(request: OutageDemoRequest, http_request: Request, response: Response) -> dict[str, Any]:
-        throttle(http_request, response)
         """One synthetic grid outage, every enrolled case in the area, no operator per case.
 
         Enrolls a few monitoring cases in the service area, then applies one utility event to all
         of them. Each affected case gets an ``outage_watch`` wake; the Cloud Scheduler worker later
         judges each case from its own readings (excursion, keep watching, or safe stop).
         """
+        throttle(http_request, response)
         from datetime import datetime, timezone
         from uuid import uuid4
 
@@ -163,7 +163,7 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
         for _ in range(request.enroll):
             case = create_case()
             case["service_area"] = request.service_area
-            case["household"]["display_name"] = f"Grid household {uuid4().hex[:4].upper()} — synthetic"
+            case["household"]["display_name"] = f"Grid household {uuid4().hex[:4].upper()} (synthetic)"
             store.put(case)
             enrolled.append(case["case_id"])
         outage = {"outage_id": f"out-{uuid4().hex[:8]}", "service_area": request.service_area, "started_at": datetime.now(timezone.utc).isoformat(), "power": "off"}
@@ -326,7 +326,7 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
         except ValueError:
             unsupported_blocked = True
         check("unsupported disposition is rejected", unsupported_blocked)
-        record_review(case, "replace", "Avery Chen, PharmD — synthetic", "Replacement approved for this tabletop demonstration.")
+        record_review(case, "replace", "Avery Chen, PharmD (synthetic)", "Replacement approved for this tabletop demonstration.")
         check("human decision is explicitly not AI", not case["review"]["decision"]["made_by_ai"])
         prepare_fulfillment(case)
         dispatch_delivery(case)
