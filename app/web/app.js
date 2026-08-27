@@ -249,7 +249,7 @@ function renderAutonomy(data = {}, proof = {}) {
   $("#autonomy-actions").textContent = automatic + " traced agent event" + (automatic === 1 ? "" : "s");
   $("#autonomy-human").textContent = human + " protected decision" + (human === 1 ? "" : "s");
   $("#autonomy-background").textContent = fired + " fired" + (data.closed_by_background_wake ? " · closed case" : (data.pending_background_wakes || []).length ? ` · ${data.pending_background_wakes.length} pending` : "");
-  $("#autonomy-wait").textContent = data.complete ? (data.closed_by_background_wake ? "Closed by courier confirmation" : "Closed with receipt proof") : wait;
+  $("#autonomy-wait").textContent = data.complete ? (data.closed_by_background_wake ? "nothing, closed by courier confirmation" : "nothing, closed with receipt proof") : wait;
 }
 
 function renderPacketAgent(receipt) {
@@ -304,7 +304,7 @@ function render(caseData) {
   $("#autonomy-proof-link").href = `/api/cases/${encodeURIComponent(caseData.case_id)}/autonomy-proof`;
   renderJourney(status);
   renderReview(caseData);
-  $("#verified-fields").innerHTML = caseData.extraction.fields.map((field) => `<div class="verified-field"><span>${escapeHtml(field.key)}</span><b>${escapeHtml(field.value)}</b><small>Exact quote verified</small></div>`).join("");
+  $("#verified-fields").innerHTML = caseData.extraction.fields.map((field) => `<div class="verified-field" title="Exact quote verified"><span>${escapeHtml(field.key.replaceAll("_", " "))}</span><b>${escapeHtml(field.value)}</b></div>`).join("");
   $("#package-provenance").textContent = caseData.origin === "pilot_input" ? "USER-CONFIRMED VERBATIM" : "SYNTHETIC DEMONSTRATION";
   $("#package-name").textContent = caseData.medication.display_name;
   $("#package-strength").textContent = caseData.medication.strength;
@@ -486,6 +486,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("#new-case").addEventListener("click", () => openDialog("intake-dialog"));
   $("#record-sensor").addEventListener("click", () => openDialog("sensor-dialog"));
   $("#case-select").addEventListener("change", (event) => loadCase(event.target.value));
+  $$(".more-menu-list button").forEach((button) => button.addEventListener("click", () => { $(".more-menu").open = false; }));
+  document.addEventListener("click", (event) => { const menu = $(".more-menu"); if (menu?.open && !menu.contains(event.target)) menu.open = false; });
   $("#intake-form").addEventListener("submit", submitIntake);
   $("#sensor-form").addEventListener("submit", submitSensor);
   $("#review-form").addEventListener("submit", submitReview);

@@ -103,8 +103,16 @@
       <div class="shell board-head">
         <div><p class="eyebrow">Pilot operations workspace</p><h2 id="demo-title">One outage. One accountable queue.</h2></div>
         <div class="demo-controls">
-          <button id="new-case" class="button secondary compact" type="button">New pilot case</button><button id="reset-demo" class="button secondary compact" type="button">Load sample</button>
-          <button id="auto-demo" class="button secondary compact" type="button">Complete synthetic tabletop</button>
+          <details class="more-menu">
+            <summary class="button secondary compact" aria-label="More actions">More</summary>
+            <div class="more-menu-list" role="group" aria-label="More actions">
+              <button id="reset-demo" type="button">Load sample case</button>
+              <button id="new-case" type="button">New pilot case</button>
+              <button id="record-sensor" type="button">Record sensor event</button>
+              <button id="auto-demo" type="button">Complete synthetic tabletop</button>
+              <a href="/api/pilot/readiness" target="_blank" rel="noreferrer">Pilot readiness</a>
+            </div>
+          </details>
           <button id="outage-fanout" class="button secondary compact" type="button">Simulate grid outage</button>
           <button id="unattended-demo" class="button primary compact" type="button">Run unattended</button>
         </div>
@@ -175,31 +183,30 @@ LOT-42</textarea></label>
           <span class="origin-chip" id="case-origin">Sample fixture</span>
           <div class="boundary-chip">Clinical authority: <strong>Human</strong></div>
           <div class="run-counter"><span id="progress-count">0</span><small>verified actions</small></div>
-          <div class="board-toolbar-actions"><button id="record-sensor" class="button secondary compact" type="button">Record sensor event</button><a href="/api/pilot/readiness" target="_blank" rel="noreferrer">Pilot readiness</a></div>
         </div>
 
         <ol class="journey stepper" id="journey" aria-label="Resolution path">
-          <li data-state="monitoring"><span>1</span><div><b>Package enrolled</b><small>Verified from transcript</small></div></li>
-          <li data-state="excursion_detected"><span>2</span><div><b>Excursion recorded</b><small>No clinical conclusion</small></div></li>
-          <li data-state="awaiting_professional_review"><span>3</span><div><b>Reviewer packet</b><small>Waiting for a human</small></div></li>
-          <li data-state="replacement_approved"><span>4</span><div><b>Disposition approved</b><small>Named reviewer</small></div></li>
-          <li data-state="fulfillment_prepared"><span>5</span><div><b>Replacement reserved</b><small>Sandbox inventory</small></div></li>
-          <li data-state="delivery_dispatched"><span>6</span><div><b>Accessible delivery</b><small>Sandbox courier</small></div></li>
-          <li data-state="resolved"><span>7</span><div><b>Receipt confirmed</b><small>Case closed</small></div></li>
+          <li data-state="monitoring"><span>1</span><div><b>Package enrolled</b></div></li>
+          <li data-state="excursion_detected"><span>2</span><div><b>Excursion recorded</b></div></li>
+          <li data-state="awaiting_professional_review"><span>3</span><div><b>Pharmacist review</b></div></li>
+          <li data-state="replacement_approved"><span>4</span><div><b>Disposition approved</b></div></li>
+          <li data-state="fulfillment_prepared"><span>5</span><div><b>Replacement reserved</b></div></li>
+          <li data-state="delivery_dispatched"><span>6</span><div><b>Courier dispatched</b></div></li>
+          <li data-state="resolved"><span>7</span><div><b>Receipt confirmed</b></div></li>
         </ol>
 
         <section class="autonomy-rail" id="autonomy-receipt" data-complete="false" aria-live="polite" aria-label="ColdClock autonomy receipt">
-          <div class="autonomy-identity"><span class="autonomy-beacon" aria-hidden="true"></span><p><small>Autonomy receipt</small><b id="autonomy-title">Waiting for a monitored event</b></p></div>
-          <dl><div><dt>Operator prompts</dt><dd id="autonomy-trigger">0 continue clicks</dd></div><div><dt>Agent operations</dt><dd id="autonomy-actions">0 traced events</dd></div><div><dt>Human authority</dt><dd id="autonomy-human">0 decisions</dd></div><div><dt>Background wakes</dt><dd id="autonomy-background">0 fired</dd></div><div><dt>Current hold</dt><dd id="autonomy-wait">Sensor event</dd></div></dl>
+          <div class="autonomy-identity"><span class="autonomy-beacon" aria-hidden="true"></span><p><small>Autonomy receipt</small><b id="autonomy-title">Waiting for a monitored event</b><span class="autonomy-wait">Waiting on: <em id="autonomy-wait">sensor event</em></span></p></div>
+          <dl><div><dt>Operator prompts</dt><dd id="autonomy-trigger">0 continue clicks</dd></div><div><dt>Agent operations</dt><dd id="autonomy-actions">0 traced events</dd></div><div><dt>Human authority</dt><dd id="autonomy-human">0 decisions</dd></div><div><dt>Background wakes</dt><dd id="autonomy-background">0 fired</dd></div></dl>
         </section>
 
         <div class="board-grid">
           <aside class="board-act" aria-label="Workflow controls">
-            <h3>Next action</h3>
+            <h3>Your move</h3>
             <button id="next-action" class="button primary full" type="button">Trigger power outage</button>
             <p class="control-note" id="control-note">The package is already enrolled in this synthetic fixture.</p>
             <div class="wake-panel" aria-labelledby="wake-title">
-              <div class="wake-heading"><h4 id="wake-title">Durable wakes</h4><small id="simulated-now">Cloud Scheduler scans every minute</small></div>
+              <div class="wake-heading"><h4 id="wake-title">Background work</h4><small id="simulated-now">Cloud Scheduler scans every minute</small></div>
               <ul class="wake-list" id="wake-list" aria-live="polite"><li class="wake-empty">No durable wakes yet.</li></ul>
               <p class="worker-status" id="worker-status" data-state="unknown" aria-live="polite">Checking Cloud Scheduler...</p>
               <button id="advance-clock" class="button secondary compact full" type="button" disabled>Advance simulated clock 35 min</button>
@@ -218,14 +225,14 @@ LOT-42</textarea></label>
               <div class="chart-wrap">
                 <svg id="temperature-chart" viewBox="0 0 720 260" role="img" aria-label="Observed refrigerator temperatures over time"></svg>
               </div>
-              <div class="evidence-callout" id="evidence-callout"><span class="shield" aria-hidden="true"></span><div><b>Observation, not a verdict</b><p>ColdClock records temperature evidence. A qualified professional decides the disposition.</p></div></div>
+              <p class="cell-note" id="evidence-callout">Observation, not a verdict. A qualified professional decides the disposition.</p>
             </div>
             <div class="evidence-cell" id="tab-medicine">
               <h4>Medicine evidence</h4>
               <div class="package-preview"><div class="package-label"><small id="package-provenance">SYNTHETIC DEMONSTRATION</small><b id="package-name">INSULIN GLARGINE-YFGN</b><span id="package-strength">100 units/mL</span><i id="package-form">10 mL multiple-dose vial</i><code id="package-lot">Lot DEMO-2048</code></div></div>
               <div class="verified-fields" id="verified-fields"></div>
+              <p class="cell-note">Every field above is an exact quote from the model's own transcription. <a id="label-source" href="#" target="_blank" rel="noreferrer">Current structured label &#8599;</a></p>
               <div class="injection-screen" id="injection-screen"><b>Injection screen</b><span>Pattern layer plus Gemma 4 quarantine instruction-shaped package text before routing.</span></div>
-              <a class="source-link" id="label-source" href="#" target="_blank" rel="noreferrer">Open current structured label <span aria-hidden="true">&#8599;</span></a>
             </div>
             <div class="evidence-cell review" id="tab-review">
               <h4>Review packet</h4>
