@@ -79,5 +79,11 @@ WEB=Path(__file__).resolve().parent.parent/"web"; app.mount("/static",StaticFile
 @app.get("/health")
 def health()->dict[str,Any]:
  return {"ok":True,"project":"cold-clock","google_cloud_project":PROJECT,"persistence":persistence,"synthetic_demo":True,"operating_mode":"protected-deidentified-pilot" if ALLOW_DEIDENTIFIED else "public-synthetic-pilot","pilot_api":"/api/pilot","public_data_policy":"authorized-deidentified" if ALLOW_DEIDENTIFIED else "synthetic-only","global_reset":ALLOW_GLOBAL_RESET,"clinical_decisions":"human-only","model":"gemini-3.5-flash","models":["gemini-3.5-flash","gemini-embedding-001","gemma-4-26b-a4b-it-maas"],"model_mode":"live-fail-closed" if ENABLE_LIVE_MODELS else "local-test-no-model","tracing":trace_status,"durable_wakes":"firestore-transactional" if USE_FIRESTORE else "memory-transactional","frameworks":["Google Gen AI SDK","Google ADK"],"packet_agent":"adk-scoped-tools-verified" if ENABLE_LIVE_MODELS else "deterministic-local","event_ingress":{"sensor":"/internal/events/sensor","utility":"/internal/events/utility","transport":"Pub/Sub push with Google-signed OIDC"},"background_execution":{"worker":"/internal/wakes/scan","trigger":"Cloud Scheduler every minute, Google-signed OIDC","closes_cases":"courier_status_poll wake at sandbox ETA","outage_fanout":"outage_watch wakes per affected case","unattended_demo":"/api/demo/unattended"},"signed_receipts":"HMAC-SHA256, verify at POST /api/receipts/verify","background_worker":worker_status.snapshot(),"domain_state_writes":"transactional-optimistic-versioning","simulation_clock":True,"autonomy":"event-driven-safe-auto-continuation","developer_api":{"base":"/v1","key_issuance":"/api/developer/keys","daily_limit":50},"google_services":GOOGLE_SERVICES}
+@app.middleware("http")
+async def revalidate_static(request:Request,call_next):
+ response=await call_next(request)
+ if request.url.path=="/" or request.url.path.startswith("/static/"):
+  response.headers["Cache-Control"]="no-cache"  # browsers revalidate so a deploy never serves a stale CSS/HTML mix
+ return response
 @app.get("/",include_in_schema=False)
 def index()->FileResponse:return FileResponse(WEB/"index.html")

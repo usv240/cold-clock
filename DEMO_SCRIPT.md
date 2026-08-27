@@ -8,7 +8,7 @@ Target 3:30. Only the first four minutes are judged.
 1. Run: `python scripts/browser_check.py --url https://cold-clock-109051079423.us-central1.run.app --wait 240`
    It must print `7/7`. This also warms the service.
 2. Open five tabs, in this order, all loaded:
-   1. The app (light theme, scrolled to the workspace, wide window).
+   1. The app (light theme, scrolled to the workspace, wide window, "Show everything" unticked).
    2. Cloud Run, service `cold-clock`, Revisions tab.
    3. Cloud Scheduler, job `cold-clock-wake-scan`.
    4. Firestore, collection `cold_clock_wakes`.
@@ -42,7 +42,7 @@ Click **Record human disposition**. Type your name, pick **Replace**, type one s
 
 "I am the pharmacist today. That is the only decision a person makes."
 
-Watch the steps tick by themselves. Point at **Durable wakes**: *Poll sandbox courier, pending*. Point at **0 continue clicks**.
+Watch the steps tick by themselves. The board moves to Step 3 on its own and shows one card: **Nobody clicks from here.** Point at *Poll sandbox courier at ETA, pending* and at **0 continue clicks**.
 
 "That was the last human action. From here, nobody clicks."
 
@@ -60,13 +60,13 @@ Let me show you that on Google Cloud while it happens."
 
 ### 2:20 to 2:45. It finished by itself. (Tab 1)
 
-Switch back. The page has already changed.
+Switch back. The page has already changed to Step 4 by itself.
 
 "No refresh. No click. The case is resolved.
-The rail says: closed by a Cloud Scheduler wake, no operator. Background wakes: one fired.
+The card says: closed by a Cloud Scheduler wake, no operator. Zero clicks after the decision. One background wake fired.
 The last line in the timeline is the background agent: courier confirmed handoff."
 
-Click **Open signed autonomy proof**. Point at `closed_by_background_wake: true`, `operator_continue_clicks: 0`, and `signature`.
+Click **Open signed autonomy proof** on the card. Point at `closed_by_background_wake: true`, `operator_continue_clicks: 0`, and `signature`.
 
 "This receipt is built from stored records and signed. Change one number and it fails."
 

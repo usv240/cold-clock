@@ -215,6 +215,23 @@ LOT-42</textarea></label>
           </aside>
 
           <section class="board-evidence" aria-label="Case evidence">
+            <div class="stage-bar">
+              <p id="stage-message" aria-live="polite">Loading the case.</p>
+              <label class="show-all"><input type="checkbox" id="show-all"> Show everything</label>
+            </div>
+            <div class="evidence-cell stage-card" id="stage-background">
+              <h4>Background work</h4>
+              <p class="stage-big">Nobody clicks from here.</p>
+              <p class="cell-note">A durable wake is stored in Firestore. Cloud Scheduler wakes the agent every minute with a signed Google identity. When the courier confirms the handoff, the agent closes the case by itself. This page updates on its own.</p>
+              <ul class="wake-list" id="stage-wake-list" aria-live="polite"></ul>
+              <p class="worker-status" id="stage-worker-status" data-state="unknown">Checking Cloud Scheduler...</p>
+            </div>
+            <div class="evidence-cell stage-card" id="stage-closed">
+              <h4>Closed</h4>
+              <p class="stage-big" id="stage-closed-title">Case resolved.</p>
+              <dl class="stage-facts"><div><dt>Operator clicks after the decision</dt><dd id="stage-clicks">0</dd></div><div><dt>Background wakes fired</dt><dd id="stage-wakes">0</dd></div><div><dt>Human decisions</dt><dd id="stage-human">1</dd></div><div><dt>Receipt</dt><dd id="stage-receipt">Signed</dd></div></dl>
+              <p class="cell-note">Every number above is derived from persisted records and signed with the service key. <a id="stage-proof-link" href="/api/proof" target="_blank" rel="noreferrer">Open signed autonomy proof &#8599;</a></p>
+            </div>
             <div class="evidence-cell" id="tab-temperature">
               <h4>Temperature</h4>
               <div class="metric-row">

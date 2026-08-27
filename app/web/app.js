@@ -100,13 +100,18 @@ async function renderWakes(caseId) {
     const data = await api(`/api/cases/${encodeURIComponent(caseId)}/wakes`);
     if (!data.wakes.length) {
       list.innerHTML = '<li class="wake-empty">No durable wakes yet. Dispatching a delivery registers one.</li>';
+      const stageEmpty = $("#stage-wake-list"); if (stageEmpty) stageEmpty.innerHTML = list.innerHTML;
+      renderWorkerStatus();
       return;
     }
-    list.innerHTML = data.wakes.map((row) => `
+    const stageList = $("#stage-wake-list");
+    const rows = data.wakes.map((row) => `
       <li class="wake-row" data-status="${escapeHtml(row.status)}">
         <span class="wake-state" aria-hidden="true"></span>
         <div><b>${escapeHtml(wakeCopy(row.kind))}</b><small>${escapeHtml(row.status)} · due ${new Date(row.due_at).toLocaleTimeString([], {hour: "numeric", minute: "2-digit"})}${row.cancelled_reason ? ` · ${escapeHtml(row.cancelled_reason)}` : ""}</small></div>
       </li>`).join("");
+    list.innerHTML = rows;
+    if (stageList) stageList.innerHTML = rows;
     $("#simulated-now").textContent = `Simulated now ${new Date(data.simulated_now).toLocaleTimeString([], {hour: "numeric", minute: "2-digit"})}`;
   } catch (error) {
     list.innerHTML = `<li class="wake-empty">${escapeHtml(error.message)}</li>`;
@@ -117,6 +122,13 @@ async function renderWakes(caseId) {
 async function renderWorkerStatus() {
   const node = $("#worker-status");
   if (!node) return;
+  const mirror = $("#stage-worker-status");
+  const sync = () => { if (mirror) { mirror.textContent = node.textContent; mirror.dataset.state = node.dataset.state; } };
+  await renderWorkerStatusInto(node);
+  sync();
+}
+
+async function renderWorkerStatusInto(node) {
   try {
     const status = await api("/api/background/status");
     if (status.last_scan_at == null) {
@@ -236,6 +248,46 @@ function renderJourney(status) {
   });
 }
 
+const STAGE_BY_STATUS = {
+  monitoring: "monitoring", evidence_incomplete: "monitoring",
+  excursion_detected: "review", awaiting_professional_review: "review", review_escalated: "review", review_resolved: "closed",
+  replacement_approved: "background", fulfillment_prepared: "background", delivery_dispatched: "background",
+  stock_escalated: "background", delivery_choice_required: "background", resolved: "closed",
+};
+
+const STAGE_MESSAGE = {
+  monitoring: "Step 1 of 4. The package is enrolled and the fridge is being watched. Press Run unattended, or inject an outage, to start the case.",
+  review: "Step 2 of 4. The agent read the package and built the packet. The system will not decide if the medicine is safe. Record the pharmacist's decision.",
+  background: "Step 3 of 4. Reservation and dispatch happened by themselves. Nobody clicks from here: the Cloud Scheduler wake closes the case at the courier ETA.",
+  closed: "Step 4 of 4. Closed. Everything after the pharmacist's decision ran in the background, and the receipt is signed.",
+};
+
+function stageFor(caseData) {
+  return STAGE_BY_STATUS[caseData.status] || "review";
+}
+
+function renderStage(caseData) {
+  const board = $("#console");
+  const stage = stageFor(caseData);
+  board.dataset.stage = stage;
+  $("#stage-message").textContent = STAGE_MESSAGE[stage];
+  const proof = caseData.autonomy_proof || {};
+  $("#stage-closed-title").textContent = caseData.autonomy?.closed_by_background_wake
+    ? "Closed by a Cloud Scheduler wake. No operator."
+    : caseData.status === "review_resolved" ? "Closed by the pharmacist's decision." : "Closed with receipt proof.";
+  $("#stage-clicks").textContent = String(proof.operator_continue_clicks || 0);
+  $("#stage-wakes").textContent = String(caseData.autonomy?.background_wakes_fired || 0);
+  $("#stage-human").textContent = String(proof.human_authority_events || 0);
+  $("#stage-receipt").textContent = proof.proof_integrity === "verified" ? "Signed, verified" : "Signed";
+  $("#stage-proof-link").href = `/api/cases/${encodeURIComponent(caseData.case_id)}/autonomy-proof`;
+}
+
+function setShowAll(on) {
+  $("#console").dataset.showAll = String(on);
+  $("#show-all").checked = on;
+  try { localStorage.setItem("coldclock-show-all", String(on)); } catch (error) { /* storage unavailable */ }
+}
+
 function renderAutonomy(data = {}, proof = {}) {
   const automatic = proof.automatic_trace_events || 0;
   const human = proof.human_authority_events || 0;
@@ -303,6 +355,7 @@ function render(caseData) {
   $("#public-trace-link").href = `/api/cases/${encodeURIComponent(caseData.case_id)}/trace`;
   $("#autonomy-proof-link").href = `/api/cases/${encodeURIComponent(caseData.case_id)}/autonomy-proof`;
   renderJourney(status);
+  renderStage(caseData);
   renderReview(caseData);
   $("#verified-fields").innerHTML = caseData.extraction.fields.map((field) => `<div class="verified-field" title="Exact quote verified"><span>${escapeHtml(field.key.replaceAll("_", " "))}</span><b>${escapeHtml(field.value)}</b></div>`).join("");
   $("#package-provenance").textContent = caseData.origin === "pilot_input" ? "USER-CONFIRMED VERBATIM" : "SYNTHETIC DEMONSTRATION";
@@ -487,6 +540,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("#record-sensor").addEventListener("click", () => openDialog("sensor-dialog"));
   $("#case-select").addEventListener("change", (event) => loadCase(event.target.value));
   $$(".more-menu-list button").forEach((button) => button.addEventListener("click", () => { $(".more-menu").open = false; }));
+  let showAll = false;
+  try { showAll = localStorage.getItem("coldclock-show-all") === "true"; } catch (error) { /* storage unavailable */ }
+  setShowAll(showAll);
+  $("#show-all").addEventListener("change", (event) => setShowAll(event.target.checked));
   document.addEventListener("click", (event) => { const menu = $(".more-menu"); if (menu?.open && !menu.contains(event.target)) menu.open = false; });
   $("#intake-form").addEventListener("submit", submitIntake);
   $("#sensor-form").addEventListener("submit", submitSensor);
