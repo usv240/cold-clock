@@ -37,6 +37,9 @@ def main() -> int:
         browser = p.chromium.launch(); page = browser.new_page(viewport={"width": 1440, "height": 1100})
         page.on("pageerror", lambda e: errors.append(str(e)))
         page.goto(args.url, wait_until="networkidle")
+        page.request.post(args.url.rstrip("/") + "/api/cases")  # start from a fresh monitoring case, newest first in the queue
+        page.reload(wait_until="networkidle"); page.wait_for_function(busy_off, timeout=60000)
+        check("fresh case starts at the first stop", "Run unattended" in (page.text_content("#track-cta") or ""))
         page.click("#track-cta"); page.wait_for_function(busy_off, timeout=180000)
         check("unattended run stops at the human gate", "pharmacist" in page.text_content("#status-title").lower())
         check("human-gate button is enabled", page.evaluate("!document.querySelector('#track-cta').disabled"))
