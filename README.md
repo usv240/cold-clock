@@ -8,9 +8,9 @@ Release proof: [validation evidence incl. live scheduler closure](VALIDATION_EVI
 
 1. Open https://cold-clock-109051079423.us-central1.run.app and click **Run unattended**. Live Gemini reads the synthetic package, Gemma screens it, the embedding model routes it, and the Google ADK agent assembles the pharmacist packet through scoped tools (~15 s).
 2. Click **Record human disposition** and enter a name, a disposition, and a rationale — the only decision the system will not make.
-3. Take your hands off. Reservation and dispatch are automatic; the **Durable wakes** panel shows `courier_status_poll · pending`; within about two minutes Cloud Scheduler fires it and the case reads **Closed by a Cloud Scheduler wake — no operator**. The panel also shows when the scheduler last called, with its verified identity.
+3. Take your hands off. Reservation and dispatch are automatic; the **Durable wakes** panel shows `courier_status_poll · pending`; within about a minute Cloud Scheduler fires it and the case reads **Closed by a Cloud Scheduler wake — no operator**. The panel also shows when the scheduler last called, with its verified identity.
 4. Click **Simulate grid outage**: one event, three enrolled households, each armed with its own background watch.
-5. Open the signed autonomy proof from the timeline footer; `POST /api/receipts/verify` proves it is untampered. `/api/proof` (8/8) and `/api/hardening/proof` (17/17) are executable.
+5. Open the signed autonomy proof from the timeline footer; `POST /api/receipts/verify` proves it is untampered. `/api/proof` (8/8) and `/api/hardening/proof` (20/20) are executable.
 
 ColdClock is an event-driven agent that carries a temperature-sensitive medication case from a
 power or refrigerator failure to **pharmacist-reviewed resolution**. It assembles observed evidence,
@@ -41,7 +41,7 @@ The demo clock is simulated and forward-only (stated in the UI, never hidden). "
 
 ### One outage, every household
 
-Real outages are not one case at a time. `POST /api/demo/outage-fanout` (or a real message on the `cold-clock-utility-events` Pub/Sub topic) applies one grid event to **every** monitoring case in the service area and arms an `outage_watch` wake per case. Fifteen minutes later the background worker judges each case from its own readings: out-of-range readings become a recorded excursion routed to review; readings still in range keep a bounded watch; a sensor that stays silent becomes a safe stop for incomplete evidence. No operator opens any case, and no case ever gets a medication decision from the system.
+Real outages are not one case at a time. `POST /api/demo/outage-fanout` (or a real message on the `cold-clock-utility-events` Pub/Sub topic) applies one grid event to **every** monitoring case in the service area and arms an `outage_watch` wake per case. On the next scheduler scan the background worker judges each case from its own readings: out-of-range readings become a recorded excursion routed to review; readings still in range keep a bounded watch; a sensor that stays silent becomes a safe stop for incomplete evidence. No operator opens any case, and no case ever gets a medication decision from the system.
 
 ### The review packet is assembled by an agent — and checked
 
@@ -78,6 +78,12 @@ work that follows while keeping medication-use authority with a qualified profes
 
 ## Why this problem is credible
 
+- An estimated 2.1 million people in the United States have diagnosed type 1 diabetes and depend on
+  insulin that must stay refrigerated ([CDC National Diabetes Statistics Report](https://www.cdc.gov/diabetes/php/data-research/index.html)),
+  while the average U.S. electricity customer lost 11 hours of power in 2024, about twice the prior
+  decade's annual average ([EIA](https://www.eia.gov/todayinenergy/detail.php?id=66744)). Neither
+  figure estimates how often the two coincide; together they establish that the exposed population
+  and the trigger are both common.
 - FDA disaster guidance explains that extended refrigeration loss can affect temperature-sensitive
   medicine and directs patients to pharmacists, healthcare providers, or manufacturers for product-
   specific guidance: [FDA, Safe Drug Use After a Natural Disaster](https://www.fda.gov/drugs/emergency-preparedness-drugs/safe-drug-use-after-natural-disaster).
@@ -241,7 +247,7 @@ python scripts/demo_flow.py --url https://cold-clock-109051079423.us-central1.ru
 
 Current local baseline on August 25, 2026:
 
-- `172 passed`
+- `174 passed`
 - `10/10` static accessibility checks
 - `21/21` executable HTTP acceptance checks, including zero-click background closure, signed receipts and outage fan-out
 - `8/8` foundational safety proof and `20/20` adversarial hardening proof
@@ -314,6 +320,8 @@ Deployment enables Firestore through `USE_FIRESTORE=true`. Before recording the 
 
 | Source | What it supports | What it does not support |
 |---|---|---|
+| [CDC National Diabetes Statistics Report](https://www.cdc.gov/diabetes/php/data-research/index.html) | Scale of the exposed population: an estimated 2.1 million people in the United States have diagnosed type 1 diabetes and depend on insulin | How many experience a refrigeration failure, or any ColdClock benefit |
+| [EIA, electricity interruptions in 2024](https://www.eia.gov/todayinenergy/detail.php?id=66744) | Power loss is routine and rising: 11 hours of interruption for the average U.S. customer in 2024, about twice the prior decade | How many interruptions affect stored medicine, or any harm estimate |
 | [FDA disaster guidance](https://www.fda.gov/drugs/emergency-preparedness-drugs/safe-drug-use-after-natural-disaster) | Temperature-sensitive medicine problem and professional escalation | ColdClock efficacy or a product-specific disposition |
 | [CDC insulin guidance](https://www.cdc.gov/diabetes/articles/managing-insulin-in-emergency.html) | Emergency precautions and clinical involvement | A universal discard threshold |
 | [Cochrane review](https://pubmed.ncbi.nlm.nih.gov/37930742/) | Evidence variability and uncertainty | Automated clinical decision-making |

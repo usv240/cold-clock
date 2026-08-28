@@ -82,6 +82,20 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
             ),
             "sources": [
                 {
+                    "title": "CDC: National Diabetes Statistics Report",
+                    "url": "https://www.cdc.gov/diabetes/php/data-research/index.html",
+                    "use": "Scale of the population that depends on refrigerated insulin: an estimated 2.1 million people in the United States have diagnosed type 1 diabetes.",
+                    "class": "U.S. national surveillance",
+                    "does_not_support": "How many of them experience a refrigeration failure, or any benefit from ColdClock.",
+                },
+                {
+                    "title": "U.S. Energy Information Administration: electricity interruptions in 2024",
+                    "url": "https://www.eia.gov/todayinenergy/detail.php?id=66744",
+                    "use": "Power loss is routine and rising: U.S. customers averaged 11 hours of electricity interruptions in 2024, roughly twice the prior decade's annual average.",
+                    "class": "U.S. federal statistics",
+                    "does_not_support": "How many interruptions put stored medicine out of range, or any harm estimate.",
+                },
+                {
                     "title": "FDA: Safe Drug Use After a Natural Disaster",
                     "url": "https://www.fda.gov/drugs/emergency-preparedness-drugs/safe-drug-use-after-natural-disaster",
                     "use": "Problem framing and requirement for professional or manufacturer guidance.",

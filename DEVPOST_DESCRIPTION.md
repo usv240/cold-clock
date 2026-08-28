@@ -26,7 +26,7 @@ ColdClock is an event-driven agent that carries a medication excursion from the 
 - **Google ADK** runs the review-packet agent: an `LlmAgent` with three scoped read-only tools and a post-model verifier, so the model's reasoning is used only where it can be checked.
 - **Vertex AI via the Google Gen AI SDK** for all three models: Gemini 3.5 Flash (extraction and the ADK agent), Gemini Embedding 001 (routing), Gemma 4 (injection screen). Extraction and routing fail closed — recorded fixtures are test-only and are never substituted in the deployment.
 - **Secret Manager** injects the HMAC pepper for developer API keys and network fingerprints; **Cloud Trace** correlates every request.
-- A persisted, forward-only **simulated clock** lets a four-minute demo reach a 34-minute courier ETA using the exact code path production uses; the UI states that the clock is simulated.
+- A persisted, forward-only **simulated clock** lets the failure lab reach a 34-minute courier ETA using the exact code path production uses; the UI states that the clock is simulated.
 
 ## Challenges
 
@@ -37,7 +37,7 @@ ColdClock is an event-driven agent that carries a medication excursion from the 
 
 ## Accomplishments
 
-- 172 automated tests; 21/21 executable acceptance checks against the live deployment, including a case closed by a genuine Cloud Scheduler tick and a grid outage fanned out across enrolled cases; a real-browser check that submits the reviewer dialog and waits for the page to close itself; 8/8 safety proof and 20/20 hardening proof (sensor gap, reviewer failure, stock miss, courier failure and delay, idempotent wakes, unattended closure, quarantine, packet-verifier rejection, outage fan-out and safe stop).
+- 174 automated tests; 21/21 executable acceptance checks against the live deployment, including a case closed by a genuine Cloud Scheduler tick and a grid outage fanned out across enrolled cases; a real-browser check that submits the reviewer dialog and waits for the page to close itself; 8/8 safety proof and 20/20 hardening proof (sensor gap, reviewer failure, stock miss, courier failure and delay, idempotent wakes, unattended closure, quarantine, packet-verifier rejection, outage fan-out and safe stop).
 - Live, graded model evidence: Gemini 14/14 fields across three synthetic package fixtures with 0 invented values; Gemma 3/3 on clean and poisoned labels.
 - The sandbox courier is a stateful connector: an injected delay makes the background poll re-arm instead of assuming a receipt, and a courier that never confirms leaves a visible hold for a person.
 - A keyless judge UI plus a self-service `/v1` developer API with per-key and per-network quotas.
@@ -56,7 +56,7 @@ Gemini 3.5 Flash · Gemini Embedding 001 · Gemma 4 (Vertex AI MaaS) · Google A
 
 ## Data sources
 
-Synthetic package, sensor, people and sandbox connectors only. Public guidance is cited for the problem, never as validation: FDA disaster drug-use guidance, CDC emergency insulin guidance, a Cochrane review on insulin thermal stability, a Hurricane Maria community study, the QChainMED monitoring pilot, NHS SPS excursion workflow, and the DailyMed structured label for the fixture product.
+Synthetic package, sensor, people and sandbox connectors only. Public statistics and guidance are cited for the problem, never as validation. Scale: the CDC National Diabetes Statistics Report (an estimated 2.1 million people in the United States have diagnosed type 1 diabetes and depend on insulin) and the U.S. Energy Information Administration (customers averaged 11 hours of electricity interruptions in 2024, about twice the prior decade's average). Neither figure estimates how often the two coincide. Problem framing and safety boundaries: FDA disaster drug-use guidance, CDC emergency insulin guidance, a Cochrane review on insulin thermal stability, a Hurricane Maria community study, the QChainMED monitoring pilot, NHS SPS excursion workflow, and the DailyMed structured label for the fixture product.
 
 ## Disclosure
 
