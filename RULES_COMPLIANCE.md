@@ -16,7 +16,7 @@
 | Data-source disclosure | README research ledger and per-source claim boundaries | Pass |
 | Findings and learnings | README section and validation ledger | Pass |
 | New-work disclosure | README identifies the reused production-spine primitives and independent work; first commit 2026-08-16 | Pass |
-| Under-four-minute public video | Must be published by entrant with Cloud execution visible; shot list in `VIDEO_RELEASE_CHECKLIST.md` | Entrant action |
+| Under-four-minute public video | Published by the entrant with live Cloud execution visible: https://youtu.be/iA2KmVMKc-M | Met |
 | Additional Google AI models (+0.2 each) | Gemini Embedding 001 (semantic routing) and Gemma 4 (injection screen) both run live in the deployed workflow with receipts; recorded and graded evidence in `app/fixtures` | Implemented; live evidence recorded |
 | Optional public content/social post | Drafts are in `docs/`; eligible platform publication remains entrant action | Entrant action |
 

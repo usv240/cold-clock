@@ -1,6 +1,6 @@
 # ColdClock
 
-Release proof: [validation evidence incl. live scheduler closure](VALIDATION_EVIDENCE.md) · [Devpost text](DEVPOST_DESCRIPTION.md) · [2026-08-22 release audit](RELEASE_AUDIT_2026-08-22.md) · [bonus ledger](BONUS_SCORE_LEDGER.md) · [impact evidence scorecard](IMPACT_EVIDENCE_SCORECARD.md) · [real-world validation protocol](EXTERNAL_VALIDATION_PROTOCOL.md) · [live model contract](https://cold-clock-109051079423.us-central1.run.app/api/model-evidence)
+Release proof: [validation evidence incl. live scheduler closure](VALIDATION_EVIDENCE.md) · [hackathon rules compliance](RULES_COMPLIANCE.md) · [live model contract](https://cold-clock-109051079423.us-central1.run.app/api/model-evidence)
 
 > When refrigeration fails, the alarm is only step one.
 
@@ -67,10 +67,12 @@ multi-case queue and an input-driven pilot API at `/api/pilot`:
 - require a named qualified reviewer to enter the disposition and independent rationale;
 - preserve every case in Firestore instead of clearing global state when the page opens.
 
-`GET /api/pilot/readiness` states what works and what remains before PHI or clinical deployment.
-The public service is currently a **synthetic operational pilot**, not production clinical software. An authorized de-identified mode is disabled by default and belongs only in a private, identity-controlled deployment. See the
-[startup-readiness audit](STARTUP_READINESS.md) for the identity, compliance,
-integration, validation, and operating controls still required.
+`GET /api/pilot/readiness` states what works and what remains before PHI or clinical
+deployment: the identity, compliance, integration, validation, and operating controls still
+required. The public service is currently a **synthetic operational pilot**, not production
+clinical software. An authorized de-identified mode is disabled by default and belongs only in a
+private, identity-controlled deployment.
+
 ## The one-sentence distinction
 
 A monitoring product tells someone that the temperature changed. ColdClock executes the fragmented
@@ -180,14 +182,14 @@ role executes under a separate IAM identity.
 
 ```text
 cold-clock/
-  PLAN.md                         research, differentiation, safety, UX and release plan
   README.md                       public technical and product guide
   TECHNICAL_DESIGN.md             as-built architecture and boundaries
+  DEVELOPER_API.md                public API contract
   PROJECT_DIFFERENTIATION.md      direct prior-art comparison
   VALIDATION_EVIDENCE.md          measured checks and remaining validation
-  SUBMISSION_KIT.md               Devpost copy and video spine
+  RULES_COMPLIANCE.md             hackathon requirements mapped to evidence
   docs/architecture.svg           technical architecture diagram (PNG alongside)
-  DEVPOST_STORY.md                submission write-up
+  docs/build-story.md             engineering write-up
   app/
     cold_clock/
       workflow.py                 safety-bounded state machine
