@@ -35,7 +35,7 @@ def register_followups(case: dict[str, Any], scheduler) -> list[str]:
             case.setdefault("cancelled_wakes", []).extend(cancelled)
     if case["status"] == "delivery_dispatched":
         eta = int((case.get("delivery") or {}).get("eta_minutes") or 0)
-        _record(case, scheduler.sleep_for(case_id, "courier_status_poll", timedelta(minutes=max(eta, 0))  # an ETA of 0 means the next scheduler scan polls the courier))
+        _record(case, scheduler.sleep_for(case_id, "courier_status_poll", timedelta(minutes=max(eta, 0))))  # an ETA of 0 means the next scheduler scan polls the courier
         registered.append("courier_status_poll")
         _record(case, scheduler.sleep_for(case_id, "receipt_followup", timedelta(minutes=RECEIPT_FOLLOWUP_MINUTES)))
         registered.append("receipt_followup")
