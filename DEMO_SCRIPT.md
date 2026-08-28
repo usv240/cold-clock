@@ -17,6 +17,9 @@ About three minutes are the product, including a live developer key; about thirt
 - **Tab 3, Cloud Scheduler:** https://console.cloud.google.com/cloudscheduler/jobs/us-central1/cold-clock-wake-scan?project=agentic-fleet-2026
 - **Tab 4, Firestore:** https://console.cloud.google.com/firestore/databases/-default-/data/panel/cold_clock_wakes?project=agentic-fleet-2026
 
+Also open **one terminal window** in the `cold-clock/app` folder with this command typed but not run:
+`python scripts/publish_event.py utility --service-area grid-7`
+
 Close everything else. Zoom 100 percent. Start recording on Tab 1.
 
 ---
@@ -27,7 +30,7 @@ Close everything else. Zoom 100 percent. Start recording on Tab 1.
 
 **POINT:** the headline **The fridge is being watched.**
 
-**SAY:** "When the power goes out, a fridge with insulin in it sends an alarm. And then nothing happens. Someone still has to work out which medicine it was, how long it was warm, call a pharmacist, get a replacement, and make sure it arrives. Today, the alarm is only the beginning. ColdClock does that work by itself. It stops for one thing: the decision that belongs to a pharmacist."
+**SAY:** "When the power goes out, a fridge with insulin in it sends an alarm. And then nothing happens. Someone still has to work out which medicine it was, how long it was warm, call a pharmacist, get a replacement, and make sure it arrives. After Hurricane Maria, families reported throwing away insulin they could not keep cold. Today, the alarm is only the beginning. ColdClock does that work by itself. It stops for one thing: the decision that belongs to a pharmacist."
 
 ---
 
@@ -132,12 +135,15 @@ Stop 3 ticks. Stop 4 opens by itself: **Nobody clicks from here.** The button tu
 
 ---
 
-## Step 8. One outage, every household · 3:00 · Tab 1
+## Step 8. One outage, every household · 3:00 · Terminal, then Tab 1
 
-**DO:** click the white **Simulate grid outage** button. The card switches to a new household.
+**DO:** switch to the terminal. Press Enter on the prepared command. It prints `"published": "<message id>"`.
+**POINT:** the word **published** and the **service_area: grid-7** in the payload.
+**SAY:** "A real outage is not one house. This is one message from the utility, on Pub/Sub, saying grid seven lost power."
 
-**POINT:** the **Case** dropdown, then stop 1's grey text.
-**SAY:** "A real outage is not one house. One message from the utility reaches every home we watch. Each home gets its own background watch. Warm fridge: sent to a pharmacist. Fine fridge: keep watching. Silent sensor: stop safely and ask a person."
+**DO:** switch to Tab 1. Open the **Case** dropdown.
+**POINT:** the households in the list, then close the dropdown and point at stop 1's grey text on the current case.
+**SAY:** "That one message reached every home we watch, with no operator. Each home now has its own background watch. Warm fridge: sent to a pharmacist. Fine fridge: keep watching. Silent sensor: stop safely and ask a person."
 
 ---
 
@@ -156,7 +162,7 @@ Stop 3 ticks. Stop 4 opens by itself: **Nobody clicks from here.** The button tu
 
 **DO:** scroll up so the ColdClock header and the card are both visible.
 
-**SAY:** "ColdClock: Gemini, Gemma, and an ADK agent for the evidence. Firestore for memory. Cloud Scheduler and Pub/Sub so it works while nobody is watching. A pharmacist for the one decision that must stay human. And a signed receipt for everything else. The idea is simple: an alarm should not just tell you something went wrong. The agent should safely coordinate what happens next. Everything here is synthetic, the demo clock is simulated and says so, and we claim no clinical result. Code, diagram, and proofs are linked below. Thank you."
+**SAY:** "ColdClock: Gemini, Gemma, and an ADK agent for the evidence. Firestore for memory. Cloud Scheduler and Pub/Sub so it works while nobody is watching. A pharmacist for the one decision that must stay human. And a signed receipt for everything else. The idea is simple: an alarm should not just tell you something went wrong. The agent should safely coordinate what happens next. The same pattern fits any alarm that needs a professional's decision and coordinated follow-through: vaccines, blood products, lab samples, a whole grid during a heatwave. Everything here is synthetic, the demo clock is simulated and says so, and we claim no clinical result. Code, diagram, and proofs are linked below. Thank you."
 
 **DO:** stop recording.
 
@@ -174,5 +180,6 @@ Stop 3 ticks. Stop 4 opens by itself: **Nobody clicks from here.** The button tu
 - **Run unattended is slow:** the counter keeps going; keep talking, it lands within 30 seconds.
 - **Case not closed when you return in Step 7:** say "the scheduler ticks once a minute", do Step 8, come back. Never click anything else on the card.
 - **Red message "live model evidence unavailable":** say "it fails closed instead of faking a result", click the green button again.
+- **The terminal command fails:** click the white **Simulate grid outage** button on the card instead and say the same lines.
 - **Firestore panel empty:** type `cold_clock_wakes` in the collection search box.
 - **Key dialog says the network limit is reached:** say "five keys per network per day, by design" and skip to Step 6; the rest of the demo does not depend on it.
