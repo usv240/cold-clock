@@ -104,3 +104,6 @@ body[data-show-all=true] .board #tab-temperature{grid-column:auto}
 body[data-show-all=true] .board #tab-review{grid-column:1 / -1}
 body[data-show-all=true] .board .timeline-item{display:grid}
 @media(max-width:820px){.track{padding:16px}.stop-body .fridge{grid-template-columns:1fr}.track-head{grid-template-columns:1fr}.track-cta{align-items:stretch}.track-cta small{text-align:left;max-width:none}.stop-body .facts{grid-template-columns:1fr 1fr}.stop-body .review-packet{grid-template-columns:1fr}}
+
+/* Tighter band around the tracker */
+.demo-section{padding:44px 0 56px}
