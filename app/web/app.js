@@ -655,10 +655,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupTabs();
   try {
     await refreshCases();
-    // Open on the newest case that is still in progress; if everything is finished, start fresh at stop 1.
-    const finished = new Set(["resolved", "review_resolved", "evidence_incomplete"]);
-    const active = caseSummaries.find((row) => !finished.has(row.status));
-    if (active) await loadCase(active.case_id);
+    // Open at the start of the story: the newest case still at stop 1, or a fresh sample. Other cases stay in the dropdown.
+    const fresh = caseSummaries.find((row) => row.status === "monitoring");
+    if (fresh) await loadCase(fresh.case_id);
     else await resetCase();
   } catch (error) { toast(error.message); }
   startPolling();
