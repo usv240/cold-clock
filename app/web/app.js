@@ -265,7 +265,7 @@ const STAGE_MESSAGE = {
   review: "Step 2 of 4. The agent read the package and built the packet. The system will not decide if the medicine is safe. Record the pharmacist's decision.",
   background: "Step 3 of 4. Reservation and dispatch happened by themselves. Nobody clicks from here: the Cloud Scheduler wake closes the case at the courier ETA.",
   closed: "Step 4 of 4. Closed. Everything after the pharmacist's decision ran in the background, and the receipt is signed.",
-  outage: "Grid outage reported. A background watch will judge this household from its own readings in 15 minutes: excursion, keep watching, or a safe stop. Nobody needs to do anything.",
+  outage: "Grid outage reported. A background watch judges this household from its own readings on the next scheduler scan: excursion, keep watching, or a safe stop. Nobody needs to do anything.",
 };
 
 function stageFor(caseData) {
@@ -295,7 +295,7 @@ const TRACK_COPY = {
   review: { title: "Waiting for the pharmacist.", sub: "The agent gathered the evidence and built the packet. It will not decide whether the medicine is safe. That decision belongs to a person.", cta: "Record the pharmacist's decision", note: "The only decision a human makes.", stop: 3 },
   background: { title: "Replacement on the way. Nobody needs to click.", sub: "The pharmacist decided. Reservation and dispatch happened by themselves. Cloud Scheduler checks the courier every minute; this page updates on its own.", cta: "Hands off", note: "Watch stop 4. It completes itself.", stop: 4 },
   closed: { title: "Delivered. Case closed.", sub: "Everything after the pharmacist's decision ran in the background, and the receipt is signed.", cta: "Start another case", note: "Runs a fresh synthetic case.", stop: 5 },
-  outage: { title: "Grid outage reported. Watching this household.", sub: "One utility message reached every home in this area at once. Each home now has its own background watch. In 15 minutes the agent judges this one from its own readings: warm fridge goes to a pharmacist, fine fridge keeps watching, silent sensor stops safely.", cta: "Watching", note: "Nothing to click. The background watch decides.", stop: 1 },
+  outage: { title: "Grid outage reported. Watching this household.", sub: "One utility message reached every home in this area at once. Each home now has its own background watch. Within a minute the agent judges each one from its own readings: warm fridge goes to a pharmacist, fine fridge keeps watching, silent sensor stops safely.", cta: "Watching", note: "Nothing to click. The background watch decides.", stop: 1 },
 };
 
 const openStops = { caseId: null, set: new Set() };

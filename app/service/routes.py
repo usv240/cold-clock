@@ -159,11 +159,20 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
 
         from service.events_routes import fan_out_utility_outage
 
+        # Three households with genuinely different sensor evidence, so the background watch reaches
+        # three different conclusions from data rather than from a script.
+        from datetime import timedelta as _timedelta
+
+        profiles = [("warm", 71.5), ("in range", 40.5), ("silent", None)]
         enrolled: list[str] = []
-        for _ in range(request.enroll):
+        now_utc = datetime.now(timezone.utc)
+        for index in range(request.enroll):
             case = create_case()
             case["service_area"] = request.service_area
-            case["household"]["display_name"] = f"Grid household {uuid4().hex[:4].upper()} (synthetic)"
+            label, reading = profiles[index % len(profiles)]
+            case["household"]["display_name"] = f"Grid household {uuid4().hex[:4].upper()} ({label}, synthetic)"
+            if reading is not None:
+                case["sensor"]["readings"].append({"at": (now_utc + _timedelta(seconds=30)).isoformat(), "fahrenheit": reading, "power": "off"})
             store.put(case)
             enrolled.append(case["case_id"])
         outage = {"outage_id": f"out-{uuid4().hex[:8]}", "service_area": request.service_area, "started_at": datetime.now(timezone.utc).isoformat(), "power": "off"}

@@ -20,7 +20,7 @@ from cold_clock.failures import report_sensor_gap
 from cold_clock.workflow import _append, _iso, advance_safe_automation
 
 DEFAULT_SERVICE_AREA = "grid-7"
-OUTAGE_WATCH_MINUTES = 15
+OUTAGE_WATCH_MINUTES = 0  # due immediately: the next Cloud Scheduler scan judges the household
 MAX_OUTAGE_RECHECKS = 3
 
 
@@ -135,7 +135,7 @@ def evaluate_outage_watch(case: dict[str, Any], now: datetime, wake_id: str, att
             _append(case, "Background wake agent", "Outage watch closed in range", f"Readings stayed within {low:g}–{high:g}°F through {attempt} rechecks; monitoring continues normally.", evidence_ids=[wake_id, "sensor-readings"], at=now)
             return "held_in_range"
         outage["rechecks"] = attempt + 1
-        _append(case, "Background wake agent", "Outage watch: still in range", f"Latest reading {since[-1]['fahrenheit']}°F is within range; re-checking in {OUTAGE_WATCH_MINUTES} minutes.", evidence_ids=[wake_id, "sensor-readings"], at=now)
+        _append(case, "Background wake agent", "Outage watch: still in range", f"Latest reading {since[-1]['fahrenheit']}°F is within range; the watch stays armed for the next scan.", evidence_ids=[wake_id, "sensor-readings"], at=now)
         return "recheck"
     if attempt >= 1:
         outage["resolution"] = "sensor_silent"
@@ -144,5 +144,5 @@ def evaluate_outage_watch(case: dict[str, Any], now: datetime, wake_id: str, att
         case["timeline"][-1]["evidence_ids"].append(wake_id)
         return "sensor_gap_safe_stop"
     outage["rechecks"] = attempt + 1
-    _append(case, "Background wake agent", "Outage watch: no readings yet", "No sensor reading has arrived since the outage; waiting one more interval before a safe stop.", status="attention", evidence_ids=[wake_id], at=now)
+    _append(case, "Background wake agent", "Outage watch: no readings yet", "No sensor reading has arrived since the outage; one more scan before a safe stop.", status="attention", evidence_ids=[wake_id], at=now)
     return "recheck"
