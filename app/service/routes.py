@@ -165,18 +165,26 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
 
         profiles = [("warm", 71.5), ("in range", 40.5), ("silent", None)]
         enrolled: list[str] = []
-        now_utc = datetime.now(timezone.utc)
         for index in range(request.enroll):
             case = create_case()
             case["service_area"] = request.service_area
-            label, reading = profiles[index % len(profiles)]
+            label, _reading = profiles[index % len(profiles)]
             case["household"]["display_name"] = f"Grid household {uuid4().hex[:4].upper()} ({label}, synthetic)"
-            if reading is not None:
-                case["sensor"]["readings"].append({"at": (now_utc + _timedelta(seconds=30)).isoformat(), "fahrenheit": reading, "power": "off"})
             store.put(case)
             enrolled.append(case["case_id"])
         outage = {"outage_id": f"out-{uuid4().hex[:8]}", "service_area": request.service_area, "started_at": datetime.now(timezone.utc).isoformat(), "power": "off"}
         result = fan_out_utility_outage(store, scheduler, outage, channel="api")
+        # Readings must arrive AFTER the outage, or the watch correctly treats them as pre-outage evidence.
+        reported = datetime.now(timezone.utc) + _timedelta(seconds=30)
+        for index, case_id in enumerate(enrolled):
+            _label, reading = profiles[index % len(profiles)]
+            if reading is None:
+                continue
+            case = store.get(case_id)
+            if case is None:
+                continue
+            case["sensor"]["readings"].append({"at": reported.isoformat(), "fahrenheit": reading, "power": "off"})
+            store.put(case)
         return {**result, "enrolled": enrolled, "watch_minutes": 15, "next": "each affected case now holds an outage_watch wake; GET /api/cases/{case_id}/wakes"}
 
     @router.get("/cases/{case_id}/wakes")
