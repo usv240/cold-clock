@@ -46,6 +46,7 @@ def apply_utility_outage(case: dict[str, Any], outage: dict[str, Any], *, channe
         return False
     started_at = _utc(outage["started_at"])
     latest = case["sensor"]["readings"][-1]
+    readings_before = len(case["sensor"]["readings"])
     case["sensor"]["readings"].append({"at": _iso(started_at), "fahrenheit": latest.get("fahrenheit"), "power": "off", "source": "utility-event"})
     case["utility_outage"] = {
         "outage_id": outage_id,
@@ -54,6 +55,9 @@ def apply_utility_outage(case: dict[str, Any], outage: dict[str, Any], *, channe
         "channel": channel,
         "rechecks": 0,
         "resolution": None,
+        # Evidence is judged by arrival order, not by comparing timestamps from different clocks:
+        # a baseline reading stamped a few milliseconds after the utility's started_at is still pre-outage.
+        "readings_at_outage": readings_before,
     }
     case.setdefault("event_channels", []).append({"channel": channel, "kind": "utility_outage", "id": outage_id})
     _append(
@@ -89,10 +93,12 @@ def evaluate_outage_watch(case: dict[str, Any], now: datetime, wake_id: str, att
         return "no_longer_needed"
     started = _utc(outage["started_at"])
     low, high = _range(case)
-    since = [
-        row for row in case["sensor"]["readings"]
-        if row.get("at") and row.get("source") != "utility-event" and _utc(row["at"]) > started and row.get("fahrenheit") is not None
-    ]
+    readings = case["sensor"]["readings"]
+    if outage.get("readings_at_outage") is not None:
+        arrived_after = readings[int(outage["readings_at_outage"]) + 1:]  # everything appended after the outage marker
+    else:  # older cases without the marker count: fall back to timestamps
+        arrived_after = [row for row in readings if row.get("at") and _utc(row["at"]) > started]
+    since = [row for row in arrived_after if row.get("source") != "utility-event" and row.get("at") and row.get("fahrenheit") is not None]
     out_of_range = [row for row in since if float(row["fahrenheit"]) < low or float(row["fahrenheit"]) > high]
     if out_of_range:
         first = _utc(out_of_range[0]["at"])

@@ -136,3 +136,18 @@ def test_http_outage_fanout_demo_enrolls_and_arms_watches():
     case = client.get(f"/api/cases/{result['enrolled'][0]}").json()
     assert case["utility_outage"]["channel"] == "api" and case["timeline"][-1]["actor"] == "Utility outage gateway"
     assert case["autonomy_proof"]["external_evidence_events"] >= 1
+
+
+def test_baseline_reading_stamped_after_outage_start_is_not_evidence():
+    """Clock skew: a pre-outage baseline can carry a later timestamp than the utility's started_at."""
+    clock, scheduler, cases = _runtime()
+    case = create_case()
+    case["sensor"]["readings"][-1]["at"] = (clock.now() + timedelta(seconds=2)).isoformat()  # baseline "after" the outage by the clock
+    cases.put(case)
+    fan_out_utility_outage(cases, scheduler, {"outage_id": "out-skew", "service_area": "grid-7", "started_at": clock.now().isoformat()}, channel="pubsub")
+    executor = ColdClockWakeExecutor(cases, clock, scheduler)
+    clock.advance(timedelta(minutes=16)); scheduler.dispatch_due(executor.execute)
+    first = cases.get(case["case_id"])
+    assert first["timeline"][-1]["action"] == "Outage watch: no readings yet", "the baseline must not count as a post-outage reading"
+    clock.advance(timedelta(minutes=16)); scheduler.dispatch_due(executor.execute)
+    assert cases.get(case["case_id"])["status"] == "evidence_incomplete"
