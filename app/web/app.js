@@ -53,13 +53,26 @@ async function api(path, options = {}) {
   return response.json();
 }
 
+function caseOption(row) {
+  return `<option value="${escapeHtml(row.case_id)}">${escapeHtml(row.case_reference)} · ${escapeHtml(row.medication)} · ${escapeHtml(statusCopy(row.status))}</option>`;
+}
+
+function caseOptionsHtml() {
+  if (!caseSummaries.length) return '<option value="">No cases yet</option>';
+  // Households hit by the newest outage go in their own group at the top, so the fan-out is easy to walk through.
+  const newestOutage = caseSummaries.find((row) => row.outage_id)?.outage_id;
+  const inOutage = newestOutage ? caseSummaries.filter((row) => row.outage_id === newestOutage) : [];
+  const rest = caseSummaries.filter((row) => !inOutage.includes(row));
+  if (!inOutage.length) return rest.map(caseOption).join("");
+  return `<optgroup label="This outage · ${inOutage.length} households">${inOutage.map(caseOption).join("")}</optgroup>`
+    + `<optgroup label="Earlier cases">${rest.map(caseOption).join("")}</optgroup>`;
+}
+
 async function refreshCases(preferredId = currentCase?.case_id) {
   const data = await api("/api/pilot/cases");
   caseSummaries = data.cases;
   const select = $("#case-select");
-  select.innerHTML = caseSummaries.length
-    ? caseSummaries.map((row) => `<option value="${escapeHtml(row.case_id)}">${escapeHtml(row.case_reference)} · ${escapeHtml(row.medication)} · ${escapeHtml(statusCopy(row.status))}</option>`).join("")
-    : '<option value="">No cases yet</option>';
+  select.innerHTML = caseOptionsHtml();
   if (preferredId && caseSummaries.some((row) => row.case_id === preferredId)) select.value = preferredId;
   const mirror = $("#track-case-select");
   if (mirror) { mirror.innerHTML = select.innerHTML; mirror.value = select.value; }
