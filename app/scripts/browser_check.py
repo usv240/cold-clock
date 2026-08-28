@@ -40,7 +40,7 @@ def main() -> int:
         page.click("#track-cta"); page.wait_for_function(busy_off, timeout=180000)
         check("unattended run stops at the human gate", "pharmacist" in page.text_content("#status-title").lower())
         check("human-gate button is enabled", page.evaluate("!document.querySelector('#track-cta').disabled"))
-        page.locator("#console").screenshot(path=str(out / "review.png"))  # the board shows the review packet without tabs
+        page.locator("#track").screenshot(path=str(out / "review.png"))  # the board shows the review packet without tabs
         packet = page.text_content("#stop-3-body") or ""
         check("packet card shows a receipt", "packet" in packet.lower())
         page.click("#track-cta"); page.wait_for_selector("#review-dialog[open]")
@@ -48,7 +48,7 @@ def main() -> int:
         page.fill("#review-form [name=rationale]", "Replacement approved after reviewing the packet in this browser check.")
         page.click("#review-form button[type=submit]"); page.wait_for_function(busy_off, timeout=60000); time.sleep(1)
         check("one decision dispatched automatically", "delivery" in page.text_content("#status-title").lower())
-        page.locator("#console").screenshot(path=str(out / "dispatched.png"))
+        page.locator("#track").screenshot(path=str(out / "dispatched.png"))
         started = time.time()
         try:
             page.wait_for_function("document.querySelector('#status-title').textContent.includes('Resolution complete')", timeout=args.wait * 1000)
@@ -58,7 +58,7 @@ def main() -> int:
         check(f"page closed itself from a background wake within {args.wait}s", closed)
         if closed:
             print(f"      closed after {time.time() - started:.0f}s: {page.text_content('#autonomy-title')}")
-        page.locator("#console").screenshot(path=str(out / "closed.png"))
+        page.locator("#track").screenshot(path=str(out / "closed.png"))
         check("worker status line reports the scheduler", "scheduler" in (page.text_content("#track-worker-status") or "").lower())
         check("no page errors", not errors)
         browser.close()
