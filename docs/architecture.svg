@@ -1,46 +1,154 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="960" viewBox="0 0 1500 960" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc" font-family="Arial, Helvetica, sans-serif">
   <title id="title">ColdClock architecture</title>
-  <desc id="desc">Synthetic events enter a Cloud Run FastAPI agent service directly or through OIDC-verified Pub/Sub push subscriptions; a utility outage fans out to every enrolled case. A Google ADK agent assembles the review packet through scoped tools and a verifier checks it. Gemini 3.5 Flash reads the package, a pattern layer plus Gemma 4 quarantine injected text, Gemini Embedding 001 routes the evidence, and Firestore holds versioned cases and transactional wakes. A mandatory named pharmacist gate precedes sandbox fulfillment and courier dispatch. Cloud Scheduler calls the OIDC-verified wake worker every minute; the courier poll wake closes the case at the ETA with no operator. Cloud Trace and Secret Manager support observability and key protection.</desc>
-  <rect width="1500" height="960" fill="#08110f"/>
-  <text x="80" y="92" fill="#effaf6" font-family="Arial" font-size="46" font-weight="700">ColdClock architecture</text>
-  <text x="80" y="132" fill="#91aaa0" font-family="Arial" font-size="20">The coordination system cannot cross the professional decision gate by itself — and after that gate it finishes without anyone watching.</text>
-  <g font-family="Arial">
-    <text x="85" y="212" fill="#55d9bd" font-size="15" font-weight="700">SYNTHETIC EVENTS</text>
-    <rect x="80" y="235" width="300" height="100" rx="18" fill="#12241f" stroke="#355449" stroke-width="2"/><text x="110" y="276" fill="#effaf6" font-size="22" font-weight="700">Package image</text><text x="110" y="306" fill="#91aaa0" font-size="15">Synthetic fixture</text>
-    <rect x="80" y="355" width="300" height="100" rx="18" fill="#12241f" stroke="#355449" stroke-width="2"/><text x="110" y="396" fill="#effaf6" font-size="22" font-weight="700">Sensor readings</text><text x="110" y="426" fill="#91aaa0" font-size="15">Idempotent by event id</text>
-    <rect x="80" y="475" width="300" height="100" rx="18" fill="#12241f" stroke="#355449" stroke-width="2"/><text x="110" y="516" fill="#effaf6" font-size="22" font-weight="700">Utility outage</text><text x="110" y="546" fill="#91aaa0" font-size="15">One grid event → every enrolled case</text>
-    <rect x="80" y="595" width="300" height="80" rx="18" fill="#1c2f3a" stroke="#6bb8ff" stroke-width="2"/><text x="110" y="628" fill="#e8f3ff" font-size="19" font-weight="700">Pub/Sub push · OIDC</text><text x="110" y="654" fill="#a9c8e6" font-size="13">/internal/events/sensor · /internal/events/utility</text>
-    <path d="M405 405H485" stroke="#55d9bd" stroke-width="3"/><path d="M475 395L490 405L475 415" fill="none" stroke="#55d9bd" stroke-width="3"/>
-    <path d="M405 635H460V470" stroke="#6bb8ff" stroke-width="2" fill="none" stroke-dasharray="6 5"/>
+  <desc id="desc">A refrigeration event arrives by Pub/Sub push or API. Gemini 3.5 Flash reads the package with exact-quote grounding, Gemma 4 screens the label for injected instructions, and Gemini Embedding routes the evidence. A Google ADK agent assembles the pharmacist review packet through three read-only tools and a verifier checks every value against tool output. A named pharmacist is the only actor allowed to choose the medication disposition. After that decision the agent reserves sandbox inventory and dispatches an accessible courier, stores a durable wake in Firestore, and Cloud Scheduler calls an OIDC-verified worker every minute which polls the courier, closes the case and emits a signed autonomy receipt, with no operator.</desc>
 
-    <text x="505" y="212" fill="#55d9bd" font-size="15" font-weight="700">GOOGLE CLOUD RUNTIME</text>
-    <rect x="500" y="235" width="440" height="470" rx="24" fill="#10251f" stroke="#55d9bd" stroke-width="3"/>
-    <rect x="530" y="265" width="380" height="74" rx="14" fill="#19352d"/><text x="555" y="296" fill="#effaf6" font-size="21" font-weight="700">Cloud Run · FastAPI agent service</text><text x="555" y="322" fill="#9eb7ad" font-size="14">Bounded state machine · ADK review-packet agent with scoped tools + verifier</text>
-    <rect x="530" y="355" width="182" height="92" rx="14" fill="#19352d"/><text x="550" y="386" fill="#effaf6" font-size="18" font-weight="700">Gemini 3.5 Flash</text><text x="550" y="410" fill="#9eb7ad" font-size="13">Quote-grounded</text><text x="550" y="430" fill="#9eb7ad" font-size="13">package reader (live)</text>
-    <rect x="728" y="355" width="182" height="92" rx="14" fill="#19352d"/><text x="748" y="386" fill="#effaf6" font-size="18" font-weight="700">Gemma 4 screen</text><text x="748" y="410" fill="#9eb7ad" font-size="13">Pattern layer + Gemma</text><text x="748" y="430" fill="#9eb7ad" font-size="13">quarantine injected text</text>
-    <rect x="530" y="463" width="182" height="92" rx="14" fill="#19352d"/><text x="550" y="494" fill="#effaf6" font-size="18" font-weight="700">Embedding 001</text><text x="550" y="518" fill="#9eb7ad" font-size="13">Semantic evidence</text><text x="550" y="538" fill="#9eb7ad" font-size="13">routing, no authority</text>
-    <rect x="728" y="463" width="182" height="92" rx="14" fill="#19352d"/><text x="748" y="494" fill="#effaf6" font-size="18" font-weight="700">Firestore</text><text x="748" y="518" fill="#9eb7ad" font-size="13">Versioned cases (409 on stale)</text><text x="748" y="538" fill="#9eb7ad" font-size="13">Transactional wake claims</text>
-    <rect x="530" y="571" width="380" height="104" rx="14" fill="#1c2f3a" stroke="#6bb8ff" stroke-width="2"/><text x="555" y="602" fill="#e8f3ff" font-size="18" font-weight="700">Wake worker  ·  POST /internal/wakes/scan</text><text x="555" y="627" fill="#a9c8e6" font-size="13">Verifies Google-signed OIDC (audience, issuer, service account) · 401 otherwise</text><text x="555" y="647" fill="#a9c8e6" font-size="13">Claims due wake in a transaction · 90 s lease · 5 attempts · dead letters</text><text x="555" y="667" fill="#a9c8e6" font-size="13">Idempotent by wake id · courier poll closes the case · reminders never contact anyone</text>
+  <rect width="1600" height="1000" fill="#ffffff"/>
+  <text x="60" y="62" font-size="34" font-weight="700" fill="#12221d">ColdClock architecture</text>
+  <text x="60" y="92" font-size="16" fill="#53635d">Everything is automatic except one decision. After that decision, the workflow finishes with nobody watching.</text>
 
-    <path d="M965 405H1027" stroke="#ffc85f" stroke-width="4"/><path d="M1017 395L1032 405L1017 415" fill="none" stroke="#ffc85f" stroke-width="4"/>
-    <text x="1038" y="212" fill="#ffc85f" font-size="15" font-weight="700">MANDATORY AUTHORITY GATE</text>
-    <rect x="1035" y="235" width="385" height="130" rx="22" fill="#2c3d27" stroke="#ffc85f" stroke-width="3"/>
-    <text x="1070" y="282" fill="#fff5d9" font-size="27" font-weight="700">Named human pharmacist</text><text x="1070" y="318" fill="#d7c797" font-size="17">Reviews evidence and chooses disposition</text><text x="1070" y="344" fill="#ffc85f" font-size="14" font-weight="700">AI CANNOT BYPASS THIS STATE</text>
-    <path d="M1227 390V440" stroke="#55d9bd" stroke-width="3"/><path d="M1217 430L1227 445L1237 430" fill="none" stroke="#55d9bd" stroke-width="3"/>
-    <rect x="1035" y="455" width="180" height="110" rx="18" fill="#12241f" stroke="#355449" stroke-width="2"/><text x="1060" y="493" fill="#effaf6" font-size="20" font-weight="700">Pharmacy</text><text x="1060" y="521" fill="#91aaa0" font-size="14">Sandbox inventory</text><text x="1060" y="543" fill="#91aaa0" font-size="14">reservation (automatic)</text>
-    <rect x="1240" y="455" width="180" height="110" rx="18" fill="#12241f" stroke="#355449" stroke-width="2"/><text x="1265" y="493" fill="#effaf6" font-size="20" font-weight="700">Courier</text><text x="1265" y="521" fill="#91aaa0" font-size="14">Sandbox dispatch</text><text x="1265" y="543" fill="#91aaa0" font-size="14">(automatic) · ETA</text>
-    <path d="M1215 510H1232" stroke="#55d9bd" stroke-width="3"/><path d="M1224 502L1236 510L1224 518" fill="none" stroke="#55d9bd" stroke-width="3"/>
+  <!-- ================= ROW 1: the workflow ================= -->
+  <text x="60" y="140" font-size="12" font-weight="700" fill="#087965" letter-spacing="1.5">THE WORKFLOW</text>
 
-    <text x="1038" y="608" fill="#6bb8ff" font-size="15" font-weight="700">BACKGROUND CLOSURE · NO OPERATOR</text>
-    <rect x="1035" y="625" width="385" height="80" rx="18" fill="#1c2f3a" stroke="#6bb8ff" stroke-width="2"/><text x="1060" y="655" fill="#e8f3ff" font-size="18" font-weight="700">Cloud Scheduler · every minute</text><text x="1060" y="681" fill="#a9c8e6" font-size="13">OIDC token from agent-wake-scheduler service account</text>
-    <path d="M1035 665H945" stroke="#6bb8ff" stroke-width="3"/><path d="M955 655L940 665L955 675" fill="none" stroke="#6bb8ff" stroke-width="3"/>
-    <path d="M1330 565V620" stroke="#6bb8ff" stroke-width="3" stroke-dasharray="6 5"/><path d="M1320 610L1330 625L1340 610" fill="none" stroke="#6bb8ff" stroke-width="3"/>
-    <text x="1345" y="598" fill="#a9c8e6" font-size="12">courier_status_poll</text>
+  <!-- 1. Events -->
+  <rect x="60" y="158" width="270" height="196" rx="14" fill="#f5f7f5" stroke="#d7dfdb"/>
+  <circle cx="88" cy="188" r="13" fill="#087965"/><text x="88" y="193" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+  <text x="112" y="193" font-size="16" font-weight="700" fill="#12221d">Event arrives</text>
+  <text x="80" y="226" font-size="13" fill="#53635d">Sensor reading, package image,</text>
+  <text x="80" y="246" font-size="13" fill="#53635d">or a utility outage for a whole</text>
+  <text x="80" y="266" font-size="13" fill="#53635d">service area.</text>
+  <rect x="80" y="284" width="230" height="52" rx="9" fill="#e8f1fb" stroke="#b9d3ee"/>
+  <text x="92" y="304" font-size="12" font-weight="700" fill="#1c4f86">Pub/Sub push or REST API</text>
+  <text x="92" y="322" font-size="11" fill="#3f6b9c">Google-signed OIDC verified, else 401</text>
+
+  <!-- 2. Observe -->
+  <rect x="352" y="158" width="270" height="196" rx="14" fill="#f5f7f5" stroke="#d7dfdb"/>
+  <circle cx="380" cy="188" r="13" fill="#087965"/><text x="380" y="193" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+  <text x="404" y="193" font-size="16" font-weight="700" fill="#12221d">Observe</text>
+  <text x="372" y="222" font-size="13" font-weight="700" fill="#12221d">Gemini 3.5 Flash</text>
+  <text x="372" y="240" font-size="12" fill="#53635d">reads the package. A field is kept</text>
+  <text x="372" y="256" font-size="12" fill="#53635d">only if it is an exact quote.</text>
+  <text x="372" y="282" font-size="13" font-weight="700" fill="#12221d">Gemma 4</text>
+  <text x="372" y="300" font-size="12" fill="#53635d">quarantines label text shaped like</text>
+  <text x="372" y="316" font-size="12" fill="#53635d">an instruction.</text>
+  <text x="372" y="340" font-size="12" fill="#53635d"><tspan font-weight="700" fill="#12221d">Embedding 001</tspan> routes evidence.</text>
+
+  <!-- 3. Prepare -->
+  <rect x="644" y="158" width="270" height="196" rx="14" fill="#f5f7f5" stroke="#d7dfdb"/>
+  <circle cx="672" cy="188" r="13" fill="#087965"/><text x="672" y="193" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+  <text x="696" y="193" font-size="16" font-weight="700" fill="#12221d">Prepare the packet</text>
+  <text x="664" y="222" font-size="13" font-weight="700" fill="#12221d">Google ADK agent</text>
+  <text x="664" y="242" font-size="12" fill="#53635d">assembles the review packet using</text>
+  <text x="664" y="258" font-size="12" fill="#53635d">three read-only tools.</text>
+  <rect x="664" y="274" width="230" height="62" rx="9" fill="#fdf3e7" stroke="#e8c89a"/>
+  <text x="676" y="294" font-size="12" font-weight="700" fill="#8a5a12">A verifier checks every value</text>
+  <text x="676" y="311" font-size="11" fill="#8a5a12">against what the tools returned.</text>
+  <text x="676" y="328" font-size="11" fill="#8a5a12">An invented number is rejected.</text>
+
+  <!-- 4. HUMAN GATE -->
+  <rect x="936" y="158" width="270" height="196" rx="14" fill="#fff8e8" stroke="#d9a520" stroke-width="2.5"/>
+  <circle cx="964" cy="188" r="13" fill="#d9a520"/><text x="964" y="193" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+  <text x="988" y="193" font-size="16" font-weight="700" fill="#5c4310">Pharmacist decides</text>
+  <text x="956" y="226" font-size="13" fill="#5c4310">A named human reviews the packet</text>
+  <text x="956" y="244" font-size="13" fill="#5c4310">and records the disposition.</text>
+  <rect x="956" y="262" width="230" height="30" rx="7" fill="#ffffff" stroke="#d9a520"/>
+  <text x="1071" y="282" font-size="12" font-weight="700" fill="#8a5a12" text-anchor="middle">AI DISPOSITION: NONE</text>
+  <text x="956" y="312" font-size="12" fill="#5c4310">The state machine makes</text>
+  <text x="956" y="329" font-size="12" fill="#5c4310">fulfillment impossible until this</text>
+  <text x="956" y="346" font-size="12" fill="#5c4310">is recorded.</text>
+
+  <!-- 5. Act -->
+  <rect x="1228" y="158" width="270" height="196" rx="14" fill="#f5f7f5" stroke="#d7dfdb"/>
+  <circle cx="1256" cy="188" r="13" fill="#087965"/><text x="1256" y="193" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">5</text>
+  <text x="1280" y="193" font-size="16" font-weight="700" fill="#12221d">Act</text>
+  <text x="1248" y="226" font-size="13" fill="#53635d">Reserve matching inventory.</text>
+  <text x="1248" y="246" font-size="13" fill="#53635d">Book an accessible courier.</text>
+  <text x="1248" y="266" font-size="13" fill="#53635d">Register a durable wake.</text>
+  <rect x="1248" y="284" width="230" height="52" rx="9" fill="#eef4f2" stroke="#c9d8d3"/>
+  <text x="1260" y="304" font-size="11" fill="#53635d">Pharmacy, courier, insurer and</text>
+  <text x="1260" y="321" font-size="11" fill="#53635d">sensor are sandbox connectors.</text>
+
+  <!-- arrows between stages -->
+  <g stroke="#087965" stroke-width="2.5" fill="none">
+    <path d="M330 256H346"/><path d="M340 250L348 256L340 262" fill="#087965"/>
+    <path d="M622 256H638"/><path d="M632 250L640 256L632 262" fill="#087965"/>
   </g>
-  <rect x="500" y="730" width="920" height="50" rx="14" fill="#10251f" stroke="#355449"/>
-  <text x="525" y="761" fill="#9eb7ad" font-family="Arial" font-size="15">Cloud Trace correlation · Secret Manager pepper (keys + signed receipts) · Google ADK + Gen AI SDK · outage_watch wakes per case · 409 conflict receipts</text>
-  <rect x="80" y="800" width="1340" height="120" rx="18" fill="#10201c" stroke="#2a453c"/>
-  <text x="110" y="838" fill="#55d9bd" font-family="Arial" font-size="17" font-weight="700">HONEST PUBLIC BOUNDARY</text>
-  <text x="110" y="868" fill="#abc0b8" font-family="Arial" font-size="17">All people, events, medication lot, inventory, coverage, and delivery are synthetic. The demo clock is simulated and forward-only, and says so.</text>
-  <text x="110" y="896" fill="#abc0b8" font-family="Arial" font-size="17">The demo proves workflow execution and unattended closure — not clinical benefit or production integration. The autonomy proof is derived from the persisted trace.</text>
+  <g stroke="#d9a520" stroke-width="3" fill="none">
+    <path d="M914 256H930"/><path d="M924 249L933 256L924 263" fill="#d9a520"/>
+    <path d="M1206 256H1222"/><path d="M1216 249L1225 256L1216 263" fill="#d9a520"/>
+  </g>
+
+  <!-- ================= ROW 2: background closure ================= -->
+  <text x="60" y="424" font-size="12" font-weight="700" fill="#1c4f86" letter-spacing="1.5">IT FINISHES ITSELF. NO OPERATOR.</text>
+  <rect x="60" y="442" width="1438" height="216" rx="16" fill="#f4f8fc" stroke="#b9d3ee" stroke-width="2"/>
+
+  <rect x="88" y="472" width="250" height="112" rx="12" fill="#ffffff" stroke="#cfe0f0"/>
+  <text x="106" y="500" font-size="15" font-weight="700" fill="#12221d">Firestore</text>
+  <text x="106" y="524" font-size="12" fill="#53635d">Cases with optimistic versions,</text>
+  <text x="106" y="541" font-size="12" fill="#53635d">a stale write returns 409.</text>
+  <text x="106" y="565" font-size="12" fill="#53635d">Durable wakes stored here.</text>
+
+  <rect x="382" y="472" width="250" height="112" rx="12" fill="#ffffff" stroke="#cfe0f0"/>
+  <text x="400" y="500" font-size="15" font-weight="700" fill="#12221d">Cloud Scheduler</text>
+  <text x="400" y="524" font-size="12" fill="#53635d">Calls the worker every minute</text>
+  <text x="400" y="541" font-size="12" fill="#53635d">with a Google-signed OIDC token</text>
+  <text x="400" y="565" font-size="12" fill="#53635d">from a dedicated service account.</text>
+
+  <rect x="676" y="472" width="250" height="112" rx="12" fill="#ffffff" stroke="#cfe0f0"/>
+  <text x="694" y="500" font-size="15" font-weight="700" fill="#12221d">Wake worker</text>
+  <text x="694" y="524" font-size="12" fill="#53635d">Verifies the identity, else 401.</text>
+  <text x="694" y="541" font-size="12" fill="#53635d">Claims each wake in a transaction:</text>
+  <text x="694" y="558" font-size="12" fill="#53635d">90 s lease, 5 tries, dead letter.</text>
+  <text x="694" y="575" font-size="12" fill="#53635d">Actions are idempotent.</text>
+
+  <rect x="970" y="472" width="250" height="112" rx="12" fill="#ffffff" stroke="#cfe0f0"/>
+  <text x="988" y="500" font-size="15" font-weight="700" fill="#12221d">Courier poll</text>
+  <text x="988" y="524" font-size="12" fill="#53635d">Asks the sandbox courier at the</text>
+  <text x="988" y="541" font-size="12" fill="#53635d">ETA. Still in transit means poll</text>
+  <text x="988" y="558" font-size="12" fill="#53635d">again. Never confirmed becomes</text>
+  <text x="988" y="575" font-size="12" fill="#53635d">a hold for a person.</text>
+
+  <rect x="1264" y="472" width="206" height="112" rx="12" fill="#e8f5ef" stroke="#8fcdb4"/>
+  <text x="1282" y="500" font-size="15" font-weight="700" fill="#0c5d47">Case closed</text>
+  <text x="1282" y="524" font-size="12" fill="#0c5d47">Receipt recorded and</text>
+  <text x="1282" y="541" font-size="12" fill="#0c5d47">HMAC-signed. Reminders</text>
+  <text x="1282" y="558" font-size="12" fill="#0c5d47">cancelled. Zero operator</text>
+  <text x="1282" y="575" font-size="12" fill="#0c5d47">clicks, and it is provable.</text>
+
+  <g stroke="#3f6b9c" stroke-width="2.5" fill="none">
+    <path d="M338 528H374"/><path d="M366 522L376 528L366 534" fill="#3f6b9c"/>
+    <path d="M632 528H668"/><path d="M660 522L670 528L660 534" fill="#3f6b9c"/>
+    <path d="M926 528H962"/><path d="M954 522L964 528L954 534" fill="#3f6b9c"/>
+    <path d="M1220 528H1256"/><path d="M1248 522L1258 528L1248 534" fill="#3f6b9c"/>
+  </g>
+  <path d="M1367 584V614H213V584" stroke="#3f6b9c" stroke-width="2" stroke-dasharray="6 5" fill="none"/>
+  <path d="M206 592L213 582L220 592" fill="#3f6b9c"/>
+  <text x="790" y="632" font-size="11.5" fill="#3f6b9c" text-anchor="middle">every state change is written back to Firestore, so nothing depends on a browser staying open</text>
+
+  <!-- other wake kinds -->
+  <text x="60" y="694" font-size="12" font-weight="700" fill="#087965" letter-spacing="1.5">THE SAME WORKER RUNS THREE OTHER TIMERS</text>
+  <rect x="60" y="710" width="466" height="72" rx="12" fill="#f5f7f5" stroke="#d7dfdb"/>
+  <text x="80" y="736" font-size="13" font-weight="700" fill="#12221d">outage_watch</text>
+  <text x="80" y="756" font-size="12" fill="#53635d">Judges each household after a grid event:</text>
+  <text x="80" y="772" font-size="12" fill="#53635d">excursion, keep watching, or a safe stop.</text>
+
+  <rect x="546" y="710" width="466" height="72" rx="12" fill="#f5f7f5" stroke="#d7dfdb"/>
+  <text x="566" y="736" font-size="13" font-weight="700" fill="#12221d">review_followup</text>
+  <text x="566" y="756" font-size="12" fill="#53635d">Surfaces a review nobody has answered.</text>
+  <text x="566" y="772" font-size="12" fill="#53635d">Cancelled the moment a pharmacist decides.</text>
+
+  <rect x="1032" y="710" width="466" height="72" rx="12" fill="#f5f7f5" stroke="#d7dfdb"/>
+  <text x="1052" y="736" font-size="13" font-weight="700" fill="#12221d">receipt_followup</text>
+  <text x="1052" y="756" font-size="12" fill="#53635d">Surfaces a delivery still unconfirmed.</text>
+  <text x="1052" y="772" font-size="12" fill="#53635d">Never dispatches a second courier.</text>
+
+  <!-- the rule -->
+  <rect x="60" y="806" width="1438" height="54" rx="12" fill="#eef7f3" stroke="#8fcdb4"/>
+  <text x="84" y="840" font-size="15" fill="#0c5d47"><tspan font-weight="700">The rule:</tspan> the agent acts where a mistake can be undone, and stops where it cannot. That is why the pharmacist owns the disposition, a silent sensor becomes a safe stop, and an unconfirmed courier waits for a person.</text>
+
+  <!-- honest boundary -->
+  <rect x="60" y="876" width="1438" height="104" rx="12" fill="#f5f7f5" stroke="#d7dfdb"/>
+  <text x="84" y="902" font-size="12" font-weight="700" fill="#087965" letter-spacing="1.2">HONEST BOUNDARY</text>
+  <text x="84" y="924" font-size="13" fill="#53635d">Every person, medicine lot, pharmacy, courier and sensor event is synthetic. The demo clock is simulated and forward-only, and the interface says so.</text>
+  <text x="84" y="944" font-size="13" fill="#53635d">The autonomy receipt is derived from the persisted trace, not asserted by the caller. This demonstrates workflow execution, not clinical benefit.</text>
+  <text x="84" y="966" font-size="13" fill="#53635d">The whole service runs on Cloud Run. Cloud Trace correlates every request, and Secret Manager holds the key that signs the receipt.</text>
 </svg>
