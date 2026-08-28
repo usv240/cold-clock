@@ -1,7 +1,7 @@
 # ColdClock demo runbook
 
 One take, about 3:40. Each step: **DO** (mouse), **POINT** (cursor on the **bold** thing), **SAY** (read as written).
-About three minutes are the product; about forty seconds are Google Cloud proof, which the rules require.
+About three minutes are the product, including a live developer key; about thirty seconds are Google Cloud proof, which the rules require.
 
 ---
 
@@ -75,35 +75,46 @@ Stop 3 ticks. Stop 4 opens by itself: **Nobody clicks from here.** The button tu
 
 **DO:** click **Details** on stop 2 (Evidence gathered).
 
-**POINT:** the package label, then the row of pills **NAME, STRENGTH, FORM, LOT, OPENED ON**, then the green line **Package text screened, clean**
-**SAY:** "This is what the agent read. Five fields, and each one must appear word for word in the model's own transcription, or it is thrown away. Gemma checked the label for anything that tries to give the system orders. Clean."
+**POINT:** the row of pills **NAME, STRENGTH, FORM, LOT, OPENED ON**, then the green line **Package text screened, clean**
+**SAY:** "This is what the agent read. Five fields, each one an exact quote from the model's own transcription, or it is thrown away. Gemma checked the label for anything that tries to give the system orders. Clean."
 
-**DO:** click **Details** on stop 1 (Fridge lost power).
-
-**POINT:** the chart line rising out of the green band
-**SAY:** "And this is the fridge: normal, then the power goes out, then 95 degrees. Observation, not a verdict."
-
-**DO:** click **Hide** on both.
+**DO:** click **Hide**.
 
 ---
 
-## Step 5. Proof on Google Cloud · 1:55 · Tabs 2, 3, 4
+## Step 5. A developer key, live · 1:40 · Tab 1
+
+**DO:** click **Developer key** in the top header. A dialog opens: **Connect in two minutes.** Tick the consent box. Click **Generate free key**.
+
+**POINT:** the key that appears, starting **cc_live_**
+**SAY:** "This is not only a demo page. Any developer can get a key, no account needed. The key is shown once; the server keeps only a hash."
+
+**DO:** click **Run live API test**. Wait two seconds.
+
+**POINT:** **201** under Live API response, then **49 calls remaining today**, then the JSON with **"status": "monitoring"**
+**SAY:** "One authenticated call, a real case created in Firestore, quota counted. The same durable workflow you just watched, behind an API."
+
+**DO:** close the dialog with the **x**.
+
+---
+
+## Step 6. Proof on Google Cloud · 2:05 · Tabs 2, 3, 4 (ten seconds each)
 
 **DO:** Tab 2, Cloud Run: https://console.cloud.google.com/run/detail/us-central1/cold-clock/revisions?project=agentic-fleet-2026
 **POINT:** the top revision row with **100%**
-**SAY:** "ColdClock runs here on Cloud Run."
+**SAY:** "It runs here on Cloud Run."
 
 **DO:** Tab 3, Cloud Scheduler: https://console.cloud.google.com/cloudscheduler/jobs/us-central1/cold-clock-wake-scan?project=agentic-fleet-2026
-**POINT:** the frequency **\* \* \* \* \*** and the **service account**
-**SAY:** "Cloud Scheduler wakes it every minute with a signed Google identity. Without it, the agent answers 401."
+**POINT:** the frequency **\* \* \* \* \***
+**SAY:** "Cloud Scheduler wakes it every minute with a signed Google identity."
 
 **DO:** Tab 4, Firestore: https://console.cloud.google.com/firestore/databases/-default-/data/panel/cold_clock_wakes?project=agentic-fleet-2026 . Click **refresh**, open the newest document.
-**POINT:** **kind: courier_status_poll**, then **status** (pending or done)
-**SAY:** "And here is the wake itself in Firestore. Nobody needs to keep the browser open."
+**POINT:** **kind: courier_status_poll**, then **status**
+**SAY:** "And the wake itself, in Firestore. Nobody needs to keep the browser open."
 
 ---
 
-## Step 6. It finished by itself · 2:35 · Tab 1
+## Step 7. It finished by itself · 2:35 · Tab 1
 
 **DO:** back to Tab 1. Do not refresh. Do not click.
 
@@ -121,7 +132,7 @@ Stop 3 ticks. Stop 4 opens by itself: **Nobody clicks from here.** The button tu
 
 ---
 
-## Step 7. One outage, every household · 3:00 · Tab 1
+## Step 8. One outage, every household · 3:00 · Tab 1
 
 **DO:** click the white **Simulate grid outage** button. The card switches to a new household.
 
@@ -130,7 +141,7 @@ Stop 3 ticks. Stop 4 opens by itself: **Nobody clicks from here.** The button tu
 
 ---
 
-## Step 8. When things break · 3:15
+## Step 9. When things break · 3:15
 
 **DO:** open a new tab: https://cold-clock-109051079423.us-central1.run.app/api/hardening/proof
 
@@ -141,7 +152,7 @@ Stop 3 ticks. Stop 4 opens by itself: **Nobody clicks from here.** The button tu
 
 ---
 
-## Step 9. Close · 3:28 · Tab 1
+## Step 10. Close · 3:28 · Tab 1
 
 **DO:** scroll up so the ColdClock header and the card are both visible.
 
@@ -161,6 +172,7 @@ Stop 3 ticks. Stop 4 opens by itself: **Nobody clicks from here.** The button tu
 ## If something goes wrong
 
 - **Run unattended is slow:** the counter keeps going; keep talking, it lands within 30 seconds.
-- **Case not closed when you return in Step 6:** say "the scheduler ticks once a minute", do Step 7, come back. Never click anything else on the card.
+- **Case not closed when you return in Step 7:** say "the scheduler ticks once a minute", do Step 8, come back. Never click anything else on the card.
 - **Red message "live model evidence unavailable":** say "it fails closed instead of faking a result", click the green button again.
 - **Firestore panel empty:** type `cold_clock_wakes` in the collection search box.
+- **Key dialog says the network limit is reached:** say "five keys per network per day, by design" and skip to Step 6; the rest of the demo does not depend on it.
