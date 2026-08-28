@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="/static/cloud-status.css">
   <link rel="stylesheet" href="/static/autonomy.css">
   <link rel="stylesheet" href="/static/board.css">
+  <link rel="stylesheet" href="/static/track.css">
 <link rel="stylesheet" href="/static/developer.css"></head>
 <body>
   <a class="skip-link" href="#demo">Skip to live demonstration</a>
@@ -100,6 +101,37 @@
       </div>
     </section>
     <section class="demo-section" id="demo" aria-labelledby="demo-title">
+      <section class="track shell" id="track" aria-label="Case tracking">
+        <div class="track-head">
+          <div>
+            <p class="eyebrow">Live case</p>
+            <h2 id="track-title">Loading the case.</h2>
+            <p id="track-sub">One moment.</p>
+            <p class="track-counters" id="track-counters"></p>
+          </div>
+          <div class="track-cta">
+            <button id="track-cta" class="button primary" type="button">Run unattended</button>
+            <small id="track-cta-note"></small>
+            <button id="track-secondary" class="button secondary compact" type="button" hidden>Simulate grid outage</button>
+          </div>
+        </div>
+        <div class="track-case">
+          <span>Case</span>
+          <select id="track-case-select" aria-label="Choose the active case"><option>Loading cases...</option></select>
+          <span class="origin-chip" id="track-origin">Sample fixture</span>
+          <span class="boundary-chip">Clinical authority: <strong>Human</strong></span>
+          <label class="show-all-inline"><input type="checkbox" id="show-all-track"> Show everything</label>
+        </div>
+        <ol class="stops" id="stops">
+          <li class="stop todo" data-stop="1"><span class="stop-dot"><span>1</span></span><div><div class="stop-head"><b>Fridge lost power</b><small id="stop-1-meta">Watching the fridge</small></div><div class="stop-body" id="stop-1-body"></div></div></li>
+          <li class="stop todo" data-stop="2"><span class="stop-dot"><span>2</span></span><div><div class="stop-head"><b>Evidence gathered</b><small id="stop-2-meta"></small></div><div class="stop-body" id="stop-2-body"></div></div></li>
+          <li class="stop todo" data-stop="3"><span class="stop-dot"><span>3</span></span><div><div class="stop-head"><b>Pharmacist decided</b><small id="stop-3-meta"></small></div><div class="stop-body" id="stop-3-body"></div></div></li>
+          <li class="stop todo" data-stop="4"><span class="stop-dot"><span>4</span></span><div><div class="stop-head"><b>Replacement on the way</b><small id="stop-4-meta"></small></div><div class="stop-body" id="stop-4-body"></div></div></li>
+          <li class="stop todo" data-stop="5"><span class="stop-dot"><span>5</span></span><div><div class="stop-head"><b>Delivered, case closed</b><small id="stop-5-meta"></small></div><div class="stop-body" id="stop-5-body"></div></div></li>
+        </ol>
+        <p class="track-recent" id="track-recent"></p>
+      </section>
+
       <div class="shell board-head">
         <div><p class="eyebrow">Pilot operations workspace</p><h2 id="demo-title">One outage. One accountable queue.</h2></div>
         <div class="demo-controls">

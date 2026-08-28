@@ -85,5 +85,9 @@ async def revalidate_static(request:Request,call_next):
  if request.url.path=="/" or request.url.path.startswith("/static/"):
   response.headers["Cache-Control"]="no-cache"  # browsers revalidate so a deploy never serves a stale CSS/HTML mix
  return response
+import hashlib,re
+BUILD_ID=hashlib.sha256(b"".join(path.read_bytes() for path in sorted(WEB.glob("*.css"))+sorted(WEB.glob("*.js"))+[WEB/"index.html"])).hexdigest()[:10]
+INDEX_HTML=re.sub(r'(/static/[A-Za-z0-9_.-]+\.(?:css|js))',lambda m:f"{m.group(1)}?v={BUILD_ID}",(WEB/"index.html").read_text(encoding="utf-8"))
+from fastapi.responses import HTMLResponse
 @app.get("/",include_in_schema=False)
-def index()->FileResponse:return FileResponse(WEB/"index.html")
+def index()->HTMLResponse:return HTMLResponse(INDEX_HTML)  # asset links carry a build stamp so a stale cached copy is never reused

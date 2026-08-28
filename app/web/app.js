@@ -61,6 +61,8 @@ async function refreshCases(preferredId = currentCase?.case_id) {
     ? caseSummaries.map((row) => `<option value="${escapeHtml(row.case_id)}">${escapeHtml(row.case_reference)} · ${escapeHtml(row.medication)} · ${escapeHtml(statusCopy(row.status))}</option>`).join("")
     : '<option value="">No cases yet</option>';
   if (preferredId && caseSummaries.some((row) => row.case_id === preferredId)) select.value = preferredId;
+  const mirror = $("#track-case-select");
+  if (mirror) { mirror.innerHTML = select.innerHTML; mirror.value = select.value; }
 }
 
 async function loadCase(caseId) {
@@ -152,6 +154,7 @@ async function pollActiveCase() {
     if (fresh.record_version === currentCase.record_version) {
       // Wake rows and the scheduler status line change without touching the case record.
       await renderWakes(currentCase.case_id);
+      mirrorWakesIntoTrack();
       return;
     }
     const before = currentCase.autonomy?.background_wakes_fired || 0;
@@ -282,9 +285,93 @@ function renderStage(caseData) {
   $("#stage-proof-link").href = `/api/cases/${encodeURIComponent(caseData.case_id)}/autonomy-proof`;
 }
 
+const TRACK_COPY = {
+  monitoring: { title: "The fridge is being watched.", sub: "Nothing has happened yet. Press Run unattended to start a synthetic outage: the agent reads the package, checks the evidence, and prepares the pharmacist's packet.", cta: "Run unattended", note: "One click. Live Gemini, Gemma and an ADK agent.", stop: 1 },
+  review: { title: "Waiting for the pharmacist.", sub: "The agent gathered the evidence and built the packet. It will not decide whether the medicine is safe. That decision belongs to a person.", cta: "Record the pharmacist's decision", note: "The only decision a human makes.", stop: 3 },
+  background: { title: "Replacement on the way. Nobody needs to click.", sub: "The pharmacist decided. Reservation and dispatch happened by themselves. Cloud Scheduler checks the courier every minute; this page updates on its own.", cta: "Hands off", note: "Watch stop 4. It completes itself.", stop: 4 },
+  closed: { title: "Delivered. Case closed.", sub: "Everything after the pharmacist's decision ran in the background, and the receipt is signed.", cta: "Start another case", note: "Runs a fresh synthetic case.", stop: 5 },
+};
+
+const openStops = { caseId: null, set: new Set() };
+
+function stopIndexFor(caseData) {
+  const status = caseData.status;
+  if (status === "resolved" || status === "review_resolved") return 5;
+  if (["replacement_approved", "fulfillment_prepared", "delivery_dispatched", "stock_escalated", "delivery_choice_required"].includes(status)) return 4;
+  if (["excursion_detected", "awaiting_professional_review", "review_escalated"].includes(status)) return 3;
+  return 1;
+}
+
+function renderTrack(caseData) {
+  const stage = stageFor(caseData);
+  const copy = TRACK_COPY[stage];
+  const proof = caseData.autonomy_proof || {};
+  const current = stopIndexFor(caseData);
+  const closedByWake = Boolean(caseData.autonomy?.closed_by_background_wake);
+  $("#track-title").textContent = stage === "closed" && closedByWake ? "Delivered. Closed by a Cloud Scheduler wake, no operator." : stage === "closed" && caseData.status === "review_resolved" ? "Closed by the pharmacist's decision." : copy.title;
+  $("#track-sub").textContent = copy.sub;
+  $("#track-counters").innerHTML = `<b>${proof.operator_continue_clicks || 0}</b> continue clicks · <b>${proof.automatic_trace_events || 0}</b> agent actions · <b>${proof.human_authority_events || 0}</b> human decision${(proof.human_authority_events || 0) === 1 ? "" : "s"} · <b>${caseData.autonomy?.background_wakes_fired || 0}</b> background wake${(caseData.autonomy?.background_wakes_fired || 0) === 1 ? "" : "s"} fired`;
+  const cta = $("#track-cta");
+  cta.textContent = copy.cta;
+  cta.disabled = stage === "background" || autoRunning;
+  $("#track-cta-note").textContent = copy.note;
+  $("#track-origin").textContent = caseData.origin === "pilot_input" ? `${caseData.data_class} pilot input` : "sample fixture";
+  const select = $("#track-case-select");
+  select.innerHTML = $("#case-select").innerHTML;
+  select.value = caseData.case_id;
+
+  if (openStops.caseId !== caseData.case_id) { openStops.caseId = caseData.case_id; openStops.set.clear(); }
+  $$("#stops .stop").forEach((stop) => {
+    const index = Number(stop.dataset.stop);
+    stop.classList.remove("done", "current", "todo", "live", "open");
+    if (index === current) stop.classList.add(current === 5 ? "done" : "current", current === 5 ? "open" : "current");
+    else if (index < current) stop.classList.add("done");
+    else stop.classList.add("todo");
+    if (index === 4 && stage === "background") stop.classList.add("live");
+    if (openStops.set.has(index) && index !== current) stop.classList.add("open");
+  });
+
+  // Stop 1: the fridge
+  const readings = caseData.sensor.readings;
+  const latest = readings[readings.length - 1];
+  $("#stop-1-meta").textContent = caseData.excursion ? `${caseData.excursion.observed_minutes} min out of range, peak ${caseData.excursion.maximum_fahrenheit}°F` : `${latest.fahrenheit.toFixed(1)}°F, power ${latest.power === "on" ? "on" : "off"}`;
+  $("#stop-1-body").innerHTML = `<div class="fridge"><div class="metric-row"><div><span>Latest reading</span><strong>${latest.fahrenheit.toFixed(1)}°F</strong></div><div><span>Out of range for</span><strong>${caseData.excursion ? caseData.excursion.observed_minutes + " min" : "0 min"}</strong></div><div><span>Power</span><strong>${latest.power === "on" ? "On" : "Outage"}</strong></div></div><div class="mini-chart"><svg viewBox="0 0 720 260" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Observed refrigerator temperatures">${$("#temperature-chart").innerHTML}</svg></div></div><p class="stop-note">Observation, not a verdict. A qualified professional decides the disposition.</p>`;
+
+  // Stop 2: the evidence
+  const fields = caseData.extraction.fields.length;
+  const screen = caseData.injection_screen;
+  $("#stop-2-meta").textContent = current >= 2 ? `${fields} package fields, every one an exact quote` : "";
+  $("#stop-2-body").innerHTML = `${$("#tab-medicine .package-preview").innerHTML}<div class="verified-fields">${$("#verified-fields").innerHTML}</div><p class="stop-note">Every field is an exact quote from the model's own transcription. <a href="${caseData.label_evidence.url}" target="_blank" rel="noreferrer">Current structured label ↗</a></p>${screen ? `<p class="agent-line${screen.clean ? "" : " flagged"}"><b>${screen.clean ? "Package text screened, clean" : screen.quarantined_spans + " instruction-shaped span(s) quarantined"}</b><span>${escapeHtml(screen.model)} · ${escapeHtml(screen.mode)}</span></p>` : ""}`;
+
+  // Stop 3: the pharmacist
+  const decision = caseData.review?.decision;
+  const packet = caseData.packet_agent;
+  $("#stop-3-meta").textContent = decision ? `${decision.reviewer} chose ${decision.disposition.replaceAll("_", " ")}` : current === 3 ? "Packet ready, waiting for a person" : "";
+  $("#stop-3-body").innerHTML = `${$("#review-card").outerHTML}${packet?.live ? `<p class="agent-line${packet.accepted ? "" : " flagged"}"><b>${packet.accepted ? "ADK agent built this packet, verified" : "ADK packet rejected, deterministic packet used"}</b><span>${(packet.tool_calls || []).length} scoped tool calls · ${(packet.verified_fields || []).length} values checked against the tools</span></p>` : ""}`;
+
+  // Stop 4: the background
+  $("#stop-4-meta").textContent = stage === "background" ? "Cloud Scheduler is polling the courier" : current > 4 ? "Confirmed by the background wake" : "";
+  $("#stop-4-body").innerHTML = `<p class="hands-off">${stage === "background" ? "Nobody clicks from here." : "This stop completed itself."}</p><ul class="wake-list" id="track-wake-list">${$("#wake-list").innerHTML}</ul><p class="worker-status" id="track-worker-status" data-state="${$("#worker-status").dataset.state || "unknown"}">${escapeHtml($("#worker-status").textContent)}</p>`;
+
+  // Stop 5: closed
+  $("#stop-5-meta").textContent = current === 5 ? (closedByWake ? "Courier handoff confirmed by the wake" : "Receipt recorded") : "";
+  $("#stop-5-body").innerHTML = `<dl class="facts"><div><dt>Clicks after the decision</dt><dd>${proof.operator_continue_clicks || 0}</dd></div><div><dt>Background wakes fired</dt><dd>${caseData.autonomy?.background_wakes_fired || 0}</dd></div><div><dt>Human decisions</dt><dd>${proof.human_authority_events || 0}</dd></div><div><dt>Receipt</dt><dd>${proof.proof_integrity === "verified" ? "Signed, verified" : "Signed"}</dd></div></dl><p class="stop-note">Every number is derived from persisted records and signed with the service key. <a href="/api/cases/${encodeURIComponent(caseData.case_id)}/autonomy-proof" target="_blank" rel="noreferrer">Open signed autonomy proof ↗</a> · <a href="/api/cases/${encodeURIComponent(caseData.case_id)}/trace" target="_blank" rel="noreferrer">Safe trace ↗</a></p>`;
+
+  const last = caseData.timeline[caseData.timeline.length - 1];
+  $("#track-recent").innerHTML = last ? `<span>Latest:</span> <b>${escapeHtml(last.actor)}</b> <span>${escapeHtml(last.action)}</span> <span>· ${caseData.timeline.length} events, all in the signed trace</span>` : "";
+}
+
+function mirrorWakesIntoTrack() {
+  const list = $("#track-wake-list"); const status = $("#track-worker-status");
+  if (list) list.innerHTML = $("#wake-list").innerHTML;
+  if (status) { status.textContent = $("#worker-status").textContent; status.dataset.state = $("#worker-status").dataset.state || "unknown"; }
+}
+
 function setShowAll(on) {
   $("#console").dataset.showAll = String(on);
+  document.body.dataset.showAll = String(on);
   $("#show-all").checked = on;
+  const inline = $("#show-all-track"); if (inline) inline.checked = on;
   try { localStorage.setItem("coldclock-show-all", String(on)); } catch (error) { /* storage unavailable */ }
 }
 
@@ -372,7 +459,8 @@ function render(caseData) {
   button.disabled = !action?.endpoint || autoRunning;
   $("#control-note").textContent = action?.note || "Reset to replay the synthetic case.";
   $("#advance-clock").disabled = !WAITING_STATES.has(status);
-  renderWakes(caseData.case_id);
+  renderTrack(caseData);
+  renderWakes(caseData.case_id).then(mirrorWakesIntoTrack);
 }
 
 function escapeHtml(value) {
@@ -544,6 +632,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   try { showAll = localStorage.getItem("coldclock-show-all") === "true"; } catch (error) { /* storage unavailable */ }
   setShowAll(showAll);
   $("#show-all").addEventListener("change", (event) => setShowAll(event.target.checked));
+  $("#show-all-track").addEventListener("change", (event) => setShowAll(event.target.checked));
+  $("#track-case-select").addEventListener("change", (event) => loadCase(event.target.value));
+  $$("#stops .stop-head").forEach((head) => head.addEventListener("click", () => {
+    const stop = head.closest(".stop");
+    if (!stop.classList.contains("done")) return;
+    const index = Number(stop.dataset.stop);
+    if (openStops.set.has(index)) openStops.set.delete(index); else openStops.set.add(index);
+    stop.classList.toggle("open");
+  }));
+  $("#track-cta").addEventListener("click", () => {
+    if (!currentCase) return;
+    const stage = stageFor(currentCase);
+    if (stage === "monitoring" || stage === "closed") return runUnattended();
+    if (stage === "review") return advance(false);
+  });
   document.addEventListener("click", (event) => { const menu = $(".more-menu"); if (menu?.open && !menu.contains(event.target)) menu.open = false; });
   $("#intake-form").addEventListener("submit", submitIntake);
   $("#sensor-form").addEventListener("submit", submitSensor);
