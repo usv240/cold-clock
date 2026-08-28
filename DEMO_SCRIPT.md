@@ -12,7 +12,7 @@ One take, about 3:40. Each step: **DO** (mouse), **POINT** (cursor on the **bold
 
 1. App: https://cold-clock-109051079423.us-central1.run.app
    At the top of the page, click the green **Open operations workspace** button. The page scrolls to the white card labelled **LIVE CASE** (it sits below the "Build on the resolution engine" section and above "Research, not decoration").
-   The card opens on a case at the start: headline **The fridge is being watched.** and a green **Run unattended** button. If you ever see a different headline, open the **Case** dropdown on the card and choose any entry ending in **Monitoring normally**. Keep "Show everything" unticked.
+   The card opens on a case at the start: headline **The fridge is being watched.** and a green **Run unattended** button. If you ever see a different headline, click **New case** (the small green link next to the Case dropdown) and the headline resets. Keep "Show everything" unticked.
 2. Cloud Run: https://console.cloud.google.com/run/detail/us-central1/cold-clock/revisions?project=agentic-fleet-2026
 3. Cloud Scheduler: https://console.cloud.google.com/cloudscheduler/jobs/us-central1/cold-clock-wake-scan?project=agentic-fleet-2026
 4. Firestore: https://console.cloud.google.com/firestore/databases/-default-/data/panel/cold_clock_wakes?project=agentic-fleet-2026
