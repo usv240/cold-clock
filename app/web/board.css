@@ -136,3 +136,4 @@
 .board:not([data-show-all=true]) .timeline-item:nth-child(n+4){display:none}
 .board[data-stage=background]:not([data-show-all=true]) .board-act .wake-panel{display:none}
 .board[data-stage=monitoring]:not([data-show-all=true]) .board-act .wake-panel{display:none}
+.board[data-stage=outage] #tab-temperature{display:block;grid-column:1 / -1}

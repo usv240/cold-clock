@@ -89,9 +89,10 @@ async function simulateOutage() {
   beginWorking("Grid outage reported.", "Enrolling households and arming a background watch for each. Elapsed", "Working");
   try {
     const result = await api("/api/demo/outage-fanout", { method: "POST", body: JSON.stringify({ service_area: "grid-7", enroll: 3 }) });
-    await refreshCases(result.affected_cases[0]);
-    await loadCase(result.affected_cases[0]);
-    toast(`Grid outage ${result.outage_id}: ${result.affected_cases.length} enrolled cases armed with outage watches. Each will be judged from its own readings by the background worker.`);
+    const focus = (result.enrolled && result.enrolled[0]) || result.affected_cases[0];
+    await refreshCases(focus);
+    await loadCase(focus);
+    toast(`One utility message reached ${result.affected_cases.length} households. Each now has its own background watch.`);
   } catch (error) { toast(error.message); }
   finally { endWorking(); button.disabled = false; $("#console").setAttribute("aria-busy", "false"); if (currentCase) render(currentCase); }
 }
@@ -264,9 +265,12 @@ const STAGE_MESSAGE = {
   review: "Step 2 of 4. The agent read the package and built the packet. The system will not decide if the medicine is safe. Record the pharmacist's decision.",
   background: "Step 3 of 4. Reservation and dispatch happened by themselves. Nobody clicks from here: the Cloud Scheduler wake closes the case at the courier ETA.",
   closed: "Step 4 of 4. Closed. Everything after the pharmacist's decision ran in the background, and the receipt is signed.",
+  outage: "Grid outage reported. A background watch will judge this household from its own readings in 15 minutes: excursion, keep watching, or a safe stop. Nobody needs to do anything.",
 };
 
 function stageFor(caseData) {
+  const outage = caseData.utility_outage;
+  if (caseData.status === "monitoring" && outage && !outage.resolution) return "outage";
   return STAGE_BY_STATUS[caseData.status] || "review";
 }
 
@@ -291,9 +295,15 @@ const TRACK_COPY = {
   review: { title: "Waiting for the pharmacist.", sub: "The agent gathered the evidence and built the packet. It will not decide whether the medicine is safe. That decision belongs to a person.", cta: "Record the pharmacist's decision", note: "The only decision a human makes.", stop: 3 },
   background: { title: "Replacement on the way. Nobody needs to click.", sub: "The pharmacist decided. Reservation and dispatch happened by themselves. Cloud Scheduler checks the courier every minute; this page updates on its own.", cta: "Hands off", note: "Watch stop 4. It completes itself.", stop: 4 },
   closed: { title: "Delivered. Case closed.", sub: "Everything after the pharmacist's decision ran in the background, and the receipt is signed.", cta: "Start another case", note: "Runs a fresh synthetic case.", stop: 5 },
+  outage: { title: "Grid outage reported. Watching this household.", sub: "One utility message reached every home in this area at once. Each home now has its own background watch. In 15 minutes the agent judges this one from its own readings: warm fridge goes to a pharmacist, fine fridge keeps watching, silent sensor stops safely.", cta: "Watching", note: "Nothing to click. The background watch decides.", stop: 1 },
 };
 
 const openStops = { caseId: null, set: new Set() };
+
+// Copies of board markup shown inside the tracker must not carry ids, or later renders write to the wrong copy.
+function mirror(html) {
+  return String(html || "").replace(/\sid="[^"]*"/g, "");
+}
 let workingTimer = null;
 
 function beginWorking(title, sub, buttonLabel) {
@@ -338,7 +348,7 @@ function renderTrack(caseData) {
   $("#track-counters").innerHTML = `<b>${proof.operator_continue_clicks || 0}</b> continue clicks · <b>${proof.automatic_trace_events || 0}</b> agent actions · <b>${proof.human_authority_events || 0}</b> human decision${(proof.human_authority_events || 0) === 1 ? "" : "s"} · <b>${caseData.autonomy?.background_wakes_fired || 0}</b> background wake${(caseData.autonomy?.background_wakes_fired || 0) === 1 ? "" : "s"} fired`;
   const cta = $("#track-cta");
   cta.textContent = copy.cta;
-  cta.disabled = stage === "background" || autoRunning;
+  cta.disabled = stage === "background" || stage === "outage" || autoRunning;
   $("#track-cta-note").textContent = copy.note;
   $("#track-origin").textContent = caseData.origin === "pilot_input" ? `${caseData.data_class} pilot input` : "sample fixture";
   const select = $("#track-case-select");
@@ -359,24 +369,24 @@ function renderTrack(caseData) {
   // Stop 1: the fridge
   const readings = caseData.sensor.readings;
   const latest = readings[readings.length - 1];
-  $("#stop-1-meta").textContent = caseData.excursion ? `${caseData.excursion.observed_minutes} min out of range, peak ${caseData.excursion.maximum_fahrenheit}°F` : `${latest.fahrenheit.toFixed(1)}°F, power ${latest.power === "on" ? "on" : "off"}`;
+  $("#stop-1-meta").textContent = caseData.excursion ? `${caseData.excursion.observed_minutes} min out of range, peak ${caseData.excursion.maximum_fahrenheit}°F` : stage === "outage" ? `Grid outage ${caseData.utility_outage.outage_id}, background watch armed` : `${latest.fahrenheit.toFixed(1)}°F, power ${latest.power === "on" ? "on" : "off"}`;
   $("#stop-1-body").innerHTML = `<div class="fridge"><div class="metric-row"><div><span>Latest reading</span><strong>${latest.fahrenheit.toFixed(1)}°F</strong></div><div><span>Out of range for</span><strong>${caseData.excursion ? caseData.excursion.observed_minutes + " min" : "0 min"}</strong></div><div><span>Power</span><strong>${latest.power === "on" ? "On" : "Outage"}</strong></div></div><div class="mini-chart"><svg viewBox="0 0 720 260" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Observed refrigerator temperatures">${$("#temperature-chart").innerHTML}</svg></div></div><p class="stop-note">Observation, not a verdict. A qualified professional decides the disposition.</p>`;
 
   // Stop 2: the evidence
   const fields = caseData.extraction.fields.length;
   const screen = caseData.injection_screen;
   $("#stop-2-meta").textContent = current >= 2 ? `${fields} package fields, every one an exact quote` : "";
-  $("#stop-2-body").innerHTML = `${$("#tab-medicine .package-preview").innerHTML}<div class="verified-fields">${$("#verified-fields").innerHTML}</div><p class="stop-note">Every field is an exact quote from the model's own transcription. <a href="${caseData.label_evidence.url}" target="_blank" rel="noreferrer">Current structured label ↗</a></p>${screen ? `<p class="agent-line${screen.clean ? "" : " flagged"}"><b>${screen.clean ? "Package text screened, clean" : screen.quarantined_spans + " instruction-shaped span(s) quarantined"}</b><span>${escapeHtml(screen.model)} · ${escapeHtml(screen.mode)}</span></p>` : ""}`;
+  $("#stop-2-body").innerHTML = `${mirror($("#tab-medicine .package-preview").innerHTML)}<div class="verified-fields">${mirror($("#verified-fields").innerHTML)}</div><p class="stop-note">Every field is an exact quote from the model's own transcription. <a href="${caseData.label_evidence.url}" target="_blank" rel="noreferrer">Current structured label ↗</a></p>${screen ? `<p class="agent-line${screen.clean ? "" : " flagged"}"><b>${screen.clean ? "Package text screened, clean" : screen.quarantined_spans + " instruction-shaped span(s) quarantined"}</b><span>${escapeHtml(screen.model)} · ${escapeHtml(screen.mode)}</span></p>` : ""}`;
 
   // Stop 3: the pharmacist
   const decision = caseData.review?.decision;
   const packet = caseData.packet_agent;
   $("#stop-3-meta").textContent = decision ? `${decision.reviewer} chose ${decision.disposition.replaceAll("_", " ")}` : current === 3 ? "Packet ready, waiting for a person" : "";
-  $("#stop-3-body").innerHTML = `${$("#review-card").outerHTML}${packet?.live ? `<p class="agent-line${packet.accepted ? "" : " flagged"}"><b>${packet.accepted ? "ADK agent built this packet, verified" : "ADK packet rejected, deterministic packet used"}</b><span>${(packet.tool_calls || []).length} scoped tool calls · ${(packet.verified_fields || []).length} values checked against the tools</span></p>` : ""}`;
+  $("#stop-3-body").innerHTML = `${mirror($("#review-card").outerHTML)}${packet?.live ? `<p class="agent-line${packet.accepted ? "" : " flagged"}"><b>${packet.accepted ? "ADK agent built this packet, verified" : "ADK packet rejected, deterministic packet used"}</b><span>${(packet.tool_calls || []).length} scoped tool calls · ${(packet.verified_fields || []).length} values checked against the tools</span></p>` : ""}`;
 
   // Stop 4: the background
   $("#stop-4-meta").textContent = stage === "background" ? "Cloud Scheduler is polling the courier" : current > 4 ? "Confirmed by the background wake" : "";
-  $("#stop-4-body").innerHTML = `<p class="hands-off">${stage === "background" ? "Nobody clicks from here." : "This stop completed itself."}</p><ul class="wake-list" id="track-wake-list">${$("#wake-list").innerHTML}</ul><p class="worker-status" id="track-worker-status" data-state="${$("#worker-status").dataset.state || "unknown"}">${escapeHtml($("#worker-status").textContent)}</p>`;
+  $("#stop-4-body").innerHTML = `<p class="hands-off">${stage === "background" ? "Nobody clicks from here." : "This stop completed itself."}</p><ul class="wake-list" id="track-wake-list">${mirror($("#wake-list").innerHTML)}</ul><p class="worker-status" id="track-worker-status" data-state="${$("#worker-status").dataset.state || "unknown"}">${escapeHtml($("#worker-status").textContent)}</p>`;
 
   // Stop 5: closed
   $("#stop-5-meta").textContent = current === 5 ? (closedByWake ? "Courier handoff confirmed by the wake" : "Receipt recorded") : "";
@@ -388,7 +398,7 @@ function renderTrack(caseData) {
 
 function mirrorWakesIntoTrack() {
   const list = $("#track-wake-list"); const status = $("#track-worker-status");
-  if (list) list.innerHTML = $("#wake-list").innerHTML;
+  if (list) list.innerHTML = mirror($("#wake-list").innerHTML);
   if (status) { status.textContent = $("#worker-status").textContent; status.dataset.state = $("#worker-status").dataset.state || "unknown"; }
 }
 
