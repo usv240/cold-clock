@@ -292,7 +292,8 @@ def prepare_fulfillment(case: dict[str, Any]) -> dict[str, Any]:
 def dispatch_delivery(case: dict[str, Any]) -> dict[str, Any]:
     if case["fulfillment"].get("status") != "prepared":
         raise ValueError("a prepared replacement is required before dispatch")
-    eta_minutes = int(case.get("delivery_eta_minutes") or DEFAULT_COURIER_ETA_MINUTES)
+    configured_eta = case.get("delivery_eta_minutes")  # 0 is valid: poll on the next scheduler tick, so do not use `or`
+    eta_minutes = int(configured_eta) if configured_eta is not None else DEFAULT_COURIER_ETA_MINUTES
     case["fulfillment"]["status"] = "confirmed"
     case["delivery"] = {
         "status": "dispatched",

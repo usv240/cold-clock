@@ -91,3 +91,9 @@ def test_case_listing_is_newest_first_and_bounded_and_area_query_filters():
 def test_case_creation_is_throttled_per_network_with_headers():
     response = client.post("/api/cases")
     assert response.status_code == 200 and response.headers["X-Demo-Limit"] == "120"
+
+
+def test_zero_eta_is_honoured_and_not_replaced_by_the_default():
+    """0 minutes means the next scheduler tick; a falsy check would silently make it 34."""
+    case = run_unattended_demo(create_case(), courier_eta_minutes=0)
+    assert case["delivery"]["eta_minutes"] == 0
