@@ -8,7 +8,7 @@ Target 3:30. Only the first four minutes are judged.
 1. Run: `python scripts/browser_check.py --url https://cold-clock-109051079423.us-central1.run.app --wait 240`
    It must print `7/7`. This also warms the service.
 2. Open five tabs, in this order, all loaded:
-   1. The app (light theme, scrolled to the workspace, wide window, "Show everything" unticked).
+   1. The app (light theme, scrolled to the Live case tracker, wide window, "Show everything" unticked).
    2. Cloud Run, service `cold-clock`, Revisions tab.
    3. Cloud Scheduler, job `cold-clock-wake-scan`.
    4. Firestore, collection `cold_clock_wakes`.
@@ -32,17 +32,17 @@ While it runs, say:
 "One click. ColdClock reads the medicine package, checks the storage evidence, and builds everything a pharmacist needs to review the case.
 Gemini reads the package. Gemma screens the label for hidden instructions. And a Google ADK agent builds the review packet from read-only evidence. Every value is checked against its source."
 
-When it stops, everything is on one screen. Point at the **Review packet** card: **AI DISPOSITION: NONE**, and beneath it **ADK agent packet accepted, 6 values verified**. Point at the **Medicine evidence** card: the verified fields and the green injection-screen line.
+When it stops, the headline reads **Waiting for the pharmacist.** Stops 1 and 2 are ticked with one-line summaries; stop 3 is open. Point at **AI DISPOSITION: NONE** in the packet, and at the green line beneath it: **ADK agent built this packet, verified**.
 
 "It stopped on purpose. The system will not decide if the medicine is safe. A person does."
 
 ### 0:45 to 1:05. The one human decision. (Tab 1)
 
-Click **Record human disposition**. Type your name, pick **Replace**, type one sentence, submit.
+Click the big button, **Record the pharmacist's decision**. Type your name, pick **Replace**, type one sentence, submit.
 
 "I am the pharmacist today. That is the only decision a person makes."
 
-Watch the steps tick by themselves. The board moves to Step 3 on its own and shows one card: **Nobody clicks from here.** Point at *Poll sandbox courier at ETA, pending* and at **0 continue clicks**.
+Watch stop 3 tick and stop 4 open by itself: **Nobody clicks from here.** The button now reads **Hands off** and is disabled. Point at *Poll sandbox courier at ETA, pending* and at **0 continue clicks** under the headline.
 
 "That was the last human action. From here, nobody clicks."
 
@@ -60,13 +60,13 @@ Let me show you that on Google Cloud while it happens."
 
 ### 2:20 to 2:45. It finished by itself. (Tab 1)
 
-Switch back. The page has already changed to Step 4 by itself.
+Switch back. The page has already moved to stop 5 by itself.
 
-"No refresh. No click. The case is resolved.
-The card says: closed by a Cloud Scheduler wake, no operator. Zero clicks after the decision. One background wake fired.
-The last line in the timeline is the background agent: courier confirmed handoff."
+"No refresh. No click. The headline says: Delivered. Closed by a Cloud Scheduler wake, no operator.
+Zero clicks after the decision. One background wake fired. One human decision.
+The last line at the bottom is the background agent: courier confirmed handoff."
 
-Click **Open signed autonomy proof** on the card. Point at `closed_by_background_wake: true`, `operator_continue_clicks: 0`, and `signature`.
+Click **Open signed autonomy proof** under the four numbers. Point at `closed_by_background_wake: true`, `operator_continue_clicks: 0`, and `signature`.
 
 "This receipt is built from stored records and signed. Change one number and it fails."
 
