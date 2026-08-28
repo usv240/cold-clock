@@ -274,7 +274,9 @@ def build_router(store: CaseStore, scheduler=None, *, allow_global_reset: bool =
                 model_runner.apply(case)
             except Exception as exc:
                 raise HTTPException(status_code=503, detail="live model evidence unavailable; no replay substituted") from exc
-        run_unattended_demo(case, stop_at_review=options.stop_at_review)
+        # The on-camera path stops at the human gate; its courier ETA is immediate so the closure lands on the next
+        # scheduler tick after the decision instead of one to two minutes later.
+        run_unattended_demo(case, courier_eta_minutes=0 if options.stop_at_review else 1, stop_at_review=options.stop_at_review)
         register_followups(case, scheduler)
         store.put(case)
         return public_view(case)

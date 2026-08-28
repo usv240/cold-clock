@@ -25,12 +25,12 @@ def test_unattended_can_stop_at_the_real_human_gate():
     assert case["status"] == "awaiting_professional_review"
     assert case["review"]["decision"] is None
     assert case["demo_completion_mode"] == "awaiting_real_review_then_background"
-    assert case["delivery_eta_minutes"] == 1
+    assert case["delivery_eta_minutes"] == 0, "on-camera path polls the courier on the next scheduler tick"
     kinds = {row["kind"] for row in case["autonomy"]["pending_background_wakes"]}
     assert kinds == {"review_followup"}
     decided = client.post(f"/api/cases/{case['case_id']}/review", json={"disposition": "replace", "reviewer_name": "Avery Chen, PharmD - synthetic", "rationale": "Replacement approved after a real review in this test."}).json()
     assert decided["status"] == "delivery_dispatched"
-    assert decided["delivery"]["eta_minutes"] == 1
+    assert decided["delivery"]["eta_minutes"] == 0
     assert {row["kind"] for row in decided["autonomy"]["pending_background_wakes"]} == {"courier_status_poll", "receipt_followup"}
 
 
