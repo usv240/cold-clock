@@ -65,6 +65,8 @@ def _summary(case: dict[str, Any]) -> dict[str, Any]:
         "data_class": case.get("data_class", "synthetic"),
         "created_at": case["created_at"],
         "latest_fahrenheit": case["sensor"]["readings"][-1].get("fahrenheit"),
+        # Untouched: nothing has happened yet, so it is a clean start for a first-time visitor.
+        "pristine": case["status"] == "monitoring" and not case.get("background_executions") and not case.get("utility_outage") and not case.get("excursion"),
     }
 
 

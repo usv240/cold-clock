@@ -86,13 +86,14 @@ async function simulateOutage() {
   const button = $("#outage-fanout");
   button.disabled = true;
   $("#console").setAttribute("aria-busy", "true");
+  beginWorking("Grid outage reported.", "Enrolling households and arming a background watch for each. Elapsed", "Working");
   try {
     const result = await api("/api/demo/outage-fanout", { method: "POST", body: JSON.stringify({ service_area: "grid-7", enroll: 3 }) });
     await refreshCases(result.affected_cases[0]);
     await loadCase(result.affected_cases[0]);
     toast(`Grid outage ${result.outage_id}: ${result.affected_cases.length} enrolled cases armed with outage watches. Each will be judged from its own readings by the background worker.`);
   } catch (error) { toast(error.message); }
-  finally { button.disabled = false; $("#console").setAttribute("aria-busy", "false"); }
+  finally { endWorking(); button.disabled = false; $("#console").setAttribute("aria-busy", "false"); if (currentCase) render(currentCase); }
 }
 
 async function renderWakes(caseId) {
@@ -293,6 +294,30 @@ const TRACK_COPY = {
 };
 
 const openStops = { caseId: null, set: new Set() };
+let workingTimer = null;
+
+function beginWorking(title, sub, buttonLabel) {
+  const track = $("#track");
+  if (!track) return;
+  track.dataset.working = "true";
+  $("#track-title").textContent = title;
+  const started = Date.now();
+  const tick = () => { $("#track-sub").textContent = `${sub} ${Math.round((Date.now() - started) / 1000)}s`; };
+  tick();
+  workingTimer = window.setInterval(tick, 1000);
+  const cta = $("#track-cta");
+  cta.disabled = true;
+  cta.classList.add("working");
+  cta.textContent = buttonLabel;
+  $("#track-cta-note").textContent = "Live calls to Vertex AI. Please wait.";
+}
+
+function endWorking() {
+  const track = $("#track");
+  if (track) delete track.dataset.working;
+  if (workingTimer) { window.clearInterval(workingTimer); workingTimer = null; }
+  $("#track-cta").classList.remove("working");
+}
 
 function stopIndexFor(caseData) {
   const status = caseData.status;
@@ -526,6 +551,7 @@ async function runUnattended() {
   autoRunning = true;
   $("#unattended-demo").disabled = true;
   $("#console").setAttribute("aria-busy", "true");
+  beginWorking("Reading the package with live models.", "Gemini is reading the package, Gemma is screening the label, the ADK agent is building the packet. Usually 15 to 25 seconds. Elapsed", "Working");
   try {
     const started = await api("/api/demo/unattended", { method: "POST", body: JSON.stringify({ stop_at_review: true }) });
     render(started);
@@ -535,6 +561,7 @@ async function runUnattended() {
     toast(error.message);
   } finally {
     autoRunning = false;
+    endWorking();
     $("#unattended-demo").disabled = false;
     $("#console").setAttribute("aria-busy", "false");
     if (currentCase) render(currentCase);
@@ -606,13 +633,15 @@ async function submitReview(event) {
   event.preventDefault();
   if (!currentCase) return;
   const values = Object.fromEntries(new FormData(event.currentTarget));
+  closeDialog("review-dialog");
+  beginWorking("Decision recorded. Reserving and dispatching.", "Reservation and courier dispatch are running by themselves. Elapsed", "Working");
   try {
     const updated = await api(`/api/cases/${currentCase.case_id}/review`, { method: "POST", body: JSON.stringify(values) });
-    closeDialog("review-dialog");
     render(updated);
     await refreshCases(updated.case_id);
     toast("Named human disposition recorded.");
   } catch (error) { toast(error.message); }
+  finally { endWorking(); if (currentCase) render(currentCase); }
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -635,6 +664,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("#show-all-track").addEventListener("change", (event) => setShowAll(event.target.checked));
   $("#track-case-select").addEventListener("change", (event) => loadCase(event.target.value));
   $("#track-new-case").addEventListener("click", resetCase);
+  $("#track-secondary").addEventListener("click", simulateOutage);
   $$("#stops .stop-head").forEach((head) => head.addEventListener("click", () => {
     const stop = head.closest(".stop");
     if (!stop.classList.contains("done")) return;
@@ -657,7 +687,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
     await refreshCases();
     // Open at the start of the story: the newest case still at stop 1, or a fresh sample. Other cases stay in the dropdown.
-    const fresh = caseSummaries.find((row) => row.status === "monitoring");
+    const fresh = caseSummaries.find((row) => row.pristine);
     if (fresh) await loadCase(fresh.case_id);
     else await resetCase();
   } catch (error) { toast(error.message); }

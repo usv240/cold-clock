@@ -109,3 +109,11 @@ body[data-show-all=true] .board .timeline-item{display:grid}
 
 /* Tighter band around the tracker */
 .demo-section{padding:44px 0 56px}
+
+/* Working state: the click is acknowledged immediately */
+.track-cta .button.working{opacity:1;color:var(--ink-inverse);background:var(--brand);cursor:progress}
+.track-cta .button.working::before{content:"";width:14px;height:14px;margin-right:10px;border:2px solid color-mix(in srgb,var(--ink-inverse) 45%,transparent);border-top-color:var(--ink-inverse);border-radius:50%;display:inline-block;vertical-align:-2px;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#track[data-working=true] .track-head h2{color:var(--brand)}
+#track[data-working=true] .stop.current .stop-dot{animation:stop-pulse 1s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){.track-cta .button.working::before,#track[data-working=true] .stop.current .stop-dot{animation:none}}
