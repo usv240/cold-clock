@@ -634,6 +634,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("#show-all").addEventListener("change", (event) => setShowAll(event.target.checked));
   $("#show-all-track").addEventListener("change", (event) => setShowAll(event.target.checked));
   $("#track-case-select").addEventListener("change", (event) => loadCase(event.target.value));
+  $("#track-new-case").addEventListener("click", resetCase);
   $$("#stops .stop-head").forEach((head) => head.addEventListener("click", () => {
     const stop = head.closest(".stop");
     if (!stop.classList.contains("done")) return;

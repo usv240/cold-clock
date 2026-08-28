@@ -14,6 +14,8 @@
 .track-case > span{color:var(--text-faint);font:600 9px "DM Mono",monospace;text-transform:uppercase;letter-spacing:.08em}
 .track-case select{min-height:34px;max-width:420px;padding:5px 10px;border:1px solid var(--line-strong);border-radius:9px;background:var(--bg-elevated);color:var(--text);font:inherit;font-size:12px}
 .track-case .origin-chip,.track-case .boundary-chip{font-size:9px}
+.track-link{all:unset;cursor:pointer;color:var(--brand);font-size:11px;font-weight:600;padding:6px 8px;border-radius:8px}
+.track-link:hover,.track-link:focus-visible{background:var(--brand-soft)}
 .show-all-inline{margin-left:auto;display:inline-flex;align-items:center;gap:6px;color:var(--text-soft);font-size:11px;cursor:pointer}
 .show-all-inline input{accent-color:var(--brand)}
 .stops{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:0}
