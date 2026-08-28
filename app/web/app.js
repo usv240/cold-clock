@@ -655,7 +655,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupTabs();
   try {
     await refreshCases();
-    if (caseSummaries.length) await loadCase(caseSummaries[0].case_id);
+    // Open on the newest case that is still in progress; if everything is finished, start fresh at stop 1.
+    const finished = new Set(["resolved", "review_resolved", "evidence_incomplete"]);
+    const active = caseSummaries.find((row) => !finished.has(row.status));
+    if (active) await loadCase(active.case_id);
     else await resetCase();
   } catch (error) { toast(error.message); }
   startPolling();
